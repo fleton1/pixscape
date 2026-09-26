@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PixScape</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%233b342a'/><path d='M3 13 12 4M4 13 13 4' stroke='%23c8c8c8'/><path d='M2 10l4 4' stroke='%23e8c13a'/></svg>">
+</head>
+<body>
+  <div id="app">
+    <canvas id="view"></canvas>
+
+    <div id="hover-text"></div>
+    <div id="area-banner"></div>
+    <div id="announce"></div>
+    <div id="toasts"></div>
+    <div id="xpdrops"></div>
+    <div id="xp-counter">0</div>
+
+    <div id="top-right">
+      <div id="orbs">
+        <button id="xp-orb" class="xp-btn" title="Toggle XP counter">XP</button>
+        <div class="orb" id="orb-hp" title="Hitpoints"><span class="num">10</span><div class="ball"><div class="fill"></div><img></div></div>
+        <div class="orb" id="orb-pr" title="Prayer (click to toggle quick-prayers off)"><span class="num">1</span><div class="ball"><div class="fill"></div><img></div></div>
+        <div class="orb" id="orb-run" title="Run (R)"><span class="num">100</span><div class="ball"><div class="fill"></div><img></div></div>
+        <button id="btn-map" class="map-btn" title="World map (M)">MAP</button>
+      </div>
+      <div id="minimap-wrap">
+        <canvas id="minimap" width="172" height="172"></canvas>
+        <div id="compass">N</div>
+      </div>
+    </div>
+
+    <div id="wild-level" style="display:none"></div>
+
+    <div id="sidebar">
+      <div id="panel"></div>
+    </div>
+
+    <div id="chatbox">
+      <div id="chat-log"></div>
+      <div id="dialogue"></div>
+      <div id="chat-line"><span id="chat-name">Adventurer:</span> <span id="chat-input"></span><span class="caret">*</span><span class="chat-hint">Press Enter to chat</span></div>
+      <div id="chat-tabs"><span class="ct on">All</span><span class="ct">Game<br><i>On</i></span><span class="ct">Public<br><i>On</i></span><span class="ct">Private<br><i>On</i></span><span class="ct">Clan<br><i>On</i></span><span class="ct">Trade<br><i>On</i></span><span class="ct report">Report</span></div>
+    </div>
+
+    <div id="ctx-menu"></div>
+    <div id="window" class="win"></div>
+    <div id="worldmap"><canvas></canvas></div>
+    <div id="fade"></div>
+
+    <div id="title">
+      <div class="title-box">
+        <h1>Pix<span>Scape</span></h1>
+        <div class="tagline">An old school adventure</div>
+        <div id="creator">
+          <div class="creator-row">
+            <canvas id="char-preview" width="120" height="150"></canvas>
+            <div id="char-opts"></div>
+          </div>
+          <label class="name">Name <input id="name-input" maxlength="12" placeholder="Adventurer" autocomplete="off"></label>
+        </div>
+        <div class="title-btns">
+          <button id="btn-continue">Continue</button>
+          <button id="btn-new">Begin adventure</button>
+        </div>
+        <div class="title-foot">Left-click to walk &amp; interact · Right-click for options · Scroll to zoom · M for map</div>
+      </div>
+    </div>
+
+    <div id="loading"><div class="lbox"><h1>Pix<span>Scape</span></h1><div id="load-status">Loading...</div></div></div>
+  </div>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
