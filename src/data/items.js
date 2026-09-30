@@ -531,6 +531,72 @@ wear('ring_of_life', 'Ring of life', 'ring', { def: 3 }, { kind: 'ring', color: 
 for (let c = 8; c >= 1; c--) wear(`travellers_necklace_${c}`, `Traveller's necklace (${c})`, 'neck', { def: 2 }, { kind: 'necklace', color: '#2ab04a' }, { color: '#2ab04a' }, 800 + c * 60, { examine: 'Rub it to travel to a dungeon entrance.', jewelTele: 'travellers', charges: c });
 for (let c = 4; c >= 0; c--) wear(`amulet_of_glory_${c}`, c ? `Amulet of glory (${c})` : 'Amulet of glory', 'neck', { att: 10, str: 6, def: 10, mag: 10, rng: 10 }, { kind: 'amulet', color: '#a03ad8' }, { color: '#a03ad8' }, 12000 + c * 500, { examine: c ? 'Rub it to teleport.' : 'It has run out of charges.', jewelTele: c ? 'glory' : null, charges: c });
 
+// =====================================================================================
+// 1.4 Herblore & Agility
+// =====================================================================================
+// Herbs (PixScape's own flora): clean level/xp, and the level band of monsters that drop them.
+export const HERBS = [
+  ['brightleaf', 'Brightleaf', '#6ab04a', 3, 2.5], ['marshmint', 'Marshmint', '#4a9a6a', 5, 3.8], ['tarroot', 'Tarroot', '#8a7a3a', 11, 5],
+  ['harrowbloom', 'Harrowbloom', '#b0803a', 20, 6.3], ['rannet', 'Rannet', '#3a8a3a', 25, 7.5], ['toadweed', 'Toadweed', '#6a8a2a', 30, 8],
+  ['iris', 'Iris', '#6a6ad8', 40, 8.8], ['avenroot', 'Avenroot', '#9a6a3a', 48, 10], ['kwellwort', 'Kwellwort', '#4a7a4a', 54, 11.3],
+  ['snapdrake', 'Snapdrake', '#c83a3a', 59, 11.8], ['cadenroot', 'Cadenroot', '#8a3a6a', 65, 12.5], ['lanternbloom', 'Lanternbloom', '#e8b030', 67, 13.1],
+  ['dwarfmoss', 'Dwarfmoss', '#5a6a3a', 70, 13.8], ['torchbloom', 'Torchbloom', '#e8602a', 75, 15],
+].map(([id, name, color, lvl, xp]) => ({ id, name, color, lvl, xp }));
+for (const h of HERBS) {
+  add('grimy_' + h.id, { name: `Grimy ${h.name.toLowerCase()}`, value: 5 + h.lvl * 4, icon: { kind: 'herb', color: h.color, grimy: true }, examine: 'I need to clean this herb before I can use it.', herb: h.id });
+  add(h.id, { name: h.name, value: 8 + h.lvl * 5, icon: { kind: 'herb', color: h.color }, examine: `A fresh ${h.name.toLowerCase()} leaf.` });
+  add(h.id + '_potion_unf', { name: `${h.name} potion (unf)`, value: 10 + h.lvl * 5, icon: { kind: 'potion', color: h.color, unf: true }, examine: 'I need another ingredient to finish this potion.' });
+}
+add('vial_of_water', { name: 'Vial of water', value: 4, icon: { kind: 'potion', color: '#a8c8f0' }, examine: 'A glass vial full of water.' });
+add('pestle_and_mortar', { name: 'Pestle and mortar', value: 4, icon: { kind: 'pestle' }, examine: 'I can grind things for potions in this.' });
+// secondaries
+const second = [
+  ['eye_of_newt', 'Eye of newt', { kind: 'eye' }, 3, 'It seems to be looking at me.'],
+  ['seashell', 'Seashell', { kind: 'shell' }, 5, 'A pretty spiral shell.'],
+  ['crushed_shell', 'Crushed shell', { kind: 'powder', color: '#f0e8e0' }, 20, 'Ground seashell. Good against poison.'],
+  ['limpwurt_root', 'Limpwurt root', { kind: 'root', color: '#c8a870' }, 30, 'The root of a limpwurt plant.'],
+  ['red_spiders_eggs', "Red spiders' eggs", { kind: 'eggs', color: '#c83a2a' }, 40, 'Eurgh! They\'re still moving.'],
+  ['chocolate_dust', 'Chocolate dust', { kind: 'powder', color: '#5a3018' }, 20, 'It\'s ground up chocolate.'],
+  ['white_berries', 'White berries', { kind: 'berries', color: '#f0f0e8' }, 30, 'Poisonous berries. Perfect for potions.'],
+  ['snape_grass', 'Snape grass', { kind: 'grass', color: '#6ab06a' }, 30, 'Strange spiky grass.'],
+  ['bog_fungus', 'Bog fungus', { kind: 'fungus', color: '#8a7a5a' }, 50, 'It grows on dead things in the swamp.'],
+  ['dragon_scale', 'Blue dragon scale', { kind: 'scale', color: '#2a5ab0' }, 60, 'A large shiny scale.'],
+  ['dragon_scale_dust', 'Dragon scale dust', { kind: 'powder', color: '#4a7ad8' }, 90, 'Finely ground blue dragon scale.'],
+  ['fire_lily', 'Fire lily', { kind: 'flower', color: '#e8501a' }, 90, 'It grows where the ground is hot.'],
+  ['desert_bloom', 'Desert bloom', { kind: 'flower', color: '#e8c050' }, 80, 'A tough little cactus flower.'],
+];
+for (const [id, name, icon, value, examine] of second) add(id, { name, value, icon, examine });
+// potions made with Herblore (some already exist from earlier releases)
+const potion = (id, name, color, value, ex) => { if (!ITEMS[id]) add(id, { name, value, icon: { kind: 'potion', color }, examine: ex }); };
+potion('antipoison', 'Antipoison', '#e8a0c0', 60, 'Cures poison and protects against it for a while.');
+potion('energy_potion', 'Energy potion', '#c8a870', 50, 'Restores 20% run energy.');
+potion('restore_potion', 'Restore potion', '#e05050', 80, 'Restores lowered stats.');
+potion('superantipoison', 'Superantipoison', '#e870b0', 150, 'Cures poison and protects against it for a long time.');
+potion('super_energy', 'Super energy', '#a0602a', 150, 'Restores 40% run energy.');
+potion('super_restore', 'Super restore', '#e0306a', 400, 'Restores stats and prayer.');
+potion('antifire_potion', 'Antifire potion', '#8a3ad8', 500, 'Protects against dragonfire for a while.');
+potion('ranging_potion', 'Ranging potion', '#3ab0b0', 400, 'Boosts Ranged.');
+potion('magic_potion', 'Magic potion', '#3a3ad8', 400, 'Boosts Magic.');
+potion('super_combat', 'Super combat potion', '#3a6a2a', 1200, 'Boosts Attack, Strength and Defence.');
+potion('agility_potion', 'Agility potion', '#8ac8e8', 120, 'Boosts Agility.');
+Object.assign(POTIONS, {
+  antipoison: { cure: 150 }, superantipoison: { cure: 600 },
+  energy_potion: { energy: 20 }, super_energy: { energy: 40 },
+  restore_potion: { restoreStats: [10, 0.3] }, super_restore: { restoreStats: [8, 0.25], restore: [8, 0.25] },
+  antifire_potion: { antifire: 600 }, agility_potion: { boost: { agility: [3, 0] } },
+  ranging_potion: { boost: { ranged: [4, 0.1] } }, magic_potion: { boost: { magic: [4, 0] } },
+  super_combat: { boost: { attack: [5, 0.15], strength: [5, 0.15], defence: [5, 0.15] } },
+});
+// agility rewards
+add('mark_of_grace', { name: 'Mark of grace', stack: true, value: 0, icon: { kind: 'mark' }, examine: 'A token of the agile. Trade them with Grace in Highcrest.' });
+const graceful = [['graceful_hood', 'Graceful hood', 'head', 'hood', 35], ['graceful_cape', 'Graceful cape', 'cape', 'cape', 40], ['graceful_top', 'Graceful top', 'body', 'robe', 55], ['graceful_legs', 'Graceful legs', 'legs', 'chaps', 60], ['graceful_gloves', 'Graceful gloves', 'hands', 'gloves', 30], ['graceful_boots', 'Graceful boots', 'feet', 'boots', 40]];
+export const GRACEFUL = {};
+for (const [id, name, slot, kind, marks] of graceful) {
+  GRACEFUL[id] = marks;
+  const look = slot === 'head' ? { kind: 'hood', color: '#3a8a8a' } : slot === 'body' ? { kind: 'shirt', color: '#3a8a8a' } : slot === 'legs' ? { kind: 'pants', color: '#3a8a8a' } : { color: '#3a8a8a' };
+  wear(id, name, slot, { def: 0 }, { kind, color: '#3a8a8a' }, look, 1000, { examine: 'Light and comfortable. Great for running.', graceful: true });
+}
+
 export function item(id) {
   const it = ITEMS[id];
   if (!it) throw new Error('Unknown item ' + id);

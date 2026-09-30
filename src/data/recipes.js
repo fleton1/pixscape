@@ -4,7 +4,7 @@
 //   station: null (use item on item) or the object type(s) it needs, e.g. 'range'
 //   burn:    { item, stop } - chance to fail into `item`, falling to 0 at level `stop`
 // Recipes are also what the skill guides list, so every unlock shows up there automatically.
-import { DHIDES, ITEMS, BOW_WOODS, AMMO_METALS, STOCKS } from './items.js';
+import { DHIDES, ITEMS, BOW_WOODS, AMMO_METALS, STOCKS, HERBS } from './items.js';
 import { RUNES } from './magic.js';
 
 export const RECIPES = [];
@@ -126,6 +126,31 @@ r({ id: 'tiara', skill: 'crafting', lvl: 23, xp: 52.5, in: { silver_bar: 1 }, ke
 for (const rn of RUNES) r({ id: rn.id + '_tiara', skill: 'runecraft', lvl: rn.lvl, xp: 25 + rn.lvl * 0.5, in: { tiara: 1, [rn.id + '_talisman']: 1 }, out: rn.id + '_tiara' });
 [['water', 54, 100], ['earth', 58, 112.5], ['fire', 62, 125], ['air', 66, 137.5]].forEach(([e, lvl, xp]) =>
   r({ id: e + '_battlestaff', skill: 'crafting', lvl, xp, in: { battlestaff: 1, [e + '_orb']: 1 }, out: e + '_battlestaff' }));
+
+// ------------------------------------------------------------------ herblore
+r({ id: 'fill_vial', in: { vial: 1 }, out: 'vial_of_water', station: 'water', verb: 'fill', ticks: 1 });
+for (const h of HERBS) r({ id: h.id + '_unf', skill: 'herblore', lvl: h.lvl, in: { vial_of_water: 1, [h.id]: 1 }, out: h.id + '_potion_unf', ticks: 1 });
+for (const [from, to] of [['seashell', 'crushed_shell'], ['chocolate_bar', 'chocolate_dust'], ['dragon_scale', 'dragon_scale_dust']])
+  r({ id: 'grind_' + from, in: { [from]: 1 }, keep: ['pestle_and_mortar'], out: to, verb: 'grind', ticks: 1 });
+const brew = (out, herb, second, lvl, xp) => r({ id: 'brew_' + out, skill: 'herblore', lvl, xp, in: { [herb + '_potion_unf']: 1, ...(Array.isArray(second) ? Object.fromEntries(second.map((x) => [x, 1])) : { [second]: 1 }) }, out });
+brew('attack_potion', 'brightleaf', 'eye_of_newt', 3, 25);
+brew('antipoison', 'marshmint', 'crushed_shell', 5, 37.5);
+brew('strength_potion', 'tarroot', 'limpwurt_root', 12, 50);
+brew('restore_potion', 'harrowbloom', 'red_spiders_eggs', 22, 62.5);
+brew('energy_potion', 'harrowbloom', 'chocolate_dust', 26, 67.5);
+brew('defence_potion', 'rannet', 'white_berries', 30, 75);
+brew('agility_potion', 'toadweed', 'seashell', 34, 80);
+brew('prayer_potion', 'rannet', 'snape_grass', 38, 87.5);
+brew('super_attack', 'iris', 'eye_of_newt', 45, 100);
+brew('superantipoison', 'iris', 'crushed_shell', 48, 106.3);
+brew('super_energy', 'avenroot', 'bog_fungus', 52, 117.5);
+brew('super_strength', 'kwellwort', 'limpwurt_root', 55, 125);
+brew('super_restore', 'snapdrake', 'red_spiders_eggs', 63, 142.5);
+brew('super_defence', 'cadenroot', 'white_berries', 66, 150);
+brew('antifire_potion', 'lanternbloom', 'dragon_scale_dust', 69, 157.5);
+brew('ranging_potion', 'dwarfmoss', 'fire_lily', 72, 162.5);
+brew('magic_potion', 'lanternbloom', 'desert_bloom', 76, 172.5);
+brew('super_combat', 'torchbloom', ['super_attack', 'super_strength', 'super_defence'], 90, 150);
 
 // Tanning is a paid service (the tanner), not a recipe: hide -> leather, and the fee.
 export const TANNING = [

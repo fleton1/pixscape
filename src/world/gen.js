@@ -5,6 +5,7 @@ import { Heap } from './path.js';
 import { OBJECTS } from '../data/objects.js';
 import { makeBuilder } from './build.js';
 import { ALTAR_SITES, RUNE } from '../data/magic.js';
+import { COURSES, SHORTCUTS, DIRS } from '../data/agility.js';
 
 export const BIOME = { OCEAN: 0, KINGDOM: 1, WILD: 2, FROST: 3, DESERT: 4, SWAMP: 5, ELVEN: 6, TROPIC: 7, VOLCANIC: 8, CAVE: 9, TOMB: 10, SEWER: 11, CRYPT: 12, ICECAVE: 13, LAVACAVE: 14, HOLLOW: 15 };
 export const BIOME_INFO = {
@@ -483,6 +484,66 @@ export function generateWorld() {
     o.rune = rune;
   }
   spawnIn('cultist', 5, 285, 62, 6); spawnIn('cultist', 3, 268, 68, 5);
+
+  // ================================================================ 1.4: AGILITY & HERBLORE
+  // course tiles, plus a margin kept free of trees (the scatter pass skips reserved tiles)
+  const clearTile = (x, y, t) => { const o = w.obj(x, y); if (o) w.removeObject(o); setT(x, y, t); reserve(x - 1, y - 1, 3, 3); };
+  for (const c of COURSES) {
+    const floor = T[c.floor];
+    let [x, y] = c.start;
+    clearTile(x, y, floor);
+    const obs = [];
+    for (const st of c.steps) {
+      const [dx, dy] = DIRS[st[1]];
+      if (st[0] === 'walk') { for (let i = 0; i < st[2]; i++) { x += dx; y += dy; clearTile(x, y, floor); } continue; }
+      const [type, , gap, g] = st;
+      const ox = x + dx, oy = y + dy;
+      clearTile(ox, oy, floor);
+      for (let k = 1; k <= gap; k++) {
+        clearTile(ox + dx * k, oy + dy * k, T[g]);
+        // show what you cross: logs, stones and ropes over the gap
+        const seg = type === 'log_balance' ? 'log_segment' : type === 'stepping_stone' ? 'stone_segment' : ['rope_swing', 'zip_line', 'ledge'].includes(type) ? 'rope_segment' : null;
+        if (seg) w.addObject(seg, ox + dx * k, oy + dy * k);
+      }
+      const lx = ox + dx * (gap + 1), ly = oy + dy * (gap + 1);
+      clearTile(lx, ly, floor);
+      const o = w.addObject(type, ox, oy);
+      o.agility = { to: [lx, ly], course: c.id, index: obs.length, lvl: c.lvl, xp: c.xp };
+      obs.push(o);
+      x = lx; y = ly;
+    }
+    for (const o of obs) o.agility.count = obs.length;
+    obs[obs.length - 1].agility.last = true;
+    icon('agility', c.start[0], c.start[1]);
+    w.labels.push({ name: c.name, x: c.start[0] + 3, y: c.start[1] - 2, size: 1 });
+  }
+  for (const sc of SHORTCUTS) {
+    let a = sc.a, b = sc.b, at = null;
+    if (sc.across) {
+      // walk from `from` until the water starts, then until it ends
+      const [dx, dy] = DIRS[sc.dir];
+      let [x, y] = sc.from, n = 0;
+      while (!w.isWater(x + dx, y + dy) && n++ < 20) { x += dx; y += dy; }
+      a = [x, y]; at = [x + dx, y + dy];
+      x += dx; y += dy; n = 0;
+      while (w.isWater(x, y) && n++ < 20) { if (n > 1) w.addObject('stone_segment', x, y); x += dx; y += dy; }
+      b = [x, y];
+    } else at = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+    // both ends must be open ground
+    for (const [ex, ey] of [a, b]) clearTile(ex, ey, TINFO[getT(ex, ey)].block ? T.DIRT : getT(ex, ey));
+    reserve(at[0], at[1]);
+    const old = w.obj(at[0], at[1]); if (old) w.removeObject(old);
+    const o = w.addObject(sc.type, at[0], at[1]);
+    o.agility = { a, b, lvl: sc.lvl, xp: sc.xp };
+    icon('agility', at[0], at[1]);
+  }
+  npc('grace', 224, 122, { wander: 2 }); icon('agility', 224, 122);
+  npc('apothecary', 181, 241, { shop: 'apothecary', wander: 1 }); icon('shop', 181, 241);
+  for (const [x, y] of [[176, 246], [186, 238], [206, 244], [214, 226]]) placeNear('fungus_log', x, y);
+  for (const [x, y] of [[146, 300], [170, 302], [126, 176], [118, 150]]) placeNear('snape_grass_plant', x, y);
+  for (const [x, y] of [[92, 292], [104, 300], [86, 304]]) placeNear('fire_lily_plant', x, y);
+  for (const [x, y] of [[300, 228], [340, 230], [310, 250], [360, 260]]) placeNear('desert_bloom_plant', x, y);
+  for (const [x, y] of [[62, 176], [30, 184], [70, 150]]) placeNear('white_berry_bush', x, y);
 
   // ================================================================ 1.2: RANGED
   spawnIn('goblin_archer', 3, 162, 120, 8); spawnIn('bandit_archer', 3, 350, 241, 6);

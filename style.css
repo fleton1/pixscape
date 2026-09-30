@@ -38,6 +38,7 @@ button { font-family: var(--font); cursor: pointer; }
 .orb .ball { width: 34px; height: 34px; border-radius: 50%; border: 2px solid #1a1510; box-shadow: 0 0 0 2px #5b4f3c; position: relative; overflow: hidden; }
 .orb .fill { position: absolute; bottom: 0; left: 0; right: 0; background: #9b1c1c; transition: height .3s; }
 #orb-pr .fill { background: #2a8ab0; }
+#orb-hp.poisoned .fill { background: #2a8a2a; }
 #orb-run .fill { background: #b08a2a; }
 #orb-run.on .fill { background: #d8c040; }
 #orb-pr.on .ball { box-shadow: 0 0 0 2px #8ae0ff, 0 0 8px #8ae0ff; }

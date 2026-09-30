@@ -7,7 +7,24 @@ const rock = (ore, name, lvl, xp, respawn, color) => ({
   name: 'Rocks', actions: ['Mine'], blocks: true, mine: { lvl, xp, ore, respawn }, ore: color, examine: `A rock containing ${name}.`, map: '#6a625a', oreName: name,
 });
 
+const obstacle = (name, verb, examine) => ({ name, actions: [verb], blocks: true, obstacle: true, examine });
+
 export const OBJECTS = {
+  // ---- agility obstacles (course data in data/agility.js)
+  log_balance: obstacle('Log balance', 'Walk-across', 'A slippery log.'),
+  stepping_stone: obstacle('Stepping stone', 'Jump-across', 'Slippery when wet. Which is always.'),
+  rope_swing: obstacle('Rope swing', 'Swing-on', 'Hopefully the rope holds.'),
+  net_climb: obstacle('Cargo net', 'Climb-over', 'A rope net hung over the wall.'),
+  low_wall: obstacle('Low wall', 'Climb-over', 'I could probably climb that.'),
+  pipe: obstacle('Obstacle pipe', 'Squeeze-through', 'A narrow pipe. Breathe in.'),
+  ledge: obstacle('Narrow ledge', 'Balance-along', 'Don\'t look down.'),
+  gap_jump: obstacle('Gap', 'Jump', 'I think I can make it.'),
+  zip_line: obstacle('Zip line', 'Ride', 'A rope strung across the gap.'),
+  wall_crack: obstacle('Crack in the wall', 'Squeeze-through', 'Just about wide enough.'),
+  log_segment: { name: 'Log', actions: [], blocks: false, decor: true, examine: 'A log over the water.' },
+  stone_segment: { name: 'Stepping stone', actions: [], blocks: false, decor: true, examine: 'A flat stone.' },
+  rope_segment: { name: 'Rope', actions: [], blocks: false, decor: true, examine: 'A taut rope.' },
+
   // ---- trees ----
   tree: tree('Tree', 1, 25, 'logs', 1, 14),
   oak: tree('Oak', 15, 37.5, 'oak_logs', 8, 24),
@@ -74,6 +91,11 @@ export const OBJECTS = {
   potato_plant: { name: 'Potato', actions: ['Pick'], blocks: false, examine: 'A potato plant.', respawn: 20, crop: 'potato' },
   tomato_plant: { name: 'Tomato plant', actions: ['Pick'], blocks: false, examine: 'Ripe red tomatoes.', respawn: 20, crop: 'tomato' },
   flax_plant: { name: 'Flax', actions: ['Pick'], blocks: false, examine: 'A flax plant.', respawn: 12, crop: 'flax' },
+  white_berry_bush: { name: 'White berry bush', actions: ['Pick'], blocks: true, examine: 'Pale, poisonous berries.', respawn: 40, crop: 'white_berries' },
+  snape_grass_plant: { name: 'Snape grass', actions: ['Pick'], blocks: false, examine: 'Spiky grass that grows by the sea.', respawn: 30, crop: 'snape_grass' },
+  fungus_log: { name: 'Rotting log', actions: ['Pick'], blocks: true, examine: 'Bog fungus grows on it.', respawn: 40, crop: 'bog_fungus' },
+  fire_lily_plant: { name: 'Fire lily', actions: ['Pick'], blocks: false, light: true, examine: 'It glows like an ember.', respawn: 60, crop: 'fire_lily' },
+  desert_bloom_plant: { name: 'Flowering cactus', actions: ['Pick'], blocks: true, examine: 'A little cactus with a yellow flower.', respawn: 50, crop: 'desert_bloom' },
   grape_vine: { name: 'Grape vine', actions: ['Pick'], blocks: true, examine: 'Juicy grapes grow here.', respawn: 30, crop: 'grapes' },
   signpost: { name: 'Signpost', actions: ['Read'], blocks: true, examine: 'It points the way.' },
   wild_sign: { name: 'Warning sign', actions: ['Read'], blocks: true, examine: 'A weathered warning.' },

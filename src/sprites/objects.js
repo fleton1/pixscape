@@ -296,6 +296,26 @@ export function buildObjectSprites() {
     }
   }, 400, 368, false)];
   extraStalls(S);
+  // agility
+  S.log_balance = [build((p) => { p.ellipse(8, 11, 6, 4, '#7a5a34'); p.ellipse(8, 11, 4, 2.5, '#c8a060'); p.ellipse(8, 11, 1.5, 1, '#8a6a3a'); }, 16, 16)];
+  S.log_segment = [build((p) => { p.rect(0, 6, 16, 5, '#7a5a34'); p.hline(0, 15, 6, '#a07848'); p.hline(0, 15, 10, '#5a3a1c'); p.set(5, 8, '#5a3a1c'); p.set(12, 8, '#5a3a1c'); }, 16, 16, false)];
+  S.stepping_stone = [build((p) => { p.ellipse(8, 10, 6, 4, STONE); p.ellipse(7, 9, 4, 2, STONE_L); }, 16, 16)];
+  S.stone_segment = [build((p) => { p.ellipse(8, 9, 5, 3.5, STONE); p.ellipse(7, 8, 3, 1.5, STONE_L); }, 16, 16, false)];
+  S.rope_swing = [build((p) => { p.rect(2, 2, 3, 22, WOOD_D); p.rect(2, 2, 14, 2, WOOD); p.line(14, 4, 12, 20, '#c8b890'); p.ellipse(12, 20, 2, 1, '#c8b890'); }, 18, 26)];
+  S.rope_segment = [build((p) => { p.line(0, 8, 15, 8, '#c8b890'); p.line(0, 9, 15, 9, '#8a7a5a'); }, 16, 16, false)];
+  S.zip_line = [build((p) => { p.rect(2, 4, 3, 20, WOOD_D); p.rect(11, 4, 3, 20, WOOD_D); p.rect(1, 4, 14, 2, WOOD); p.line(8, 6, 16, 2, '#c8b890'); }, 16, 24)];
+  S.net_climb = [build((p) => { p.rect(0, 0, 2, 24, WOOD_D); p.rect(14, 0, 2, 24, WOOD_D); for (let i = 0; i < 7; i++) { p.line(2, 2 + i * 3, 14, 2 + i * 3, '#c8b890'); p.line(2 + i * 2, 2, 2 + i * 2, 22, '#c8b890'); } }, 16, 24)];
+  S.low_wall = [build((p) => { p.rect(0, 6, 16, 10, STONE); p.hline(0, 15, 6, STONE_L); for (let x = 0; x < 16; x += 5) p.vline(x, 7, 15, STONE_D); p.hline(0, 15, 11, STONE_D); }, 16, 16)];
+  S.pipe = [build((p) => { p.rect(0, 5, 16, 9, '#6a6a70'); p.hline(0, 15, 5, '#9a9aa0'); p.ellipse(3, 9, 3, 4, '#1a1a1a'); p.ellipse(3, 9, 3.5, 4.5, null); }, 16, 16)];
+  S.ledge = [build((p) => { p.rect(0, 9, 16, 4, STONE); p.hline(0, 15, 9, STONE_L); p.hline(0, 15, 12, STONE_D); }, 16, 16)];
+  S.gap_jump = [build((p) => { p.rect(0, 10, 16, 6, STONE_D); p.rect(0, 10, 16, 2, STONE); p.set(4, 8, '#e8e0a0'); p.set(11, 8, '#e8e0a0'); }, 16, 16)];
+  S.wall_crack = [build((p) => { p.rect(0, 0, 16, 16, '#e8e8e8'); p.line(8, 0, 6, 8, '#1a1a1a'); p.line(6, 8, 9, 16, '#1a1a1a'); p.line(9, 0, 7, 8, '#3a3a3a'); }, 16, 16)];
+  // herb ingredients
+  S.white_berry_bush = [build((p) => { p.ball(8, 9, 7, 6, '#3a6a2a'); for (const [x, y] of [[5, 7], [9, 5], [11, 10], [6, 11]]) p.ball(x, y, 1.3, 1.3, '#f0f0e8'); }, 16, 16)];
+  S.snape_grass_plant = [build((p) => { for (let i = 0; i < 5; i++) p.line(4 + i * 2, 14, 3 + i * 2 + (i % 2) * 2, 4 + (i % 3), '#6ab06a'); }, 16, 16)];
+  S.fungus_log = [build((p) => { p.rect(1, 8, 20, 6, '#5a4a3a'); p.ellipse(20, 11, 2, 3, '#8a7a5a'); for (const [x, y] of [[5, 7], [10, 6], [15, 7]]) { p.ellipse(x, y, 2.5, 1.5, '#c8a878'); p.vline(x, y + 1, y + 2, '#e8d8b8'); } }, 22, 16)];
+  S.fire_lily_plant = [build((p) => { p.line(8, 15, 8, 8, '#3a6a2a'); for (const [x, y] of [[8, 5], [5, 7], [11, 7]]) p.ball(x, y, 2, 2, '#e8501a'); p.ball(8, 7, 1.3, 1.3, '#ffd040'); }, 16, 16)];
+  S.desert_bloom_plant = [build((p) => { p.rect(6, 5, 4, 11, '#3d7a2a'); p.rect(2, 9, 2, 4, '#3d7a2a'); p.rect(12, 8, 2, 4, '#3d7a2a'); p.ball(8, 4, 2, 2, '#e8c050'); }, 16, 16)];
   S.essence_rock = [build((p) => { p.ball(16, 18, 15, 12, '#c8c4d8'); p.ball(10, 20, 8, 7, '#d8d4e8'); p.ball(22, 14, 7, 6, '#e8e4f0'); for (const [x, y] of [[9, 14], [20, 20], [15, 10], [24, 12]]) { p.set(x, y, '#ffffff'); p.set(x + 1, y + 1, '#a8a0c8'); } }, 32, 32)];
   S.mysterious_ruins = [build((p) => {
     p.ellipse(16, 24, 15, 7, '#6a6258');

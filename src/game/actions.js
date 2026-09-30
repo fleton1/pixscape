@@ -8,6 +8,8 @@ import { chop, mine, fish, cook, lightLogs, feedFire, stealStall, pickpocket, bu
 import { recipesForPair, recipesForStation, offerRecipes, pickCrop, shear, searchChest } from './crafting.js';
 import { castOnItem, castOnNpc, castOnObject, clearSpell, rubJewellery, enterRuins, craftRunes } from './magic.js';
 import { SPELL } from '../data/magic.js';
+import { crossObstacle } from './agility.js';
+import { HERBS } from '../data/items.js';
 import { DIALOGUE, searchObject, pickObject, combineTablets, tombDoor, openChest, dig, readClue, openCasket, rubLamp } from './quests.js';
 import { npcLevelColor } from './combat.js';
 import { placeName, areaAt } from './world_info.js';
@@ -118,6 +120,7 @@ export function performObj(o, option, useItem) {
     sfx('door');
     return;
   }
+  if (d.obstacle && option === d.actions[0]) { crossObstacle(o); return; }
   switch (option) {
     case 'Chop down': chop(o); break;
     case 'Mine': mine(o); break;
@@ -258,6 +261,7 @@ export function itemOptions(slot) {
   if (s.id === 'lamp') E.push({ text: `Rub ${nm}`, fn: () => rubLamp(slot) });
   if (s.id === 'spade') E.push({ text: `Dig ${nm}`, fn: () => { p.path = []; p.target = null; dig(); } });
   if (s.id === 'bird_nest') E.push({ text: `Search ${nm}`, fn: () => searchNest(slot) });
+  if (it.herb) E.push({ text: `Clean ${nm}`, fn: () => cleanHerb(slot) });
   if (it.jewelTele) E.push({ text: `Rub ${nm}`, fn: () => rubJewellery(slot) });
   E.push({ text: `Use ${nm}`, fn: () => { G.useItem = { slot, id: s.id }; G.ui.dirty('inv'); } });
   E.push({ text: `Drop ${nm}`, fn: () => dropSlot(slot) });
@@ -302,9 +306,22 @@ export function drink(slot) {
     k.cur = Math.max(k.cur, k.lvl + a + Math.floor(k.lvl * f));
   }
   if (pot.restore) { const k = p.skills.prayer; k.cur = Math.min(k.lvl, k.cur + pot.restore[0] + Math.floor(k.lvl * pot.restore[1])); }
+  if (pot.restoreStats) for (const [sk, k] of Object.entries(p.skills)) if (sk !== 'hitpoints' && sk !== 'prayer' && k.cur < k.lvl) k.cur = Math.min(k.lvl, k.cur + pot.restoreStats[0] + Math.floor(k.lvl * pot.restoreStats[1]));
+  if (pot.cure) { if (p.poison) msg('You are no longer poisoned.'); p.poison = null; p.poisonImmune = G.tick + pot.cure; }
+  if (pot.energy) p.runEnergy = Math.min(100, p.runEnergy + pot.energy);
+  if (pot.antifire) { p.antifireUntil = G.tick + pot.antifire; msg('You feel protected from dragonfire.'); }
   msg(`You drink the ${ITEMS[s.id].name.toLowerCase()}.`);
   sfx('drink');
   G.ui.dirty('skills'); G.ui.dirty('orbs');
+}
+
+function cleanHerb(slot) {
+  const p = G.player, s = p.inv[slot], h = HERBS.find((x) => x.id === ITEMS[s.id].herb);
+  if (p.lvl('herblore') < h.lvl) { msg(`You need a Herblore level of ${h.lvl} to clean this herb.`); return; }
+  p.inv[slot] = { id: h.id, qty: 1 };
+  p.addXp('herblore', h.xp);
+  msg(`You clean the ${h.name.toLowerCase()}.`);
+  sfx('pickup'); G.ui.dirty('inv');
 }
 
 function searchNest(slot) {

@@ -3,7 +3,8 @@ import { G, msg, sfx, after, TICK_MS } from './state.js';
 import { Player } from './player.js';
 import { spawnNpc, tickNpc } from './npc.js';
 import { Mover, touchingCardinal, rectDist } from './entity.js';
-import { playerAttack, tickTelegraphs, canHitFrom } from './combat.js';
+import { playerAttack, tickTelegraphs, canHitFrom, tickPoison } from './combat.js';
+import { gracefulPieces } from './agility.js';
 import { magicAttack } from './magic.js';
 import { tickAction } from './skilling.js';
 import { findPath } from '../world/path.js';
@@ -137,8 +138,10 @@ export const game = {
       }
     }
     // run energy
-    if (ranSteps >= 2) p.runEnergy = Math.max(0, p.runEnergy - 0.55);
-    else p.runEnergy = Math.min(100, p.runEnergy + (p.path.length ? 0.3 : 0.55));
+    tickPoison();
+    const grace = gracefulPieces(p);
+    if (ranSteps >= 2) p.runEnergy = Math.max(0, p.runEnergy - 0.55 * (1 - 0.04 * grace));
+    else p.runEnergy = Math.min(100, p.runEnergy + (p.path.length ? 0.3 : 0.55) * (1 + p.lvl('agility') / 100) * (grace === 6 ? 1.3 : 1));
     if (p.runEnergy <= 0 && p.running) { p.running = false; }
   },
 

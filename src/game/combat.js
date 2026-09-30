@@ -2,6 +2,7 @@
 import { G, msg, sfx, after } from './state.js';
 import { ITEMS } from '../data/items.js';
 import { NPCS, RARE_TABLE, PETS } from '../data/npcs.js';
+import { HERBS } from '../data/items.js';
 import { pickWeighted, randInt, commas } from '../util.js';
 import { spawnNpc } from './npc.js';
 import { wildLevel } from './world_info.js';
@@ -125,6 +126,23 @@ export function playerAttack(n) {
   if (!n.target) { n.target = p; n.returning = false; if (n.attackCd <= 0) n.attackCd = 1; }
 }
 
+// Venomous monsters (npcs.js `poison: n`) sometimes poison: n damage every 30 ticks, weakening over time.
+export function tryPoison(strength) {
+  const p = G.player;
+  if (p.poison || G.tick < (p.poisonImmune || 0) || Math.random() > 0.25) return;
+  p.poison = { dmg: strength, hits: 0, next: G.tick + 30 };
+  msg('You have been poisoned!', '#008000');
+  G.ui && G.ui.dirty('orbs');
+}
+export function tickPoison() {
+  const p = G.player, ps = p.poison;
+  if (!ps || p.dead || G.tick < ps.next) return;
+  damagePlayer(Math.min(ps.dmg, p.hp), null, 'poison');
+  ps.next = G.tick + 30;
+  if (++ps.hits % 4 === 0) ps.dmg--;
+  if (ps.dmg <= 0) { p.poison = null; msg('The poison has worn off.'); G.ui && G.ui.dirty('orbs'); }
+}
+
 export function damagePlayer(dmg, src, kind = 'hit') {
   const p = G.player;
   if (p.dead) return;
@@ -203,6 +221,7 @@ export function npcAttack(n) {
   if (p.protecting('melee')) dmg = n.boss ? Math.floor(dmg * 0.25) : 0;
   sfx(dmg ? 'hit' : 'miss');
   damagePlayer(dmg, n);
+  if (d.poison && dmg > 0) tryPoison(d.poison);
 }
 
 function dragonfire(n, max) {
@@ -212,7 +231,7 @@ function dragonfire(n, max) {
   after(1, () => {
     if (p.dead) return;
     let cap = max;
-    const shield = p.hasAntifire(), prot = p.protecting('magic');
+    const shield = p.hasAntifire() || G.tick < (p.antifireUntil || 0), prot = p.protecting('magic');
     if (shield && prot) cap = 2; else if (shield) cap = Math.ceil(max * 0.16); else if (prot) cap = Math.ceil(max * 0.3);
     const dmg = randInt(0, cap);
     if (!shield && !prot) msg('You are badly burnt by the dragonfire!', '#ef1020');
@@ -331,6 +350,11 @@ export function killNpc(n) {
   G.game.onNpcKilled && G.game.onNpcKilled(n);
 }
 
+const NO_HERBS = new Set(['cow', 'chicken', 'sheep', 'rat', 'bat', 'crab', 'golem', 'slime', 'swarm', 'wolf', 'bear', 'monkey']);
+export function herbFor(lvl) {
+  const ok = HERBS.filter((h, i) => i < 3 || h.lvl <= lvl + 10);
+  return 'grimy_' + pickWeighted(ok.map((h) => ({ w: 100 / (1 + h.lvl / 8), id: h.id }))).id;
+}
 function dropLoot(n, x, y) {
   const d = n.def.drops || {};
   if (n.temp && n.defId !== 'goblin_warrior') return;
@@ -346,6 +370,9 @@ function dropLoot(n, x, y) {
   }
   for (const u of d.uniques || []) if (Math.random() < u.chance) drop(u.item, 1);
   for (const [id, a, b, ch] of d.extra || []) if (Math.random() < ch) drop(id, randInt(a, b));
+  // herbs: most monsters carry them, better herbs from tougher monsters
+  const lvl = n.def.lvl || 0;
+  if (lvl >= 5 && d.herbs !== 0 && !NO_HERBS.has(n.def.look?.kind) && Math.random() < (d.herbs ?? (n.boss ? 0.5 : 0.06))) drop(herbFor(lvl), 1);
   const p = G.player;
   if (d.clue && Math.random() < d.clue && !p.hasAnywhere('clue_scroll') && !G.groundItems.some((g) => g.id === 'clue_scroll')) drop('clue_scroll', 1);
   if (d.pet && Math.random() < d.pet.chance) givePet(d.pet.id);

@@ -7,6 +7,8 @@ import { RECIPES, recipeOut } from './recipes.js';
 import { FISH, STALLS } from '../game/skilling.js';
 import { THIEF_CHESTS } from '../game/crafting.js';
 import { SPELLS, RUNES } from './magic.js';
+import { HERBS } from './items.js';
+import { COURSES, SHORTCUTS } from './agility.js';
 
 let cache = null;
 
@@ -41,6 +43,11 @@ export function skillGuide() {
   for (const [id, n] of Object.entries(NPCS)) if (n.pickpocket) add('thieving', n.pickpocket.lvl, `Pickpocket ${n.name.toLowerCase()}`, null, 'Pickpocket');
   for (const [id, s] of Object.entries(STALLS)) add('thieving', s.lvl, `${id[0].toUpperCase() + id.slice(1)} stall`, s.loot[0].id, 'Stalls');
   for (const [id, c] of Object.entries(THIEF_CHESTS)) add('thieving', c.lvl, `Chest (${id === 'tomb' ? 'tomb' : c.loot[0].qty[0] + ' coins'})`, 'casket', 'Chests');
+  // herblore & agility
+  for (const h of HERBS) add('herblore', h.lvl, `Clean ${h.name.toLowerCase()}`, h.id, 'Herbs');
+  for (const c of COURSES) add('agility', c.lvl, `${c.name} (${c.xp * c.steps.filter((s) => s[0] !== 'walk').length + c.lap} xp a lap)`, 'mark_of_grace', 'Courses');
+  for (const s of SHORTCUTS) add('agility', s.lvl, `Shortcut: ${s.id.replace(/_/g, ' ')}`, null, 'Shortcuts');
+  add('agility', 1, 'Faster run energy recovery with every level', null, 'Running');
   // magic & runecraft
   for (const s of SPELLS) if (s.lvl > 0) add('magic', s.lvl, s.name, null, s.type === 'combat' ? 'Combat' : s.type === 'teleport' ? 'Teleport' : 'Utility');
   for (const r of RUNES) {

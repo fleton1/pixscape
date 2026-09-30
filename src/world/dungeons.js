@@ -196,7 +196,7 @@ function hollowroot() {
   B.area('Hollowroot Caverns', 0, 0, 69, 59, 'elven');
   place('cave_exit', 6, 7, { toMain: true, msg: 'You step out into the forest.' });
   w.points.arrive = [7, 10];
-  scatter('heartwood', 3, 38, 12, 8); scatter('mahogany', 3, 38, 14, 9); scatter('yew', 2, 12, 14, 6); scatter('teak', 2, 18, 42, 8);
+  scatter('heartwood', 3, 38, 12, 8); scatter('white_berry_bush', 4, 18, 42, 7); scatter('mahogany', 3, 38, 14, 9); scatter('yew', 2, 12, 14, 6); scatter('teak', 2, 18, 42, 8);
   for (const [x, y] of [[10, 10], [30, 28], [34, 28]]) place('crystal', x, y);
   w.fishHints = [[14, 47, 'spot_lure']];
   spawnIn('moss_giant', 5, 12, 16, 6); spawnIn('treant', 4, 38, 16, 8); spawnIn('baby_blue_dragon', 6, 18, 42, 7);
@@ -238,6 +238,7 @@ function depths() {
   w.points.arrive = [9, 13];
   scatter('rune_rock', 2, 40, 36, 9); scatter('adamant_rock', 3, 40, 36, 9); scatter('coal_rock', 3, 14, 18, 7);
   for (const [x, y] of [[20, 12], [36, 6], [46, 44], [70, 18], [58, 46]]) place('lava_rock', x, y);
+  scatter('fire_lily_plant', 4, 14, 18, 6);
   spawnIn('lava_imp', 5, 14, 18, 7); spawnIn('fire_giant', 5, 40, 12, 8); spawnIn('cinderhound', 4, 40, 12, 8);
   spawnIn('obsidian_golem', 4, 40, 38, 9); spawnIn('fire_giant', 2, 40, 38, 9); spawnIn('red_dragon', 4, 65, 22, 8); spawnIn('black_dragon', 4, 64, 50, 9);
   B.finish([[D.EMBERS, 0.04], [D.CRACKS, 0.04], [D.BONES, 0.01]]);

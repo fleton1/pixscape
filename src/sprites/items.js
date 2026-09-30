@@ -76,6 +76,22 @@ function draw(icon, p) {
     case 'mace': p.line(3, 14, 10, 7, '#6a4a2a'); p.ball(11, 5, 3.5, 3.5, c); p.set(10, 4, hi); for (const [x, y] of [[11, 1], [15, 5], [8, 3], [13, 8]]) p.set(x, y, sh); break;
     case 'warhammer': p.line(2, 14, 10, 6, '#6a4a2a'); p.poly([[7, 4], [11, 0], [15, 4], [11, 8]], c); p.line(11, 0, 15, 4, hi); break;
     case 'frostblade': diagBlade(p, 4, 11, 10, c, 2, 1); p.line(1, 14, 4, 11, '#2a4a6a'); p.set(8, 7, '#e8f8ff'); p.set(11, 4, '#e8f8ff'); break;
+    case 'herb': {
+      const hc = icon.grimy ? mix(c, '#4a4a2a', 0.45) : c;
+      p.line(8, 15, 8, 8, shade(hc, -0.3));
+      for (const [x, y, rx] of [[5, 8, 3], [11, 7, 3], [8, 4, 2.5], [8, 10, 2.5]]) p.ball(x, y, rx, 2, hc);
+      if (icon.grimy) for (const [x, y] of [[6, 9], [10, 5]]) p.set(x, y, '#3a2a1a');
+      break;
+    }
+    case 'pestle': p.ellipse(8, 11, 6, 3.5, '#8a8278'); p.rect(2, 9, 12, 3, '#8a8278'); p.ellipse(8, 9, 5, 2, '#5a524a'); p.line(9, 9, 13, 2, '#a8a098'); break;
+    case 'eye': p.ball(8, 8, 5, 5, '#e8e0c8'); p.ball(9, 8, 2.5, 2.5, '#3a8a3a'); p.set(9, 8, '#1a1a1a'); p.set(8, 7, '#ffffff'); break;
+    case 'shell': p.poly([[3, 12], [8, 3], [13, 12]], '#f0d8c8'); for (let i = 0; i < 3; i++) p.line(8, 4, 5 + i * 3, 12, '#c8a898'); break;
+    case 'root': p.line(8, 2, 7, 14, c); p.line(7, 9, 3, 13, c); p.line(8, 8, 12, 13, c); p.ball(8, 3, 2, 1.5, '#4a8a3a'); break;
+    case 'eggs': for (const [x, y] of [[5, 9], [9, 7], [11, 11], [7, 12]]) p.ball(x, y, 2, 2, c); break;
+    case 'grass': for (let i = 0; i < 5; i++) p.line(4 + i * 2, 14, 3 + i * 2 + (i % 2) * 2, 3, c); break;
+    case 'fungus': p.ellipse(8, 7, 6, 3.5, c); p.rect(6, 8, 4, 6, '#e8d8b8'); p.set(6, 6, '#e8d8b8'); p.set(10, 5, '#e8d8b8'); break;
+    case 'scale': p.poly([[3, 4], [13, 4], [11, 12], [8, 15], [5, 12]], c); p.line(8, 5, 8, 13, shade(c, 0.35)); break;
+    case 'mark': p.ball(8, 8, 6, 6, '#3a8a8a'); p.ball(8, 8, 4.5, 4.5, '#6ad0d0'); p.line(8, 4, 8, 12, '#ffffff'); p.line(5, 8, 11, 8, '#ffffff'); break;
     case 'knife': p.line(3, 13, 7, 9, '#6a4a2a'); p.line(4, 14, 8, 10, '#5a3a1a'); p.line(8, 8, 13, 3, '#d0d0d0'); p.line(9, 9, 14, 4, '#9a9a9a'); break;
     case 'shaft': for (let i = 0; i < 3; i++) p.line(2 + i * 2, 14, 12 + i * 2, 2, '#b08850'); break;
     case 'arrow':
@@ -162,7 +178,7 @@ function draw(icon, p) {
     case 'locket': p.line(3, 1, 7, 8, '#c89a20'); p.line(13, 1, 9, 8, '#c89a20'); p.ball(8, 11, 3.5, 3.5, GOLD); p.set(8, 11, '#8a6a20'); break;
     case 'potion':
       p.rect(6, 2, 4, 2, '#8a6a4a'); p.rect(7, 4, 2, 2, '#c8e0e8');
-      p.ball(8, 10, 5, 4.8, '#d0e8f0'); p.ball(8, 11, 4.2, 3.6, c); p.set(6, 8, '#ffffff');
+      p.ball(8, 10, 5, 4.8, '#d0e8f0'); p.ball(8, 11, 4.2, 3.6, icon.unf ? mix(c, '#d0e8f0', 0.5) : c); p.set(6, 8, '#ffffff');
       break;
     case 'fish': case 'shrimp': case 'lobster': {
       const cc = icon.burnt ? '#2a2420' : icon.raw ? c : mix(c, '#b07030', 0.45);

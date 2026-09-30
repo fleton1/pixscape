@@ -1,7 +1,7 @@
 // Quests, NPC dialogue scripts, clue scrolls and quest-specific world hooks.
 import { G, msg, sfx, after } from './state.js';
 import { tannerTalk } from './crafting.js';
-import { ITEMS } from '../data/items.js';
+import { ITEMS, GRACEFUL } from '../data/items.js';
 import { SKILL_NAMES } from '../data/skills.js';
 import { randInt, pickWeighted, commas, cheb } from '../util.js';
 
@@ -82,6 +82,20 @@ const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
 export const DIALOGUE = {
   tanner: (d) => tannerTalk(d),
+  async grace(d) {
+    const p = G.player;
+    await d.npc('Marks of grace turn up for those who run the courses well. Bring them to me and I\'ll make you something light to wear.');
+    for (;;) {
+      const ids = Object.keys(GRACEFUL);
+      const c = await d.options([...ids.map((id) => `${ITEMS[id].name} (${GRACEFUL[id]} marks)`), 'Maybe later.']);
+      if (c >= ids.length) return;
+      const id = ids[c], cost = GRACEFUL[id];
+      if (!p.has('mark_of_grace', cost)) { await d.npc(`You'll need ${cost} marks for that. You have ${p.count('mark_of_grace')}.`); continue; }
+      if (!p.canAdd(id)) { await d.npc('Your pack is full.'); return; }
+      p.remove('mark_of_grace', cost); p.add(id);
+      await d.npc('There you go. Light as a feather.');
+    }
+  },
   async archmage(d, n) {
     await d.npc('Welcome to the Arcanum of Highcrest. Runes, staves, robes - and knowledge, if you have the patience for it.');
     for (;;) {

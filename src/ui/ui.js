@@ -137,6 +137,7 @@ export class UI {
     hpEl.querySelector('.num').textContent = hp;
     hpEl.querySelector('.num').style.color = hp / mx < 0.25 ? '#ff2020' : hp / mx < 0.5 ? '#ff9800' : hp / mx < 0.75 ? '#ffff00' : '#00ff00';
     hpEl.querySelector('.fill').style.height = clamp(hp / mx, 0, 1) * 100 + '%';
+    hpEl.classList.toggle('poisoned', !!p.poison);
     const pr = p.skills.prayer;
     $('#orb-pr .num').textContent = pr.cur;
     $('#orb-pr .fill').style.height = clamp(pr.cur / pr.lvl, 0, 1) * 100 + '%';

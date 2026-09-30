@@ -65,10 +65,10 @@ In dependency order, one release each:
    back); dragonhide is ranged armour; Sharp/Hawk/Eagle Eye prayers.
 2. **Magic + Runecraft** [done in 1.3] — elemental strike/bolt/blast/wave, a teleport to every town, high alchemy,
    superheat, jewellery enchanting (teleport necklaces, recoil ring), battlestaves from orbs.
-3. **Herblore** [next] — herbs from monster drops, vials from glassblowing; shop potions become craftable,
+3. **Herblore** [done in 1.4] — herbs from monster drops, vials from glassblowing; shop potions become craftable,
    plus antifire and antipoison (poison added to combat).
-4. **Agility** — a course per town, shortcuts around the map, marks of grace → graceful outfit.
-5. **Slayer** — three slayer masters, tasks, slayer-only monsters with unique drops.
+4. **Agility** [done in 1.4] — a course per town, shortcuts around the map, marks of grace → graceful outfit.
+5. **Slayer** [next] — three slayer masters, tasks, slayer-only monsters with unique drops.
 6. **Farming + Hunter** — patches that grow in real time (works while the game is closed); traps and
    creatures.
 
@@ -125,7 +125,7 @@ economy.
 | 1.1 [done] | Separate maps, 8 dungeons, the 13-skill buildout, skill guides, 1x default, validator |
 | 1.2 [done] | Ranged + Fletching, combat triangle |
 | 1.3 [done] | Magic + Runecraft |
-| 1.4 | Herblore + Agility |
+| 1.4 [done] | Herblore + Agility |
 | 1.5 | Slayer, more monsters, Wilderness dungeons |
 | 1.6 | Quest wave + achievement diaries |
 | 1.7 | Overworld growth, Farming + Hunter |

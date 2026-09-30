@@ -64,6 +64,9 @@ for (const pairs of Object.values(magic.ENCHANTS)) for (const [from, to] of pair
 for (const it of Object.values(ITEMS)) if (it.charges !== undefined) addSource(it.id, 'jewellery charges');
 for (const r of magic.RUNES) addSource(r.item, 'runecraft');
 for (const s of magic.SPELLS) if (s.orb) addSource(s.orb, 'charge orb');
+const { HERBS, GRACEFUL } = await import(src('data/items.js'));
+for (const id of Object.keys(GRACEFUL)) addSource(id, 'grace');
+for (const h of HERBS) { addSource('grimy_' + h.id, 'herb drops'); addSource(h.id, 'cleaning'); }
 for (const s of magic.SPELLS) for (const rn of Object.keys(s.runes)) if (!magic.RUNE[rn]) err(`spell ${s.id}: unknown rune ${rn}`);
 for (const r of content.RECIPES || []) {
   for (const id of [...Object.keys(r.in), ...r.keep, ...Object.keys(r.returns)]) itemOk(id, `recipe ${r.id}`);
@@ -128,6 +131,12 @@ for (const w of worlds.values()) {
       if (!target) { err(`${w.id}: ${o.type} at ${o.x},${o.y} leads to unknown map '${o.to[2]}'`); continue; }
       if (target.blocked(o.to[0], o.to[1])) err(`${w.id}: ${o.type} at ${o.x},${o.y} lands on a blocked tile ${o.to} in ${target.id}`);
       if (!near(w, o.x, o.y, o.w, o.h)) err(`${w.id}: ${o.type} at ${o.x},${o.y} can't be reached`);
+    }
+    if (o.agility) {
+      const ends = o.agility.to ? [o.agility.to] : [o.agility.a, o.agility.b];
+      for (const [x, y] of ends) if (w.blocked(x, y)) err(`${w.id}: ${o.type} at ${o.x},${o.y} lands on blocked ${x},${y}`);
+      if (o.agility.a) { if (!near(w, o.agility.a[0] - 1, o.agility.a[1] - 1, 3, 3) && !near(w, o.agility.b[0] - 1, o.agility.b[1] - 1, 3, 3)) warn(`${w.id}: shortcut at ${o.x},${o.y} can't be reached`); }
+      else if (!near(w, o.x, o.y)) err(`${w.id}: ${o.type} (course ${o.agility.course}) at ${o.x},${o.y} can't be reached`);
     }
     const d = OBJECTS[o.type];
     if (w.kind === 'dungeon' && d.actions?.length && !d.door && !near(w, o.x, o.y, o.w, o.h)) warn(`${w.id}: ${o.type} at ${o.x},${o.y} can't be reached`);

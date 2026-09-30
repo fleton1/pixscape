@@ -89,9 +89,9 @@ like the other sideloaded apps. APKs are attached to the [GitHub releases](https
   Highcrest Catacombs, Crestfall Deeps (a dwarven mining town with a pitch-black lower seam; bring a
   light), Mortmire Crypt, Hollowroot Caverns, Frostpeak Ice Caves, the Tomb of the Scarab and the
   Cinderhold Depths.
-- **17 skills** on the OSRS XP curve (levels 1-99) at 1x by default: Attack, Strength, Defence,
-  Ranged, Magic, Hitpoints, Prayer, Woodcutting, Fletching, Firemaking, Fishing, Cooking, Mining,
-  Smithing, Crafting, Runecraft and Thieving. Every skill has unlocks all the way up. Tap a skill for its guide.
+- **19 skills** on the OSRS XP curve (levels 1-99) at 1x by default: Attack, Strength, Defence,
+  Ranged, Magic, Hitpoints, Prayer, Agility, Herblore, Woodcutting, Fletching, Firemaking, Fishing,
+  Cooking, Mining, Smithing, Crafting, Runecraft and Thieving. Every skill has unlocks all the way up. Tap a skill for its guide.
   - Ranged: shortbows and longbows (normal to heartwood), crossbows, darts; arrows and bolts from
     bronze to dragon, which you can pick back up; accurate / rapid / longrange styles; line of sight.
   - Fletching: knife on logs for shafts, bows and stocks; string bows and crossbows; arrows, darts
@@ -100,6 +100,12 @@ like the other sideloaded apps. APKs are attached to the [GitHub releases](https
     monster, or autocast with a staff), town teleports, low and high alchemy, superheat, jewellery
     enchanting (ring of recoil, ring of life, traveller's necklace, amulet of glory) and orb charging
     for battlestaves. Elemental staves give endless runes.
+  - Herblore: 14 herbs (dropped by monsters, better ones from tougher monsters), cleaned and mixed
+    with a vial of water and a secondary into 18 potions: antipoison, energy, restore, antifire,
+    ranging, magic, super combat and more. Spiders, scorpions and their kin can poison you.
+  - Agility: six courses from Brindlewood (1) to the Frostpeak Ice Run (80) with lap bonuses and marks
+    of grace (trade them to Grace in Highcrest for graceful gear), plus shortcuts. Agility speeds up
+    run energy recovery.
   - Runecraft: mine essence via the Archmage in Highcrest, then craft all 12 runes at altars hidden
     behind ruins across the world (bring the talisman, or bind it into a tiara).
   - Cooking: water, dough, bread, pies, stew, pizzas, cakes, cheese and wine, from farm ingredients.
