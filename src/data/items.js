@@ -1,3 +1,4 @@
+import { RUNES } from './magic.js';
 // Item registry. `icon` drives the procedural icon painter; `look` drives how it appears when worn.
 
 export const ITEMS = {};
@@ -200,7 +201,7 @@ export const GEMS = [
   { id: 'dragonstone', name: 'Dragonstone', color: '#a03ad8', lvl: 55, xp: 137.5, val: 10000 },
 ];
 export const JEWELLERY = [];
-const amuletNames = { gold: 'Gold amulet', sapphire: 'Amulet of focus', emerald: 'Amulet of defence', ruby: 'Amulet of strength', diamond: 'Amulet of power', dragonstone: 'Amulet of glory' };
+const amuletNames = { gold: 'Gold amulet', sapphire: 'Amulet of focus', emerald: 'Amulet of defence', ruby: 'Amulet of strength', diamond: 'Amulet of power', dragonstone: 'Dragonstone amulet' };
 const amuletStats = { gold: [0, 0, 0], sapphire: [5, 0, 0], emerald: [0, 0, 7], ruby: [0, 10, 0], diamond: [6, 6, 6], dragonstone: [10, 6, 10] };
 const ringLvl = { gold: [5, 15], sapphire: [20, 40], emerald: [27, 55], ruby: [34, 70], diamond: [43, 85], dragonstone: [55, 100] };
 const amuLvl = { gold: [8, 30], sapphire: [24, 65], emerald: [31, 70], ruby: [50, 85], diamond: [70, 100], dragonstone: [80, 150] };
@@ -491,6 +492,44 @@ for (const a of AMMO_METALS) {
   add(a.m + '_bolts', { name: `${Nm} bolts`, stack: true, value: a.val * 2, icon: { kind: 'bolt', color: M.color }, examine: `Crossbow bolts with ${a.m} tips.`,
     equip: { slot: 'ammo', att: 0, str: 0, def: 0, rstr: a.bolt, ammo: { type: 'bolt', tier: a.tier }, look: {} } });
 }
+
+// =====================================================================================
+// 1.3 Magic & Runecraft
+// =====================================================================================
+add('rune_essence', { name: 'Rune essence', value: 4, icon: { kind: 'essence' }, examine: 'An uncharged rune stone.' });
+add('tiara_mould', { name: 'Tiara mould', value: 5, icon: { kind: 'mould_ring', tiara: true }, examine: 'A mould for tiaras.' });
+add('tiara', { name: 'Tiara', value: 100, icon: { kind: 'tiara' }, equip: { slot: 'head', att: 0, str: 0, def: 0, look: { kind: 'crown', color: '#d8dce0' } }, examine: 'A silver tiara. It could be bound to an altar.' });
+for (const r of RUNES) {
+  add(r.item, { name: `${r.name} rune`, stack: true, value: [4, 3, 4, 4, 4, 16, 50, 90, 180, 240, 300, 400][RUNES.indexOf(r)], icon: { kind: 'rune', color: r.color }, examine: `One of the 12 runes of power: ${r.name.toLowerCase()}.` });
+  add(r.id + '_talisman', { name: `${r.name} talisman`, value: 30 + r.lvl * 4, icon: { kind: 'talisman', color: r.color }, examine: `A mysterious power emanates from it. It pulls toward the ${r.name.toLowerCase()} altar.`, talisman: r.id });
+  add(r.id + '_tiara', { name: `${r.name} tiara`, value: 150 + r.lvl * 5, icon: { kind: 'tiara', color: r.color }, talisman: r.id,
+    equip: { slot: 'head', att: 0, str: 0, def: 0, look: { kind: 'crown', color: '#d8dce0' } }, examine: `A tiara bound to the ${r.name.toLowerCase()} altar.` });
+}
+// staves (equip.magic marks a weapon that can autocast)
+const staff = (id, name, color, mag, att, str, value, req = {}, extra = {}) => add(id, { name, value, icon: { kind: 'staff', color }, examine: extra.examine || `A ${name.toLowerCase()}.`, ...extra,
+  equip: { slot: 'weapon', att, str, def: 0, mag, speed: 5, twoHanded: true, req, magic: true, look: { kind: 'staff', color } } });
+staff('staff', 'Staff', '#8a3ad8', 6, 2, 3, 15);
+for (const [e, c] of [['air', '#d8e8f0'], ['water', '#3a7ad8'], ['earth', '#8a6a3a'], ['fire', '#e0401a']]) {
+  staff(`staff_of_${e}`, `Staff of ${e}`, c, 10, 3, 4, 1500, {}, { examine: `A magical staff that provides endless ${e} runes.` });
+  staff(`${e}_battlestaff`, `${e[0].toUpperCase() + e.slice(1)} battlestaff`, c, 12, 9, 12, 9000, { magic: 30, attack: 30 }, { examine: `A powerful battlestaff. It provides endless ${e} runes.` });
+  add(`${e}_orb`, { name: `${e[0].toUpperCase() + e.slice(1)} orb`, value: 900, icon: { kind: 'orb', color: c }, examine: `A magic glowing orb of ${e}.` });
+}
+add('battlestaff', { name: 'Battlestaff', value: 5000, icon: { kind: 'staff', color: '#6a4a2a', plain: true }, examine: 'A staff waiting for an orb.',
+  equip: { slot: 'weapon', att: 9, str: 12, def: 0, mag: 10, speed: 5, twoHanded: true, req: { attack: 30 }, magic: true, look: { kind: 'staff', color: '#6a4a2a' } } });
+// robes
+wear('mystic_hat', 'Mystic hat', 'head', { mag: 4, def: 2, req: { magic: 40, defence: 20 } }, { kind: 'wizhat', color: '#2a4ab0' }, { kind: 'wizhat', color: '#2a4ab0' }, 15000);
+wear('mystic_top', 'Mystic robe top', 'body', { mag: 20, def: 20, req: { magic: 40, defence: 20 } }, { kind: 'robe', color: '#2a4ab0' }, { kind: 'robe', color: '#2a4ab0' }, 120000);
+wear('mystic_bottom', 'Mystic robe bottom', 'legs', { mag: 15, def: 15, req: { magic: 40, defence: 20 } }, { kind: 'chaps', color: '#2a4ab0' }, { kind: 'pants', color: '#2a4ab0' }, 80000);
+wear('mystic_gloves', 'Mystic gloves', 'hands', { mag: 5, def: 2, req: { magic: 40, defence: 20 } }, { kind: 'gloves', color: '#2a4ab0' }, { color: '#2a4ab0' }, 10000);
+wear('mystic_boots', 'Mystic boots', 'feet', { mag: 3, def: 2, req: { magic: 40, defence: 20 } }, { kind: 'boots', color: '#2a4ab0' }, { color: '#2a4ab0' }, 10000);
+Object.assign(ITEMS.wizard_hat.equip, { mag: 2 }); Object.assign(ITEMS.wizard_robe.equip, { mag: 3 });
+Object.assign(ITEMS.dark_wizard_hat.equip, { mag: 2 }); Object.assign(ITEMS.dark_wizard_robe.equip, { mag: 3 });
+// enchanted jewellery; charges are separate items, like the classic game
+wear('ring_of_recoil', 'Ring of recoil', 'ring', { def: 1 }, { kind: 'ring', color: '#2a5ad8' }, {}, 900, { examine: 'Hurts whoever hurts you. It crumbles after enough use.' });
+wear('ring_of_forging', 'Ring of forging', 'ring', { def: 2 }, { kind: 'ring', color: '#d82a3a' }, {}, 1400, { examine: 'Iron is always pure while you wear it.' });
+wear('ring_of_life', 'Ring of life', 'ring', { def: 3 }, { kind: 'ring', color: '#e8f0f8' }, {}, 3500, { examine: 'Saves you once, when you are nearly dead.' });
+for (let c = 8; c >= 1; c--) wear(`travellers_necklace_${c}`, `Traveller's necklace (${c})`, 'neck', { def: 2 }, { kind: 'necklace', color: '#2ab04a' }, { color: '#2ab04a' }, 800 + c * 60, { examine: 'Rub it to travel to a dungeon entrance.', jewelTele: 'travellers', charges: c });
+for (let c = 4; c >= 0; c--) wear(`amulet_of_glory_${c}`, c ? `Amulet of glory (${c})` : 'Amulet of glory', 'neck', { att: 10, str: 6, def: 10, mag: 10, rng: 10 }, { kind: 'amulet', color: '#a03ad8' }, { color: '#a03ad8' }, 12000 + c * 500, { examine: c ? 'Rub it to teleport.' : 'It has run out of charges.', jewelTele: c ? 'glory' : null, charges: c });
 
 export function item(id) {
   const it = ITEMS[id];

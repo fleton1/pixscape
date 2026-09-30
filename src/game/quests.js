@@ -82,6 +82,26 @@ const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
 export const DIALOGUE = {
   tanner: (d) => tannerTalk(d),
+  async archmage(d, n) {
+    await d.npc('Welcome to the Arcanum of Highcrest. Runes, staves, robes - and knowledge, if you have the patience for it.');
+    for (;;) {
+      const c = await d.options(['How do I make runes?', 'Take me to the essence mine.', 'How does magic work?', 'Goodbye.']);
+      if (c === 0) {
+        await d.npc('Rune essence is mined in a pocket of the world I can open for you. Carry it to one of the twelve altars hidden in ruins across the land.');
+        await d.npc('The ruins will only let you in if you carry that altar\'s talisman, or wear a tiara bound to it. Air, mind, water, earth, fire and body talismans I sell. The rest... monsters have a way of collecting them.');
+        await d.npc('The better you get, the more runes each essence gives you. And bind a talisman into a silver tiara and you\'ll never need the talisman again.');
+      } else if (c === 1) {
+        d.end();
+        n.say('Senventior disthine molenko!');
+        G.effects.push({ kind: 'sparkle', follow: G.player, t: performance.now() }); sfx('teleport');
+        after(2, () => G.game.teleport(...G.worlds.get('essence').points.arrive, 'You are teleported to the rune essence mine.', true, 'essence'));
+        return;
+      } else if (c === 2) {
+        await d.npc('Open your spellbook. Combat spells need a target: choose the spell, then the monster. Wield a staff and you can set a spell to cast every time you attack.');
+        await d.npc('Elemental staves give you endless runes of their element. Teleports take you to the great towns. Alchemy turns junk into gold, and enchanted jewellery... well, try it and see.');
+      } else return;
+    }
+  },
   async townsfolk(d) {
     await d.npc(pick([
       'Hello there! Lovely day for it, isn\'t it?',

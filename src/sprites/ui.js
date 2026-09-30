@@ -28,6 +28,8 @@ const SKILL_DRAW = {
   cooking: (p) => { p.ball(8, 5, 5, 3.5, '#f8f8f8'); p.rect(4, 6, 8, 6, '#f0f0f0'); p.hline(4, 11, 11, '#b0b0b0'); },
   ranged: (p) => { p.line(3, 2, 3, 14, '#e8e0c8'); p.line(3, 2, 8, 4, '#8a5a2a'); p.line(8, 4, 10, 8, '#8a5a2a'); p.line(10, 8, 8, 12, '#8a5a2a'); p.line(8, 12, 3, 14, '#8a5a2a'); p.line(4, 8, 14, 8, '#c8c8c8'); p.poly([[13, 6], [15, 8], [13, 10]], '#9a9a9a'); p.set(5, 7, '#e84a4a'); p.set(5, 9, '#e84a4a'); },
   fletching: (p) => { p.line(2, 14, 12, 4, '#8a6a3a'); p.poly([[11, 2], [15, 1], [14, 5]], '#b0b0b0'); p.line(2, 11, 5, 14, '#e8e8e8'); p.line(3, 10, 6, 13, '#4aa0a0'); },
+  magic: (p) => { p.poly([[8, 1], [10, 6], [15, 7], [11, 10], [12, 15], [8, 12], [4, 15], [5, 10], [1, 7], [6, 6]], '#4a5ae8'); p.set(8, 7, '#e8e8ff'); p.set(7, 6, '#b0b8ff'); },
+  runecraft: (p) => { p.ball(8, 8, 6, 6, '#8a8278'); p.ball(8, 8, 4.5, 4.5, '#a8a098'); p.line(6, 5, 10, 11, '#c8a040'); p.line(10, 5, 6, 11, '#c8a040'); p.set(8, 8, '#ffe070'); },
   woodcutting: (p) => { p.line(4, 15, 11, 5, '#8a5a2a'); p.poly([[9, 2], [14, 1], [15, 7], [11, 7]], '#9a9a9a'); p.set(3, 4, '#3a7a2a'); p.ball(4, 5, 2.5, 2.5, '#3a7a2a'); },
 };
 export function skillIcon(s) { return mk('sk_' + s, 16, 16, SKILL_DRAW[s]); }
@@ -45,7 +47,7 @@ const TAB_DRAW = {
 };
 export function tabIcon(t) { return mk('tab_' + t, 17, 17, TAB_DRAW[t]); }
 
-const PRAYER_COLORS = { thick_skin: '#b09070', burst_str: '#c04040', clarity: '#c0a040', rock_skin: '#8a8070', superhuman: '#e04040', reflexes: '#e0c040', rapid_heal: '#e04080', steel_skin: '#a0a8b0', ultimate_str: '#ff5050', incredible: '#ffe050', protect_magic: '#6a8aff', protect_range: '#6ad06a', protect_melee: '#e0e0e0', chivalry: '#e8c13a', protect_item: '#e8c878', sharp_eye: '#8ac84a', hawk_eye: '#a0e05a', eagle_eye: '#c8f070', redemption: '#f0f0f0', preserve: '#8ae0c8' };
+const PRAYER_COLORS = { thick_skin: '#b09070', burst_str: '#c04040', clarity: '#c0a040', rock_skin: '#8a8070', superhuman: '#e04040', reflexes: '#e0c040', rapid_heal: '#e04080', steel_skin: '#a0a8b0', ultimate_str: '#ff5050', incredible: '#ffe050', protect_magic: '#6a8aff', protect_range: '#6ad06a', protect_melee: '#e0e0e0', chivalry: '#e8c13a', protect_item: '#e8c878', mystic_will: '#8a8ae8', mystic_lore: '#9a9af0', mystic_might: '#b0b0ff', sharp_eye: '#8ac84a', hawk_eye: '#a0e05a', eagle_eye: '#c8f070', redemption: '#f0f0f0', preserve: '#8ae0c8' };
 export function prayerIcon(id, on) {
   return mk('pr_' + id + on, 18, 18, (p) => {
     const c = PRAYER_COLORS[id] || '#fff';
@@ -71,5 +73,47 @@ export function orbIcon(kind) {
     else if (kind === 'prayer') SKILL_DRAW.prayer(p);
     else if (kind === 'run') { p.rect(4, 3, 5, 8, '#e8c080'); p.rect(4, 10, 9, 3, '#e8c080'); p.hline(4, 12, 13, '#a07840'); p.rect(3, 3, 7, 2, '#c09060'); }
     else if (kind === 'xp') { p.rect(1, 4, 14, 8, '#d8b060'); }
+  });
+}
+
+// Spellbook icons: element-coloured bolts that grow with the spell's tier, and glyphs for the rest.
+const GEM_COL = { sapphire: '#2a5ad8', emerald: '#2ab04a', ruby: '#d82a3a', diamond: '#e8f0f8', dragonstone: '#a03ad8' };
+export function spellIcon(s) {
+  return mk('sp_' + s.id, 22, 22, (p) => {
+    const c = s.color || '#8a8ae8';
+    switch (s.type) {
+      case 'combat': {
+        const r = { Strike: 3, Bolt: 4, Blast: 5, Wave: 6 }[s.tier];
+        if (s.tier !== 'Strike') p.poly([[3, 19], [11 - r / 2, 11 - r / 2], [11 + r / 2, 11 + r / 2]], shade(c, -0.25));
+        if (s.tier === 'Wave') for (let a = 0; a < 6.28; a += 0.8) p.set(Math.round(11 + Math.cos(a) * 9), Math.round(11 + Math.sin(a) * 9), c);
+        if (s.tier === 'Blast') for (let a = 0; a < 6.28; a += 1.05) p.line(11, 11, Math.round(11 + Math.cos(a) * 8), Math.round(11 + Math.sin(a) * 8), shade(c, 0.2));
+        p.ball(11, 11, r + 1, r + 1, c); p.set(10, 10, '#ffffff');
+        break;
+      }
+      case 'teleport': case 'home':
+        p.ellipse(11, 12, 8, 8, s.type === 'home' ? '#3a6a3a' : '#3a2a8a'); p.ellipse(11, 12, 5, 5, s.type === 'home' ? '#6ab04a' : '#8a6ae8'); p.ellipse(11, 12, 2, 2, '#e8e0ff');
+        if (s.type === 'home') { p.poly([[5, 9], [11, 3], [17, 9]], '#c83a2a'); p.rect(7, 9, 9, 8, '#e8d8a8'); p.rect(10, 12, 3, 5, '#6a4a2a'); }
+        break;
+      case 'alch':
+        p.ball(11, 12, s.rate > 0.5 ? 8 : 6, s.rate > 0.5 ? 8 : 6, '#e8c13a'); p.ball(11, 12, s.rate > 0.5 ? 5 : 3.5, s.rate > 0.5 ? 5 : 3.5, '#c89a20'); p.set(9, 9, '#fff2a0');
+        p.poly([[11, 1], [14, 5], [8, 5]], '#e0401a');
+        break;
+      case 'superheat':
+        p.ball(11, 15, 6, 4.5, '#5a544c'); p.set(9, 14, '#c8743a'); p.set(13, 16, '#c8743a');
+        p.poly([[6, 12], [8, 4], [11, 9], [13, 2], [16, 12]], '#e0501a'); p.poly([[9, 12], [11, 7], [13, 12]], '#ffc040');
+        break;
+      case 'enchant': {
+        const g = GEM_COL[s.gem];
+        p.poly([[5, 9], [8, 5], [14, 5], [17, 9], [11, 18]], g); p.hline(6, 16, 9, shade(g, 0.4));
+        for (const [x, y] of [[3, 3], [19, 4], [18, 17]]) p.set(x, y, '#ffffff');
+        break;
+      }
+      case 'charge': {
+        const oc = { air_orb: '#d8e8f0', water_orb: '#3a7ad8', earth_orb: '#8a6a3a', fire_orb: '#e0401a' }[s.orb];
+        p.ball(11, 11, 7, 7, oc); p.ball(8, 8, 2, 2, '#ffffff');
+        for (let a = 0; a < 6.28; a += 1.57) p.set(Math.round(11 + Math.cos(a) * 10), Math.round(11 + Math.sin(a) * 10), '#ffffff');
+        break;
+      }
+    }
   });
 }

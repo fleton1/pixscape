@@ -117,7 +117,15 @@ function draw(icon, p) {
     case 'pipe': p.line(2, 14, 13, 3, '#8a8a88'); p.line(3, 14, 14, 3, '#6a6a68'); p.ellipse(14, 2, 1.5, 1.5, '#b0b0b0'); break;
     case 'glass': p.rect(5, 3, 6, 11, '#c8e8f0', 170); p.vline(6, 4, 12, '#ffffff'); p.hline(5, 10, 13, '#a8c8d0'); break;
     case 'vial': p.rect(7, 2, 2, 3, '#a8c8d0'); p.ball(8, 10, 3.5, 4, '#d0e8f0', { a: 200 }); p.set(7, 8, '#ffffff'); break;
-    case 'orb': p.ball(8, 8, 5.5, 5.5, '#c8e8f0'); p.ball(6, 6, 2, 2, '#ffffff'); break;
+    case 'orb': p.ball(8, 8, 5.5, 5.5, icon.color || '#c8e8f0'); p.ball(6, 6, 2, 2, '#ffffff'); break;
+    case 'essence': p.poly([[3, 6], [7, 2], [13, 4], [14, 11], [8, 14], [2, 11]], '#c8c4d8'); p.line(4, 7, 8, 3, '#e8e4f0'); p.set(9, 8, '#ffffff'); p.line(8, 14, 14, 11, '#9890b0'); break;
+    case 'rune': p.poly([[3, 4], [8, 2], [13, 4], [14, 10], [8, 14], [2, 10]], '#8a8278'); p.poly([[4, 5], [8, 3], [12, 5], [12, 9], [8, 12], [4, 9]], '#a8a098'); p.ball(8, 8, 2.6, 2.6, c); p.set(7, 7, '#ffffff'); break;
+    case 'talisman': p.ball(8, 9, 5.5, 5, '#8a8278'); p.ball(8, 9, 4, 3.5, '#a8a098'); p.line(6, 7, 10, 11, c); p.line(10, 7, 6, 11, c); p.set(8, 9, '#ffffff'); p.line(5, 3, 8, 5, '#6a4a2a'); p.line(11, 3, 8, 5, '#6a4a2a'); break;
+    case 'tiara': p.hline(2, 13, 10, '#c8ccd0'); p.hline(2, 13, 11, '#9aa0a8'); p.poly([[5, 10], [8, 5], [11, 10]], '#d8dce0'); p.ball(8, 8, 1.6, 1.6, icon.color || '#e8e8f0'); break;
+    case 'staff':
+      p.line(2, 15, 12, 5, '#6a4a2a'); p.line(3, 15, 13, 5, '#5a3a1a');
+      if (!icon.plain) { p.ball(13, 3, 2.8, 2.8, c); p.set(12, 2, '#ffffff'); } else p.ball(13, 4, 1.8, 1.8, '#8a6a4a');
+      break;
     case 'lantern': p.rect(5, 5, 6, 9, '#6a6a68'); p.rect(6, 6, 4, 7, icon.empty ? '#a8c8d0' : icon.lit ? '#ffd860' : '#e8e0c0'); p.hline(4, 11, 4, '#4a4a48'); p.hline(4, 11, 14, '#4a4a48'); p.line(6, 4, 8, 1, '#4a4a48'); p.line(10, 4, 8, 1, '#4a4a48'); if (icon.lit) p.set(8, 8, '#ff8020'); break;
     case 'candle': p.rect(6, 6, 4, 9, '#f0ece0'); p.vline(6, 6, 14, '#ffffff'); p.set(8, 5, '#3a3a3a'); if (icon.lit) { p.ball(8, 3, 1.5, 2, '#ffb020'); p.set(8, 3, '#fff0a0'); } break;
     case 'shears': p.line(3, 3, 11, 11, '#b0b0b0'); p.line(3, 11, 11, 3, '#9a9a9a'); p.ball(12, 12, 2, 2, '#2a4ab0'); p.ball(12, 2, 2, 2, '#2a4ab0'); break;
@@ -191,7 +199,7 @@ function draw(icon, p) {
     case 'hammer': p.line(3, 14, 10, 7, '#8a5a2a'); p.poly([[7, 3], [11, 1], [14, 5], [10, 7]], '#8a8a8a'); p.line(11, 1, 14, 5, '#c0c0c0'); break;
     case 'chisel': p.line(3, 13, 7, 9, '#8a5a2a'); p.line(4, 14, 8, 10, '#8a5a2a'); p.line(8, 8, 13, 3, '#b0b0b0'); p.line(9, 9, 13, 5, '#8a8a8a'); break;
     case 'spade': p.line(3, 3, 9, 9, '#8a5a2a'); p.hline(1, 5, 3, '#8a5a2a'); p.poly([[8, 10], [11, 7], [15, 11], [12, 15]], '#9a9a9a'); p.set(12, 9, '#d0d0d0'); break;
-    case 'mould_ring': case 'mould_amulet': p.rect(2, 4, 12, 9, '#8a8a88'); p.rect(2, 4, 12, 1, '#b0b0b0'); if (icon.necklace) p.ellipse(8, 8.5, 4, 3, '#4a4a48'); else if (icon.bracelet) p.ellipse(8, 8.5, 4, 1.8, '#4a4a48'); else if (icon.holy) { p.vline(8, 6, 11, '#4a4a48'); p.hline(6, 10, 8, '#4a4a48'); } else if (icon.kind === 'mould_ring') p.ellipse(8, 8.5, 2.5, 2.5, '#4a4a48'); else p.ball(8, 9, 2.5, 3, '#4a4a48'); break;
+    case 'mould_ring': case 'mould_amulet': p.rect(2, 4, 12, 9, '#8a8a88'); p.rect(2, 4, 12, 1, '#b0b0b0'); if (icon.tiara) { p.hline(4, 12, 9, '#4a4a48'); p.poly([[6, 9], [8, 6], [10, 9]], '#4a4a48'); } else if (icon.necklace) p.ellipse(8, 8.5, 4, 3, '#4a4a48'); else if (icon.bracelet) p.ellipse(8, 8.5, 4, 1.8, '#4a4a48'); else if (icon.holy) { p.vline(8, 6, 11, '#4a4a48'); p.hline(6, 10, 8, '#4a4a48'); } else if (icon.kind === 'mould_ring') p.ellipse(8, 8.5, 2.5, 2.5, '#4a4a48'); else p.ball(8, 9, 2.5, 3, '#4a4a48'); break;
     case 'bucket': case 'bucket_milk': p.poly([[3, 5], [13, 5], [12, 14], [4, 14]], '#8a8a88'); p.hline(3, 13, 5, '#b0b0b0'); p.hline(4, 12, 9, '#6a6a68'); if (icon.kind === 'bucket_milk') p.ellipse(8, 5.5, 4.5, 1.2, '#f8f8f8'); if (icon.color) p.ellipse(8, 5.5, 4.5, 1.2, icon.color); p.line(3, 5, 8, 1, '#5a5a58'); p.line(13, 5, 8, 1, '#5a5a58'); break;
     case 'pot': case 'pot_flour': p.ball(8, 10, 5.5, 4.5, icon.unfired ? '#c8a888' : '#9a5a3a'); p.rect(5, 4, 6, 2, icon.unfired ? '#b09070' : '#8a4a2a'); if (icon.kind === 'pot_flour') p.ellipse(8, 5, 3, 1.2, '#f4f0e8'); break;
     case 'egg': p.ball(8, 9, 3.8, 4.8, '#f0e8d0'); p.set(6, 7, '#ffffff'); break;

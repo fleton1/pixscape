@@ -34,6 +34,7 @@ export const OBJECTS = {
   mithril_rock: rock('mithril_ore', 'mithril', 55, 80, 100, '#4a5ea8'),
   adamant_rock: rock('adamantite_ore', 'adamantite', 70, 95, 200, '#4a8a52'),
   rune_rock: rock('runite_ore', 'runite', 85, 125, 400, '#4ab7c8'),
+  essence_rock: { ...rock('rune_essence', 'rune essence', 1, 5, 0, '#e8e4f0'), name: 'Rune essence', examine: 'A huge rock of pure rune essence.', infinite: true, w: 2, h: 2 },
   clay_rock: rock('clay', 'clay', 1, 5, 2, '#b8a888'),
   silver_rock: rock('silver_ore', 'silver', 20, 40, 100, '#d8dce0'),
   gem_rock: { ...rock(null, 'gems', 40, 65, 99, '#c040c0'), examine: 'A rock glittering with gems.', gems: true },
@@ -156,5 +157,8 @@ export const OBJECTS = {
   windmill_sails: { name: 'Windmill', actions: [], blocks: true, w: 3, h: 3, tall: true, examine: 'Its sails turn slowly.' },
   dragon_skull: { name: 'Dragon skull', actions: [], blocks: true, w: 2, examine: 'A huge dragon skull.' },
   sarcophagus: { name: 'Sarcophagus', actions: [], blocks: true, h: 2, examine: 'Something ancient rests here.' },
+  mysterious_ruins: { name: 'Mysterious ruins', actions: ['Enter'], blocks: true, w: 2, h: 2, examine: 'A mysterious power seems to emanate from these ruins.', mapIcon: 'rune' },
+  rune_altar: { name: 'Altar', actions: ['Craft-rune'], blocks: true, w: 2, h: 2, light: true, examine: 'A mysterious altar. Essence can be bound here.' },
+  altar_portal: { name: 'Portal', actions: ['Exit'], blocks: true, light: true, examine: 'This portal leads back out.' },
   portal: { name: 'Portal', actions: ['Enter'], blocks: true, light: true, examine: 'A shimmering way home.' },
 };

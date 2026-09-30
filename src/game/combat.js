@@ -6,6 +6,7 @@ import { pickWeighted, randInt, commas } from '../util.js';
 import { spawnNpc } from './npc.js';
 import { wildLevel } from './world_info.js';
 import { touchingCardinal, withinRange } from './entity.js';
+import { magicAttack, jewelleryOnHit } from './magic.js';
 
 const STYLE_XP = { accurate: 'attack', aggressive: 'strength', defensive: 'defence' };
 
@@ -14,13 +15,16 @@ const STYLE_XP = { accurate: 'attack', aggressive: 'strength', defensive: 'defen
 export function npcDefRoll(n, style) {
   const d = n.def;
   const bonus = (d.defBonus || 0) + (d.weak === style ? -30 : 0) + (d.strong === style ? 45 : 0);
-  return (d.def + 9) * (bonus + 64);
+  // monsters resist spells with their wits rather than their armour
+  const lvl = style === 'magic' ? d.mdef ?? Math.round(d.def * 0.7) : d.def;
+  return (lvl + 9) * ((style === 'magic' ? bonus / 2 : bonus) + 64);
 }
 
 // Can the player hit `n` from (x, y)? Melee needs to stand next to it, ranged needs range and sight.
-export function canHitFrom(p, n, x, y) {
-  if (!p.rangedWeapon()) return touchingCardinal(x, y, n.x, n.y, n.size);
-  if (!withinRange(x, y, n.x, n.y, n.size, p.attackRange())) return false;
+export function canHitFrom(p, n, x, y, spell = null) {
+  const reach = spell ? 10 : p.attackRange();
+  if (reach <= 1) return touchingCardinal(x, y, n.x, n.y, n.size);
+  if (!withinRange(x, y, n.x, n.y, n.size, reach)) return false;
   const tx = Math.max(n.x, Math.min(x, n.x + n.size - 1)), ty = Math.max(n.y, Math.min(y, n.y + n.size - 1));
   return G.world.sees(x, y, tx, ty);
 }
@@ -78,7 +82,7 @@ function dropAmmo(id, x, y) {
   if (g) { g.qty++; g.expire = G.tick + 300; } else G.game.dropGround(id, 1, x, y);
 }
 
-function hitChance(att, def) {
+export function hitChance(att, def) {
   return att > def ? 1 - (def + 2) / (2 * (att + 1)) : att / (2 * (def + 1));
 }
 
@@ -100,6 +104,7 @@ export function playerDefRoll(p) {
 
 export function playerAttack(n) {
   const p = G.player;
+  if (p.castingSpell()) { magicAttack(n, p.autocast); return; }
   if (p.rangedWeapon()) { playerRangedAttack(n); return; }
   p.attackCd = p.attackSpeed();
   p.playAnim('attack', 2);
@@ -128,6 +133,7 @@ export function damagePlayer(dmg, src, kind = 'hit') {
   p.hitsplat(dmg, dmg > 0 ? kind : 'block');
   if (src) { p.lastHitBy = src; p.lastHitTick = G.tick; }
   if (dmg > 0) sfx('hurt');
+  jewelleryOnHit(dmg, src);
   if (p.hp > 0 && p.hp < p.maxHp / 10 && p.prayers.has('redemption')) {
     const pr = p.skills.prayer;
     p.hp += Math.floor(pr.lvl / 4);
@@ -339,6 +345,7 @@ function dropLoot(n, x, y) {
     drop(e.item, e.qty ? randInt(e.qty[0], e.qty[1]) : 1);
   }
   for (const u of d.uniques || []) if (Math.random() < u.chance) drop(u.item, 1);
+  for (const [id, a, b, ch] of d.extra || []) if (Math.random() < ch) drop(id, randInt(a, b));
   const p = G.player;
   if (d.clue && Math.random() < d.clue && !p.hasAnywhere('clue_scroll') && !G.groundItems.some((g) => g.id === 'clue_scroll')) drop('clue_scroll', 1);
   if (d.pet && Math.random() < d.pet.chance) givePet(d.pet.id);

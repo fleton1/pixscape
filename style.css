@@ -90,7 +90,7 @@ button { font-family: var(--font); cursor: pointer; }
 .skill .lv .sep { color: #ffff00; margin: 0 1px; }
 .skill .lv .boost { color: #00ff00; } .skill .lv .drain { color: #ff4040; }
 .skill .bar { position: absolute; left: 0; bottom: 0; height: 2px; background: #2ae04a; }
-.skill.total { grid-column: span 2; color: #ffff00; font-size: 12px; justify-content: center; text-align: center; }
+.skill.total { grid-column: span 1; color: #ffff00; font-size: 12px; justify-content: center; text-align: center; }
 .skillinfo { margin-top: 8px; font-size: 13px; text-align: center; }
 .skillinfo.hint { margin-top: 4px; color: #a89878; font-size: 12px; }
 .skill[data-s] { cursor: pointer; }
@@ -134,6 +134,16 @@ button { font-family: var(--font); cursor: pointer; }
 .pr.locked { opacity: .3; filter: grayscale(1); }
 .pr:hover:not(.locked) { background: rgba(255,255,255,.08); }
 
+.spellgrid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; }
+.sp { height: 30px; padding: 0; border: 1px solid transparent; border-radius: 4px; background: transparent; display: flex; align-items: center; justify-content: center; opacity: .5; filter: saturate(.4); }
+.sp.ready { opacity: 1; filter: none; }
+.sp.locked { opacity: .18; filter: grayscale(1); }
+.sp.sel { border-color: #fff; background: rgba(255,255,255,.15); }
+.sp.auto { box-shadow: inset 0 0 0 1px #00ff80; }
+.sp img { width: 22px; height: 22px; image-rendering: pixelated; pointer-events: none; }
+.spinfo { margin-top: 6px; font-size: 13px; text-align: center; min-height: 48px; color: #ff981f; }
+.spinfo small { color: #c8b890; } .spinfo .hint { color: #a89878; font-size: 12px; }
+.acimg { width: 16px; height: 16px; image-rendering: pixelated; vertical-align: middle; }
 .spell { display: flex; gap: 8px; align-items: center; padding: 6px; cursor: pointer; border: 1px solid #5b4f3c; border-radius: 4px; font-size: 13px; color: #ff981f; }
 .spell small { color: #c8b890; }
 .spell:hover { background: rgba(255,255,255,.07); }

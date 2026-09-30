@@ -32,6 +32,7 @@ for (const [id, n] of Object.entries(NPCS)) {
   for (const [it] of d?.always || []) addSource(it, `drop:${id}`);
   for (const x of d?.main || []) addSource(x.item, `drop:${id}`);
   for (const x of d?.uniques || []) addSource(x.item, `unique:${id}`);
+  for (const [it] of d?.extra || []) addSource(it, `drop:${id}`);
   for (const l of n.pickpocket?.loot || []) addSource(Array.isArray(l) ? l[0] : l.id || l.item, `pickpocket:${id}`);
 }
 for (const x of RARE_TABLE) addSource(x.item, 'rare table');
@@ -58,6 +59,12 @@ walk(skilling.FISH, 'fishing'); walk(skilling.STALLS, 'stalls');
 for (const [k, v] of Object.entries(content)) walk(v, 'content.' + k);
 for (const it of Object.values(ITEMS)) if (it.smith) addSource(it.id, 'smithing');
 for (const it of Object.values(ITEMS)) if (it.cut) addSource(it.id, 'gem cutting');
+const magic = await import(src('data/magic.js'));
+for (const pairs of Object.values(magic.ENCHANTS)) for (const [from, to] of pairs) { itemOk(from, 'enchant'); addSource(to, 'enchant'); }
+for (const it of Object.values(ITEMS)) if (it.charges !== undefined) addSource(it.id, 'jewellery charges');
+for (const r of magic.RUNES) addSource(r.item, 'runecraft');
+for (const s of magic.SPELLS) if (s.orb) addSource(s.orb, 'charge orb');
+for (const s of magic.SPELLS) for (const rn of Object.keys(s.runes)) if (!magic.RUNE[rn]) err(`spell ${s.id}: unknown rune ${rn}`);
 for (const r of content.RECIPES || []) {
   for (const id of [...Object.keys(r.in), ...r.keep, ...Object.keys(r.returns)]) itemOk(id, `recipe ${r.id}`);
   if (r.burn) addSource(r.burn.item, `recipe ${r.id}`);

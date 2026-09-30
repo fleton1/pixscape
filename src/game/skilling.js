@@ -111,6 +111,7 @@ export function mine(o) {
         p.give(g.id); msg(`You just found ${aOrAn(ITEMS[g.id].name.replace('Uncut ', ''))}!`, '#ef1020');
       }
       skillPet(1 / 4000, 'rock_golem');
+      if (d.infinite) return 4;   // essence never runs out
       o.depleted = G.tick + m.respawn;
       return false;
     }
@@ -269,7 +270,7 @@ export function smelt(bar) {
     if (!can()) return false;
     for (const [o, n] of Object.entries(r.ores)) p.remove(o, n);
     sfx('smelt');
-    if (r.fail && Math.random() < r.fail * clamp(1 - (p.lvl('smithing') - 15) / 45, 0.2, 1)) { msg('The ore is too impure and you fail to refine it.'); return 3; }
+    if (r.fail && p.equip.ring?.id !== 'ring_of_forging' && Math.random() < r.fail * clamp(1 - (p.lvl('smithing') - 15) / 45, 0.2, 1)) { msg('The ore is too impure and you fail to refine it.'); return 3; }
     p.add(bar);
     p.addXp('smithing', r.xp);
     msg(`You retrieve a bar of ${ITEMS[bar].name.replace(' bar', '').toLowerCase()}.`);

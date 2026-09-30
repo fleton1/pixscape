@@ -6,6 +6,7 @@ import { PRAYERS } from './skills.js';
 import { RECIPES, recipeOut } from './recipes.js';
 import { FISH, STALLS } from '../game/skilling.js';
 import { THIEF_CHESTS } from '../game/crafting.js';
+import { SPELLS, RUNES } from './magic.js';
 
 let cache = null;
 
@@ -40,6 +41,12 @@ export function skillGuide() {
   for (const [id, n] of Object.entries(NPCS)) if (n.pickpocket) add('thieving', n.pickpocket.lvl, `Pickpocket ${n.name.toLowerCase()}`, null, 'Pickpocket');
   for (const [id, s] of Object.entries(STALLS)) add('thieving', s.lvl, `${id[0].toUpperCase() + id.slice(1)} stall`, s.loot[0].id, 'Stalls');
   for (const [id, c] of Object.entries(THIEF_CHESTS)) add('thieving', c.lvl, `Chest (${id === 'tomb' ? 'tomb' : c.loot[0].qty[0] + ' coins'})`, 'casket', 'Chests');
+  // magic & runecraft
+  for (const s of SPELLS) if (s.lvl > 0) add('magic', s.lvl, s.name, null, s.type === 'combat' ? 'Combat' : s.type === 'teleport' ? 'Teleport' : 'Utility');
+  for (const r of RUNES) {
+    add('runecraft', r.lvl, `${r.name} runes (${r.xp} xp)`, r.item, 'Altars');
+    if (r.step) for (let l = r.step; l <= 99; l += r.step) add('runecraft', l, `${1 + Math.floor(l / r.step)} ${r.name.toLowerCase()} runes per essence`, r.item, 'Multiples');
+  }
   // prayer
   for (const pr of PRAYERS) add('prayer', pr.lvl, `${pr.name}: ${pr.desc}`, null, 'Prayers');
   for (const [id, xp] of Object.entries(BONES)) if (xp) add('prayer', 1, `${ITEMS[id].name} (${xp} xp)`, id, 'Bones');

@@ -63,9 +63,9 @@ In dependency order, one release each:
 1. **Ranged + Fletching** [done in 1.2] — bows (normal to heartwood), arrows, darts, crossbows, bolts;
    the combat triangle (monster weaknesses and resistances, armour aim penalties, archers that shoot
    back); dragonhide is ranged armour; Sharp/Hawk/Eagle Eye prayers.
-2. **Magic + Runecraft** [next] — elemental strike/bolt/blast/wave, a teleport to every town, high alchemy,
+2. **Magic + Runecraft** [done in 1.3] — elemental strike/bolt/blast/wave, a teleport to every town, high alchemy,
    superheat, jewellery enchanting (teleport necklaces, recoil ring), battlestaves from orbs.
-3. **Herblore** — herbs from monster drops, vials from glassblowing; shop potions become craftable,
+3. **Herblore** [next] — herbs from monster drops, vials from glassblowing; shop potions become craftable,
    plus antifire and antipoison (poison added to combat).
 4. **Agility** — a course per town, shortcuts around the map, marks of grace → graceful outfit.
 5. **Slayer** — three slayer masters, tasks, slayer-only monsters with unique drops.
@@ -124,7 +124,7 @@ economy.
 | 1.0 [done] | Android app, touch controls, portrait + landscape |
 | 1.1 [done] | Separate maps, 8 dungeons, the 13-skill buildout, skill guides, 1x default, validator |
 | 1.2 [done] | Ranged + Fletching, combat triangle |
-| 1.3 | Magic + Runecraft |
+| 1.3 [done] | Magic + Runecraft |
 | 1.4 | Herblore + Agility |
 | 1.5 | Slayer, more monsters, Wilderness dungeons |
 | 1.6 | Quest wave + achievement diaries |

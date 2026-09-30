@@ -296,6 +296,18 @@ export function buildObjectSprites() {
     }
   }, 400, 368, false)];
   extraStalls(S);
+  S.essence_rock = [build((p) => { p.ball(16, 18, 15, 12, '#c8c4d8'); p.ball(10, 20, 8, 7, '#d8d4e8'); p.ball(22, 14, 7, 6, '#e8e4f0'); for (const [x, y] of [[9, 14], [20, 20], [15, 10], [24, 12]]) { p.set(x, y, '#ffffff'); p.set(x + 1, y + 1, '#a8a0c8'); } }, 32, 32)];
+  S.mysterious_ruins = [build((p) => {
+    p.ellipse(16, 24, 15, 7, '#6a6258');
+    for (const [x, y, h] of [[3, 10, 14], [27, 11, 13], [9, 4, 12], [21, 5, 12]]) { p.rect(x, y, 4, h, STONE); p.vline(x, y, y + h - 1, STONE_L); p.rect(x, y + h - 2, 4, 2, STONE_D); }
+    p.ellipse(16, 22, 6, 3, '#a898c8'); p.set(16, 21, '#ffffff');
+  }, 32, 32)];
+  S.rune_altar = [build((p) => {
+    p.rect(3, 12, 26, 16, '#8a8278'); p.rect(3, 12, 26, 3, '#a8a098'); p.rect(6, 28, 4, 3, STONE_D); p.rect(22, 28, 4, 3, STONE_D);
+    p.ball(16, 9, 6, 6, '#c8b8f0'); p.ball(14, 7, 2, 2, '#ffffff'); p.line(10, 20, 22, 20, '#c8a040'); p.line(16, 16, 16, 25, '#c8a040');
+  }, 32, 32)];
+  S.altar_portal = [0, 1, 2].map((f) => build((p) => { p.ellipse(8, 12, 7, 11, '#3a2a8a'); p.ellipse(8, 12, 5.5, 9, ['#8a6ae8', '#a88af0', '#7a5ad8'][f]); p.ellipse(8, 12, 3, 5, '#e8e0ff'); }, 16, 24));
+  S.altar_portal.anim = true;
   S.chest = [build((p) => { p.rect(1, 5, 14, 9, '#8a5a2a'); p.rect(1, 3, 14, 4, '#a06a3a'); p.hline(1, 14, 7, '#4a4a4a'); p.rect(7, 6, 2, 3, '#c8b060'); }, 16, 15)];
   S.boss_chest = [build((p) => { p.rect(1, 5, 14, 9, '#6a2a2a'); p.rect(1, 3, 14, 4, '#8a3a3a'); p.hline(1, 14, 7, '#e8c13a'); p.vline(1, 3, 13, '#e8c13a'); p.vline(14, 3, 13, '#e8c13a'); p.rect(7, 6, 2, 3, '#ffe080'); }, 16, 15)];
   S.flour_bin = [build((p) => { p.rect(1, 3, 14, 12, WOOD); p.hline(1, 14, 3, WOOD_L); p.rect(3, 4, 10, 3, '#f4f0e8'); p.vline(1, 3, 14, WOOD_D); }, 16, 16)];

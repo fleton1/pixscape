@@ -4,6 +4,7 @@ import { mulberry32, fbm, valueNoise, hash2 } from '../util.js';
 import { Heap } from './path.js';
 import { OBJECTS } from '../data/objects.js';
 import { makeBuilder } from './build.js';
+import { ALTAR_SITES, RUNE } from '../data/magic.js';
 
 export const BIOME = { OCEAN: 0, KINGDOM: 1, WILD: 2, FROST: 3, DESERT: 4, SWAMP: 5, ELVEN: 6, TROPIC: 7, VOLCANIC: 8, CAVE: 9, TOMB: 10, SEWER: 11, CRYPT: 12, ICECAVE: 13, LAVACAVE: 14, HOLLOW: 15 };
 export const BIOME_INFO = {
@@ -473,6 +474,15 @@ export function generateWorld() {
   spawnIn('rock_crab', 6, 117, 138, 5); spawnIn('rock_crab', 4, 114, 186, 5); spawnIn('sand_crab', 6, 148, 296, 7);
   // trees
   for (const [x, y] of [[26, 126], [33, 128]]) placeNear('heartwood', x, y);
+
+  // ================================================================ 1.3: MAGIC & RUNECRAFT
+  npc('archmage', 231, 120, { shop: 'magic', wander: 1 }); icon('shop', 231, 120); icon('rune', 231, 120);
+  w.points.exit_essence = [231, 121];
+  for (const [rune, [x, y]] of Object.entries(ALTAR_SITES)) {
+    const o = entrance('mysterious_ruins', x, y, 'altar_' + rune, `You are pulled into the ${RUNE[rune].name.toLowerCase()} altar.`);
+    o.rune = rune;
+  }
+  spawnIn('cultist', 5, 285, 62, 6); spawnIn('cultist', 3, 268, 68, 5);
 
   // ================================================================ 1.2: RANGED
   spawnIn('goblin_archer', 3, 162, 120, 8); spawnIn('bandit_archer', 3, 350, 241, 6);

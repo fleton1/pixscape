@@ -5,6 +5,7 @@
 //   burn:    { item, stop } - chance to fail into `item`, falling to 0 at level `stop`
 // Recipes are also what the skill guides list, so every unlock shows up there automatically.
 import { DHIDES, ITEMS, BOW_WOODS, AMMO_METALS, STOCKS } from './items.js';
+import { RUNES } from './magic.js';
 
 export const RECIPES = [];
 const r = (o) => RECIPES.push({ skill: null, lvl: 1, xp: 0, in: {}, keep: [], returns: {}, station: null, ...o });
@@ -119,6 +120,12 @@ for (const a of AMMO_METALS) {
   r({ id: a.m + '_crossbow', skill: 'fletching', lvl, xp, in: { [a.m + '_crossbow_u']: 1, bow_string: 1 }, out: a.m + '_crossbow' });
   r({ id: a.m + '_bolts', skill: 'fletching', lvl, xp: [0.5, 1.5, 3.5, 5, 7, 10][a.tier], in: { [a.m + '_bolts_unf']: 1, feather: 1 }, out: a.m + '_bolts', batch: 10 });
 }
+
+// ------------------------------------------------------------------ magic & runecraft
+r({ id: 'tiara', skill: 'crafting', lvl: 23, xp: 52.5, in: { silver_bar: 1 }, keep: ['tiara_mould'], out: 'tiara', station: 'furnace', ticks: 3 });
+for (const rn of RUNES) r({ id: rn.id + '_tiara', skill: 'runecraft', lvl: rn.lvl, xp: 25 + rn.lvl * 0.5, in: { tiara: 1, [rn.id + '_talisman']: 1 }, out: rn.id + '_tiara' });
+[['water', 54, 100], ['earth', 58, 112.5], ['fire', 62, 125], ['air', 66, 137.5]].forEach(([e, lvl, xp]) =>
+  r({ id: e + '_battlestaff', skill: 'crafting', lvl, xp, in: { battlestaff: 1, [e + '_orb']: 1 }, out: e + '_battlestaff' }));
 
 // Tanning is a paid service (the tanner), not a recipe: hide -> leather, and the fee.
 export const TANNING = [

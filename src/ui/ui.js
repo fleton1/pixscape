@@ -6,11 +6,13 @@ import { PETS } from '../data/npcs.js';
 import { QUESTS } from '../game/quests.js';
 import { itemOptions, useOnItem, dropSlot } from '../game/actions.js';
 import { iconURL, iconFor } from '../sprites/items.js';
-import { skillIcon, tabIcon, prayerIcon, orbIcon } from '../sprites/ui.js';
+import { skillIcon, tabIcon, prayerIcon, orbIcon, spellIcon } from '../sprites/ui.js';
 import { buildSprite } from '../sprites/chars.js';
 import { playerMaxHit, playerRangedMaxHit } from '../game/combat.js';
 import { smelt, smith, craftJewellery } from '../game/skilling.js';
 import { makeableCount, levelOk, make } from '../game/crafting.js';
+import { selectSpell, clearSpell, canCast, runeText, missingRune } from '../game/magic.js';
+import { SPELLS, SPELL } from '../data/magic.js';
 import { RECIPES, recipeOut } from '../data/recipes.js';
 import { skillGuide } from '../data/guide.js';
 import { xpForLevel, commas, fmtNum, clamp } from '../util.js';
@@ -158,7 +160,7 @@ export class UI {
     setTimeout(() => b.classList.add('out'), 3800);
     setTimeout(() => b.remove(), 4500);
     if (skill === 'hitpoints' || skill === 'prayer') this.dirty('orbs');
-    this.dirty('combat'); this.dirty('prayer');
+    this.dirty('combat'); this.dirty('prayer'); this.dirty('magic');
   }
   announce(html, kind) {
     const b = h('div', 'announce ' + (kind || ''), html);
@@ -238,6 +240,7 @@ export class UI {
       el.innerHTML = s ? `<img src="${iconURL(s.id, s.qty)}">${ITEMS[s.id].stack ? `<span class="qty ${s.qty >= 10000000 ? 'g' : s.qty >= 100000 ? 'w' : ''}">${fmtNum(s.qty)}</span>` : ''}` : '';
     }
     if (this.window === 'bank') this.dirty('bank');
+    if (this.tab === 'magic') this.dirtySet.add('magic');
   }
   invEntries(i) {
     const p = G.player;
@@ -286,7 +289,7 @@ export class UI {
       el.onmousedown = (e) => {
         const it = p.equip[slot];
         if (!it) return;
-        if (e.button === 2) { this.openMenu(e.clientX, e.clientY, [{ text: `Remove <span class="m-item">${ITEMS[it.id].name}</span>`, fn: () => p.unequip(slot) }, { text: `Examine <span class="m-item">${ITEMS[it.id].name}</span>`, fn: () => msg(ITEMS[it.id].examine) }, { text: 'Cancel', fn: () => {} }]); return; }
+        if (e.button === 2) { this.openMenu(e.clientX, e.clientY, [{ text: `Remove <span class="m-item">${ITEMS[it.id].name}</span>`, fn: () => p.unequip(slot) }, ...(ITEMS[it.id].jewelTele ? [{ text: `Rub <span class="m-item">${ITEMS[it.id].name}</span>`, fn: () => rubJewellery(slot) }] : []), { text: `Examine <span class="m-item">${ITEMS[it.id].name}</span>`, fn: () => msg(ITEMS[it.id].examine) }, { text: 'Cancel', fn: () => {} }]); return; }
         p.unequip(slot);
       };
       el.oncontextmenu = (e) => e.preventDefault();
@@ -325,12 +328,22 @@ export class UI {
       : [['accurate', 'Accurate', 'attack', 'Attack XP'], ['aggressive', 'Aggressive', 'strength', 'Strength XP'], ['defensive', 'Defensive', 'defence', 'Defence XP']];
     const cur = ranged ? p.rangedStyle : p.style;
     const ammoNote = ranged && !p.ammoFits() ? '<div class="bonuses small danger">No usable ammo equipped</div>' : '';
+    const staff = w && w.equip.magic;
+    const cast = p.castingSpell();
+    const autoRow = staff ? `<button class="toggle ${cast ? 'on' : ''}" id="autocast">${cast ? `<img src="${spellIcon(cast)}" class="acimg"> Autocast: ${cast.name}` : 'Choose a spell to autocast'}<br><small>(${cast ? 'tap to change' : 'your staff can cast combat spells'})</small></button>` : '';
     panel.innerHTML = `<div class="ctitle">${w ? w.name : 'Unarmed'}</div><div class="clevel">Combat Lvl: ${p.combatLevel()}</div>
       <div class="styles">${styles.map(([k, n, s, x]) => `<button class="style ${cur === k ? 'on' : ''}" data-s="${k}"><img src="${skillIcon(s)}"><div>${n}</div><small>${x}</small></button>`).join('')}</div>
+      ${autoRow}
       <button class="toggle ${G.settings.autoRetaliate ? 'on' : ''}" id="autoret">Auto Retaliate<br><small>(${G.settings.autoRetaliate ? 'On' : 'Off'})</small></button>
-      <div class="bonuses small">Max hit: ${ranged ? playerRangedMaxHit(p) : playerMaxHit(p)} &nbsp; Speed: ${(p.attackSpeed() * 0.6).toFixed(1)}s${ranged ? ` &nbsp; Range: ${p.attackRange()}` : ''}</div>${ammoNote}`;
+      <div class="bonuses small">Max hit: ${cast ? cast.max : ranged ? playerRangedMaxHit(p) : playerMaxHit(p)} &nbsp; Speed: ${(p.attackSpeed() * 0.6).toFixed(1)}s${ranged ? ` &nbsp; Range: ${p.attackRange()}` : ''}</div>${ammoNote}`;
     panel.querySelectorAll('.style').forEach((b) => (b.onclick = () => { if (ranged) p.rangedStyle = b.dataset.s; else p.style = b.dataset.s; this.dirty('combat'); sfx('click'); }));
     $('#autoret').onclick = () => { G.settings.autoRetaliate = !G.settings.autoRetaliate; this.dirty('combat'); sfx('click'); };
+    if (staff) $('#autocast').onclick = (e) => {
+      const opts = SPELLS.filter((s) => s.type === 'combat' && p.lvl('magic') >= s.lvl).map((s) => ({ text: `<span style="color:#00ff80">${s.name}</span>${missingRune(p, s) ? ' <small>(no runes)</small>' : ''}`, fn: () => this.setAutocast(s.id) }));
+      opts.push({ text: 'Stop autocasting', fn: () => this.setAutocast(null) }, { text: 'Cancel', fn: () => {} });
+      const r = e.currentTarget.getBoundingClientRect();
+      this.openMenu(r.left + r.width / 2, r.top, opts);
+    };
   }
 
   // ================================================================ quests
@@ -409,8 +422,9 @@ export class UI {
     // exclusive groups
     for (const other of PRAYERS) {
       if (!p.prayers.has(other.id)) continue;
-      const offence = (x) => x.att || x.str || x.rng;
-      const clash = ((pr.protect || pr.overhead) && (other.protect || other.overhead)) || ['att', 'str', 'def', 'rng'].some((k) => pr[k] && other[k]) || (pr.rng && offence(other)) || (other.rng && offence(pr));
+      const melee = (x) => x.att || x.str;
+      const clash = ((pr.protect || pr.overhead) && (other.protect || other.overhead)) || ['att', 'str', 'def', 'rng', 'mag'].some((k) => pr[k] && other[k])
+        || ((pr.rng || pr.mag) && (melee(other) || other.rng || other.mag)) || ((other.rng || other.mag) && melee(pr));
       if (clash) p.prayers.delete(other.id);
     }
     p.prayers.add(id);
@@ -420,10 +434,51 @@ export class UI {
 
   // ================================================================ magic
   renderMagic() {
-    const panel = $('#p-magic');
-    panel.innerHTML = `<div class="spell" id="sp-home"><div class="sp-icon"></div><div><b>Home Teleport</b><br><small>Teleports you to Brindlewood. Not usable above level 20 Wilderness.</small></div></div>
-      <div class="lore">The standard spellbook is still being written by the wizards of Highcrest...</div>`;
-    $('#sp-home').onclick = () => G.game.homeTeleport();
+    const p = G.player, panel = $('#p-magic');
+    const sel = G.useSpell && G.useSpell.id;
+    let html = '<div class="spellgrid">';
+    for (const s of SPELLS) {
+      const lvlOk = p.lvl('magic') >= s.lvl, runesOk = !missingRune(p, s);
+      html += `<button class="sp ${lvlOk ? '' : 'locked'} ${lvlOk && runesOk ? 'ready' : ''} ${sel === s.id ? 'sel' : ''} ${p.autocast === s.id ? 'auto' : ''}" data-id="${s.id}"><img src="${spellIcon(s)}"></button>`;
+    }
+    html += `</div><div class="spinfo">${this.spellInfo(SPELL[this.spellShown] || (sel && SPELL[sel]))}</div>`;
+    panel.innerHTML = html;
+    panel.querySelectorAll('.sp').forEach((b) => {
+      const s = SPELL[b.dataset.id];
+      b.onmouseenter = () => { if (!G.touch) { this.spellShown = s.id; panel.querySelector('.spinfo').innerHTML = this.spellInfo(s); } };
+      b.oncontextmenu = (e) => e.preventDefault();
+      b.onmousedown = (e) => {
+        if (e.button !== 2) return;
+        e.preventDefault();
+        this.spellShown = s.id; this.dirty('magic');
+        const opts = [{ text: `Cast <span style="color:#00ff80">${s.name}</span>`, fn: () => selectSpell(s.id) }];
+        if (s.type === 'combat') opts.push({ text: p.autocast === s.id ? 'Stop autocasting' : `Autocast <span style="color:#00ff80">${s.name}</span>`, fn: () => this.setAutocast(p.autocast === s.id ? null : s.id) });
+        opts.push({ text: 'Cancel', fn: () => {} });
+        this.openMenu(e.clientX, e.clientY, opts);
+      };
+      b.onclick = () => {
+        this.spellShown = s.id;
+        if (sel === s.id) { clearSpell(); return; }
+        sfx('click');
+        selectSpell(s.id);
+        this.dirty('magic');
+      };
+    });
+  }
+  spellInfo(s) {
+    if (!s) return `<span class="hint">${G.touch ? 'Tap a spell to cast it. Hold for autocast.' : 'Click a spell to cast it. Right-click for autocast.'}</span>`;
+    const p = G.player;
+    const runes = s.type === 'home' ? 'No runes needed' : Object.entries(s.runes).map(([r, n]) => `${n} ${r}`).join(', ');
+    const what = s.type === 'combat' ? `Max hit ${s.max}` : s.type === 'teleport' ? `To ${s.place}` : s.type === 'alch' ? `Items to ${Math.round(s.rate * 100)}% of value in coins` : s.type === 'superheat' ? 'Smelts ore without a furnace' : s.type === 'enchant' ? `Enchants ${s.gem} jewellery` : s.type === 'charge' ? 'Charges an orb at an obelisk' : s.desc;
+    return `<b class="${p.lvl('magic') >= s.lvl ? '' : 'danger'}">${s.name}</b> <span class="y">Lvl ${s.lvl}</span><br><small>${what}<br>${runes}</small>`;
+  }
+  setAutocast(id) {
+    const p = G.player;
+    p.autocast = id;
+    const w = p.weapon();
+    if (id && !(w && w.equip.magic)) msg('You need to wield a staff to autocast.');
+    else msg(id ? `You will now autocast ${SPELL[id].name}.` : 'You stop autocasting.');
+    this.dirty('magic'); this.dirty('combat');
   }
 
   // ================================================================ settings

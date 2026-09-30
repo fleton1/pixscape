@@ -6,6 +6,8 @@ import { NPCS } from '../data/npcs.js';
 import { SKILL_NAMES } from '../data/skills.js';
 import { chop, mine, fish, cook, lightLogs, feedFire, stealStall, pickpocket, bury, offerBones, prayAt, cutGem } from './skilling.js';
 import { recipesForPair, recipesForStation, offerRecipes, pickCrop, shear, searchChest } from './crafting.js';
+import { castOnItem, castOnNpc, castOnObject, clearSpell, rubJewellery, enterRuins, craftRunes } from './magic.js';
+import { SPELL } from '../data/magic.js';
 import { DIALOGUE, searchObject, pickObject, combineTablets, tombDoor, openChest, dig, readClue, openCasket, rubLamp } from './quests.js';
 import { npcLevelColor } from './combat.js';
 import { placeName, areaAt } from './world_info.js';
@@ -20,6 +22,15 @@ export function worldMenu(hit) {
   const p = G.player;
   const E = [];
   const ex = [];
+  if (G.useSpell) {
+    const s = SPELL[G.useSpell.id];
+    const nm = `<span style="color:#00ff80">${s.name}</span>`;
+    if (s.type === 'combat') for (const n of hit.npcs) if (n.combat) E.push({ text: `Cast ${nm} -> ${Y(n.name)}`, fn: () => castOnNpc(n) });
+    if (s.type === 'charge' && hit.obj) E.push({ text: `Cast ${nm} -> ${C(OBJECTS[hit.obj.type].name)}`, fn: () => castOnObject(hit.obj) });
+    E.push({ text: 'Walk here', fn: () => { clearSpell(); walk(hit); } });
+    E.push({ text: 'Cancel', fn: () => clearSpell() });
+    return E;
+  }
   const use = G.useItem;
   if (use) {
     const nm = ITEMS[use.id].name;
@@ -77,6 +88,13 @@ export function performNpc(n, option) {
     case 'Bank': G.ui.openBank(); break;
     case 'Pickpocket': pickpocket(n); break;
     case 'Shear': shear(n); break;
+    case 'Teleport': {
+      const w = G.worlds.get('essence');
+      n.say('Senventior disthine molenko!');
+      G.effects.push({ kind: 'sparkle', follow: p, t: performance.now() }); sfx('teleport');
+      after(2, () => G.game.teleport(...w.points.arrive, 'You are teleported to the rune essence mine.', true, 'essence'));
+      break;
+    }
     case 'Milk':
       if (!p.has('bucket')) { msg('You need a bucket to milk the cow.'); return; }
       p.playAnim('attack', 2);
@@ -117,7 +135,8 @@ export function performObj(o, option, useItem) {
       G.game.teleport(o.to[0], o.to[1], o.msg, true, o.to[2]);
       break;
     case 'Enter':
-      if (o.to) { sfx('ladder'); G.game.teleport(o.to[0], o.to[1], o.msg, true, o.to[2]); }
+      if (o.type === 'mysterious_ruins') enterRuins(o);
+      else if (o.to) { sfx('ladder'); G.game.teleport(o.to[0], o.to[1], o.msg, true, o.to[2]); }
       else if (o.type === 'tomb_door') tombDoor(o, false);
       else if (o.type === 'portal') G.game.teleport(...G.game.home(), 'The portal whisks you away.', true, 'main');
       break;
@@ -130,6 +149,7 @@ export function performObj(o, option, useItem) {
     case 'Steal-from': stealStall(o); break;
     case 'Open': openChest(o); break;
     case 'Search-for-traps': searchChest(o); break;
+    case 'Craft-rune': craftRunes(o); break;
     case 'Spin': case 'Form': case 'Fire': case 'Churn':
       if (!offerRecipes(recipesForStation(o), `What would you like to ${option.toLowerCase()}?`, o)) msg('You have nothing to use here.');
       break;
@@ -181,6 +201,8 @@ function useOnObjAction(itemId, o) {
   const d = OBJECTS[o.type];
   if (!p.has(itemId)) return;
   if (d.cook && COOKING[itemId]) return cook(o, itemId);
+  if (o.type === 'rune_altar' && itemId === 'rune_essence') return craftRunes(o);
+  if (o.type === 'mysterious_ruins' && ITEMS[itemId].talisman) return enterRuins(o);
   if ((o.type === 'fire' || o.type === 'campfire') && FIREMAKING[itemId]) return feedFire(o, itemId);
   if (offerRecipes(recipesForStation(o, itemId), null, o)) return;
   if (o.type === 'furnace' && (SMELTING.some((s) => Object.keys(s.ores).includes(itemId)) || itemId === 'gold_bar')) return G.ui.openFurnace(itemId === 'gold_bar' ? 'jewellery' : 'bars');
@@ -214,6 +236,12 @@ export function itemOptions(slot) {
   const it = ITEMS[s.id];
   const nm = O(it.name);
   const E = [];
+  if (G.useSpell) {
+    const sp = SPELL[G.useSpell.id];
+    E.push({ text: `Cast <span style="color:#00ff80">${sp.name}</span> -> ${nm}`, fn: () => castOnItem(slot) });
+    E.push({ text: 'Cancel', fn: () => clearSpell() });
+    return E;
+  }
   if (G.useItem) {
     const u = ITEMS[G.useItem.id].name;
     E.push({ text: `Use ${O(u)} -> ${nm}`, fn: () => useOnItem(G.useItem.slot, slot) });
@@ -230,6 +258,7 @@ export function itemOptions(slot) {
   if (s.id === 'lamp') E.push({ text: `Rub ${nm}`, fn: () => rubLamp(slot) });
   if (s.id === 'spade') E.push({ text: `Dig ${nm}`, fn: () => { p.path = []; p.target = null; dig(); } });
   if (s.id === 'bird_nest') E.push({ text: `Search ${nm}`, fn: () => searchNest(slot) });
+  if (it.jewelTele) E.push({ text: `Rub ${nm}`, fn: () => rubJewellery(slot) });
   E.push({ text: `Use ${nm}`, fn: () => { G.useItem = { slot, id: s.id }; G.ui.dirty('inv'); } });
   E.push({ text: `Drop ${nm}`, fn: () => dropSlot(slot) });
   E.push({ text: `Examine ${nm}`, fn: () => msg(it.examine + (it.value > 1 ? ` <span style="color:#7f7f7f">(${commas(it.value)} coins)</span>` : '')) });

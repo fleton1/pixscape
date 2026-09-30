@@ -3,6 +3,7 @@ import { Mover } from './entity.js';
 import { G, msg, sfx } from './state.js';
 import { SKILLS, SKILL_NAMES, PRAYERS } from '../data/skills.js';
 import { ITEMS, SLOTS } from '../data/items.js';
+import { SPELL } from '../data/magic.js';
 import { levelForXp, xpForLevel } from '../util.js';
 
 export const INV_SIZE = 28;
@@ -23,6 +24,7 @@ export class Player extends Mover {
     this.runEnergy = 100;
     this.style = 'accurate';        // melee: accurate | aggressive | defensive
     this.rangedStyle = 'accurate';  // ranged: accurate | rapid | longrange
+    this.autocast = null;           // combat spell cast automatically while wielding a staff
     this.prayers = new Set();
     this.prayerDrain = 0;
     this.target = null;       // {kind, ref, option}
@@ -56,7 +58,8 @@ export class Player extends Mover {
     const base = 0.25 * (s.defence.lvl + s.hitpoints.lvl + Math.floor(s.prayer.lvl / 2));
     const melee = 0.325 * (s.attack.lvl + s.strength.lvl);
     const ranged = 0.325 * Math.floor(s.ranged.lvl * 1.5);
-    return Math.floor(base + Math.max(melee, ranged));
+    const magic = 0.325 * Math.floor(s.magic.lvl * 1.5);
+    return Math.floor(base + Math.max(melee, ranged, magic));
   }
   addXp(skill, amount, raw = false) {
     const rate = raw ? 1 : G.settings.xpRate || 1;
@@ -149,13 +152,13 @@ export class Player extends Mover {
 
   // ---------------- equipment
   bonuses() {
-    const b = { att: 0, str: 0, def: 0, prayer: 0, rng: 0, rstr: 0 };
+    const b = { att: 0, str: 0, def: 0, prayer: 0, rng: 0, rstr: 0, mag: 0 };
     const ranged = this.rangedWeapon();
     for (const s of SLOTS) {
       const e = this.equip[s];
       if (!e) continue;
       const eq = ITEMS[e.id].equip;
-      b.att += eq.att || 0; b.str += eq.str || 0; b.def += eq.def || 0; b.prayer += eq.prayer || 0; b.rng += eq.rng || 0;
+      b.att += eq.att || 0; b.str += eq.str || 0; b.def += eq.def || 0; b.prayer += eq.prayer || 0; b.rng += eq.rng || 0; b.mag += eq.mag || 0;
       // ammo only counts when the weapon fires it
       if (s !== 'ammo' || (ranged && ranged.type !== 'thrown' && this.ammoFits())) b.rstr += eq.rstr || 0;
     }
@@ -169,11 +172,18 @@ export class Player extends Mover {
     if (!r || r.type === 'thrown') return true;
     return !!a && a.type === (r.type === 'bow' ? 'arrow' : 'bolt') && a.tier <= r.tier;
   }
+  // The spell being autocast, if the wielded weapon can cast it and the player is high enough level.
+  castingSpell() {
+    const w = this.weapon(), s = this.autocast && SPELL[this.autocast];
+    return w && w.equip.magic && s && this.lvl('magic') >= s.lvl ? s : null;
+  }
   attackSpeed() {
+    if (this.castingSpell()) return 5;
     const w = this.weapon(), base = w ? w.equip.speed || 4 : 4;
     return this.rangedWeapon() && this.rangedStyle === 'rapid' ? base - 1 : base;
   }
   attackRange() {
+    if (this.castingSpell()) return 10;
     const r = this.rangedWeapon();
     if (!r) return 1;
     return Math.min(10, r.range + (this.rangedStyle === 'longrange' ? 2 : 0));

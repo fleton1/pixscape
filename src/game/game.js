@@ -4,6 +4,7 @@ import { Player } from './player.js';
 import { spawnNpc, tickNpc } from './npc.js';
 import { Mover, touchingCardinal, rectDist } from './entity.js';
 import { playerAttack, tickTelegraphs, canHitFrom } from './combat.js';
+import { magicAttack } from './magic.js';
 import { tickAction } from './skilling.js';
 import { findPath } from '../world/path.js';
 import { ITEMS } from '../data/items.js';
@@ -208,11 +209,11 @@ export const game = {
     return r.reached;
   },
 
-  setTarget(kind, ref, option) {
+  setTarget(kind, ref, option, extra = {}) {
     const p = G.player;
     p.action = null; p.toolLook = null;
     G.ui && G.ui.closeInterfaces();
-    p.target = { kind, ref, option, pathFor: null };
+    p.target = { kind, ref, option, pathFor: null, ...extra };
     this.pathToTarget(true);
     // perform immediately if already there
     this.processTarget(false);
@@ -222,7 +223,7 @@ export const game = {
     const p = G.player;
     if (t.kind === 'npc') {
       const n = t.ref;
-      if (t.option === 'Attack') return (x, y) => canHitFrom(p, n, x, y);
+      if (t.option === 'Attack' || t.option === 'Cast') return (x, y) => canHitFrom(p, n, x, y, t.spell);
       return (x, y) => { const [dx, dy] = rectDist(x, y, n.x, n.y, n.size); return Math.max(dx, dy) === 1; };
     }
     if (t.kind === 'obj') {
@@ -260,11 +261,12 @@ export const game = {
     if (t.kind === 'npc') {
       const n = t.ref;
       if (n.dead || !G.npcById.has(n.id)) { p.target = null; return; }
-      if (t.option === 'Attack') {
-        if (canHitFrom(p, n, p.x, p.y)) {
+      if (t.option === 'Attack' || t.option === 'Cast') {
+        if (canHitFrom(p, n, p.x, p.y, t.spell)) {
           p.path = [];
           p.faceTile(n.x + (n.size - 1) / 2, n.y + (n.size - 1) / 2);
-          if (p.attackCd <= 0) playerAttack(n);
+          // a single cast, then stop (autocast keeps going through Attack)
+          if (p.attackCd <= 0) { if (t.option === 'Cast') { magicAttack(n, t.spell); p.target = null; } else playerAttack(n); }
         } else if (before) this.pathToTarget(false);
         else if (!p.path.length && t.unreachable) { p.target = null; msg('I can\'t reach that!'); }
         return;
@@ -406,7 +408,7 @@ export const game = {
       v: SAVE_VERSION,
       p: {
         map: G.world.id, x: p.x, y: p.y, name: p.name, skills: p.skills, inv: p.inv, equip: p.equip, bank: p.bank, quests: p.quests, qp: p.questPoints,
-        collection: p.collection, pet: p.pet, clue: p.clue, flags: p.flags, stats: p.stats, style: p.style, rstyle: p.rangedStyle, running: p.running, runEnergy: p.runEnergy, look: p.look,
+        collection: p.collection, pet: p.pet, clue: p.clue, flags: p.flags, stats: p.stats, style: p.style, rstyle: p.rangedStyle, autocast: p.autocast, running: p.running, runEnergy: p.runEnergy, look: p.look,
       },
       settings: G.settings,
     };
@@ -431,7 +433,7 @@ export const game = {
     for (const k of Object.keys(p.equip)) p.equip[k] = item(d.equip?.[k]);
     p.bank = (d.bank || []).filter(item);
     p.quests = d.quests || {}; p.questPoints = d.qp || 0; p.collection = d.collection || {}; p.pet = d.pet || null; p.clue = d.clue || null;
-    p.flags = d.flags || {}; p.stats = { ...p.stats, ...(d.stats || {}) }; p.style = d.style || 'accurate'; p.rangedStyle = d.rstyle || 'accurate'; p.running = d.running ?? true; p.runEnergy = d.runEnergy ?? 100;
+    p.flags = d.flags || {}; p.stats = { ...p.stats, ...(d.stats || {}) }; p.style = d.style || 'accurate'; p.rangedStyle = d.rstyle || 'accurate'; p.autocast = d.autocast || null; p.running = d.running ?? true; p.runEnergy = d.runEnergy ?? 100;
     if (d.look) p.look = d.look;
     return true;
   },

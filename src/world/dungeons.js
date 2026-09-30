@@ -4,6 +4,7 @@ import { BIOME } from './gen.js';
 import { D } from './map.js';
 import { mulberry32, hash2 } from '../util.js';
 import { makeBuilder } from './build.js';
+import { RUNES } from '../data/magic.js';
 
 // Common dungeon scaffolding: fill with wall, carve rooms and corridors, void unreachable rock.
 function scaffold(def) {
@@ -178,7 +179,7 @@ function crypt() {
   B.placeNear('chest_50', 36, 13);
   for (const [x, y] of [[24, 9], [30, 10], [12, 32], [20, 33]]) w.addObject('skulls', x, y);
   spawnIn('zombie', 4, 10, 8, 5); spawnIn('skeleton_warrior', 5, 30, 9, 6); spawnIn('banshee', 6, 48, 13, 6);
-  spawnIn('ghoul', 5, 17, 31, 9); spawnIn('wraith', 4, 40, 38, 5);
+  spawnIn('ghoul', 5, 17, 31, 9); spawnIn('wraith', 4, 40, 38, 5); spawnIn('necromancer', 3, 17, 31, 8);
   B.npc('drowned_abbot', 46, 38, { wander: 2 });
   B.finish([[D.BONES, 0.02], [D.CRACKS, 0.03], [D.PEBBLES, 0.01]]);
   return w;
@@ -257,7 +258,43 @@ function fishSpots(w, B) {
   }
 }
 
-export const DUNGEONS = { catacombs, tomb, sewers, deeps, crypt, hollowroot, icecaves, depths };
+// ------------------------------------------------------------------ Rune essence mine (via the Archmage)
+function essence() {
+  const { w, B } = scaffold({ id: 'essence', name: 'Rune Essence Mine', W: 36, H: 30, floor: T.TILES, wall: T.WALL_DARK, biome: BIOME.CAVE, music: 'grove', dark: 0.25, seed: 31 });
+  B.room(3, 3, 30, 24);
+  B.area('Rune Essence Mine', 0, 0, 35, 29, 'grove');
+  for (const [x, y] of [[6, 6], [27, 6], [6, 21], [27, 21], [16, 5]]) B.place('essence_rock', x, y);
+  B.place('altar_portal', 17, 14, { toMain: true, msg: 'You step through the portal back to Highcrest.' });
+  w.points.arrive = [17, 17];
+  for (const [x, y] of [[4, 14], [31, 14]]) B.place('crystal', x, y);
+  B.finish([[D.CRACKS, 0.02]]);
+  return w;
+}
+
+// ------------------------------------------------------------------ Rune altars: one small realm per rune
+const REALM = {
+  air: [T.SNOW, BIOME.FROST], mind: [T.SANDFLOOR, BIOME.TOMB], water: [T.ICE, BIOME.ICECAVE], earth: [T.DIRT, BIOME.CAVE],
+  fire: [T.ASH, BIOME.LAVACAVE], body: [T.CARPET_BLUE, BIOME.CRYPT], cosmic: [T.CAVE, BIOME.CAVE], chaos: [T.STONEFLOOR, BIOME.WILD],
+  nature: [T.GRASS, BIOME.HOLLOW], law: [T.TILES, BIOME.KINGDOM], death: [T.CAVE, BIOME.CRYPT], blood: [T.CARPET_RED, BIOME.LAVACAVE],
+};
+function altarRealm(rune) {
+  const [floor, biome] = REALM[rune.id];
+  const { w, B } = scaffold({ id: 'altar_' + rune.id, name: `${rune.name} Altar`, W: 25, H: 25, floor, wall: T.CAVE_WALL, biome, music: 'grove', dark: 0.35, seed: 40 + RUNES.indexOf(rune) });
+  B.cavern(12, 12, 9, floor, 0.15);
+  if (rune.id === 'fire' || rune.id === 'blood') for (const [x, y] of [[5, 6], [19, 7], [6, 18]]) B.blob(x, y, 1.6, T.LAVA, 0.2);
+  if (rune.id === 'water') for (const [x, y] of [[5, 7], [19, 6], [18, 18]]) B.blob(x, y, 1.8, T.WATER, 0.2);
+  B.area(`${rune.name} Altar`, 0, 0, 24, 24, 'grove');
+  B.place('rune_altar', 11, 10, { rune: rune.id });
+  B.place('altar_portal', 12, 19, { toMain: true, msg: 'You step back out of the ruins.' });
+  w.points.arrive = [12, 16];
+  if (rune.id === 'nature') for (const [x, y] of [[6, 10], [18, 13]]) B.place('tree', x, y);
+  if (rune.id === 'air' || rune.id === 'water' || rune.id === 'cosmic') for (const [x, y] of [[7, 7], [17, 7]]) B.place('crystal', x, y);
+  if (rune.id === 'death' || rune.id === 'body') for (const [x, y] of [[7, 8], [17, 8], [8, 16]]) w.addObject('skulls', x, y);
+  B.finish([[D.PEBBLES, 0.02]]);
+  return w;
+}
+
+export const DUNGEONS = { catacombs, tomb, sewers, deeps, crypt, hollowroot, icecaves, depths, essence, ...Object.fromEntries(RUNES.map((r) => ['altar_' + r.id, () => altarRealm(r)])) };
 
 export function buildDungeons() {
   return Object.values(DUNGEONS).map((f) => f());
