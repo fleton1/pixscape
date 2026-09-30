@@ -597,6 +597,21 @@ for (const [id, name, slot, kind, marks] of graceful) {
   wear(id, name, slot, { def: 0 }, { kind, color: '#3a8a8a' }, look, 1000, { examine: 'Light and comfortable. Great for running.', graceful: true });
 }
 
+// =====================================================================================
+// 1.5 Slayer
+// =====================================================================================
+add('slayer_gem', { name: 'Enchanted gem', value: 1, icon: { kind: 'gem', color: '#8a2a8a' }, examine: 'A magical gem. It tells you your slayer task.' });
+wear('slayer_helmet', 'Slayer helmet', 'head', { def: 10, att: 0, req: { defence: 10 } }, { kind: 'fullhelm', color: '#2a2a2a' }, { kind: 'fullhelm', color: '#2a2a2a' }, 20000, { examine: 'Hits harder and truer against your slayer task.' });
+wear('mirror_shield', 'Mirror shield', 'shield', { def: 12, req: { defence: 20 } }, { kind: 'sqshield', color: '#c8d0d8' }, { kind: 'sqshield', color: '#c8d0d8' }, 5000, { examine: 'Reflects a stonegaze\'s glare back at it.' });
+add('rock_hammer', { name: 'Rock hammer', value: 500, icon: { kind: 'hammer' }, examine: 'For finishing off gargoyles.' });
+wear('crawler_gloves', 'Crawler gloves', 'hands', { att: 3, str: 2, def: 3 }, { kind: 'gloves', color: '#b8a890' }, { color: '#b8a890' }, 8000, { rare: true, examine: 'Gloves that grip on their own. Unsettling.' });
+wear('ember_ring', 'Ember ring', 'ring', { str: 4, mag: 4 }, { kind: 'ring', color: '#e8701a' }, {}, 60000, { rare: true, examine: 'Warm to the touch.' });
+wear('gargoyle_maul', 'Gargoyle maul', 'weapon', { att: 60, str: 100, speed: 6, twoHanded: true, req: { strength: 65 } }, { kind: 'maul', color: '#7a7a74' }, { kind: 'maul', color: '#7a7a74' }, 500000, { rare: true, examine: 'A slab of living stone on a handle.' });
+wear('void_lash', 'Void lash', 'weapon', { att: 82, str: 82, speed: 4, req: { attack: 70 } }, { kind: 'lash', color: '#8a3ae8' }, { kind: 'lash', color: '#8a3ae8' }, 1800000, { rare: true, examine: 'It cracks through the gaps between worlds.' });
+wear('rift_cape', 'Rift cape', 'cape', { att: 5, str: 5, def: 8, rng: 5, mag: 5, prayer: 2 }, { kind: 'cape', color: '#3a1a5a' }, { color: '#3a1a5a', trim: '#b060ff' }, 800000, { rare: true, examine: 'The fabric shows a different sky.' });
+add('shadowbow', { name: 'Shadowbow', value: 2500000, rare: true, icon: { kind: 'longbow', color: '#2a2a34' }, examine: 'It fires two arrows at once, into the dark.',
+  equip: { slot: 'weapon', att: 0, str: 0, def: 0, rng: 95, speed: 7, twoHanded: true, req: { ranged: 70 }, ranged: { type: 'bow', range: 9, tier: 6, double: true }, look: { kind: 'longbow', color: '#2a2a34' } } });
+
 export function item(id) {
   const it = ITEMS[id];
   if (!it) throw new Error('Unknown item ' + id);

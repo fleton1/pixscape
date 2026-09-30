@@ -59,6 +59,7 @@ export class World {
     this.id = id; this.W = W; this.H = H;
     this.name = meta.name || ''; this.kind = meta.kind || 'overworld';
     this.music = meta.music || null; this.dark = meta.dark || 0; this.entrance = meta.entrance || null;
+    this.wild = meta.wild || 0; this.multi = !!meta.multi;   // Wilderness level of a dungeon; multi-combat
     this.ground = new Uint8Array(W * H);
     this.decor = new Uint8Array(W * H);
     this.biome = new Uint8Array(W * H);

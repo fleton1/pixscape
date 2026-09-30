@@ -5,6 +5,7 @@ import { BIOME, BIOME_INFO } from '../world/gen.js';
 export function biomeAt(x, y) { const w = G.world; return w.inb(x, y) ? w.biome[y * w.W + x] : BIOME.OCEAN; }
 export function areaAt(x, y) { const w = G.world; const a = w.inb(x, y) ? w.area[y * w.W + x] : 0; return a ? w.areas[a - 1] : null; }
 export function wildLevel(x, y) {
+  if (G.world && G.world.wild) return G.world.wild;
   if (!G.world || biomeAt(x, y) !== BIOME.WILD) return 0;
   return Math.max(1, Math.floor((80 - y) / 1.2) + 1);
 }

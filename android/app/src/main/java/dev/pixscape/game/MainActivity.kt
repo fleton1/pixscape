@@ -1,8 +1,15 @@
 package dev.pixscape.game
 
 import android.annotation.SuppressLint
+import android.content.ContentValues
 import android.graphics.Color
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.provider.MediaStore
+import android.webkit.JavascriptInterface
+import android.webkit.ValueCallback
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.WindowManager
@@ -14,6 +21,8 @@ import android.webkit.WebView
 import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
 import androidx.activity.addCallback
+import androidx.activity.result.contract.ActivityResultContracts
+import java.io.File
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -29,6 +38,34 @@ import androidx.webkit.WebViewClientCompat
 class MainActivity : ComponentActivity() {
 
     private lateinit var web: WebView
+    private var filePick: ValueCallback<Array<Uri>>? = null
+
+    // "Import save" in the game opens the system file picker through the WebView.
+    private val pickFile = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        filePick?.onReceiveValue(if (uri != null) arrayOf(uri) else null)
+        filePick = null
+    }
+
+    // Exposed to the game as window.PixAndroid: "Export save" writes the save to Downloads.
+    inner class Bridge {
+        @JavascriptInterface
+        fun saveFile(name: String, text: String): Boolean = try {
+            if (Build.VERSION.SDK_INT >= 29) {
+                val values = ContentValues().apply {
+                    put(MediaStore.Downloads.DISPLAY_NAME, name)
+                    put(MediaStore.Downloads.MIME_TYPE, "application/json")
+                }
+                val uri = contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values) ?: error("no uri")
+                contentResolver.openOutputStream(uri)!!.use { it.write(text.toByteArray()) }
+            } else {
+                val dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) ?: filesDir
+                File(dir, name).writeText(text)
+            }
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
 
     // Served from a fixed https origin (not file://) so ES modules load and localStorage (the save
     // game) stays with the same origin across updates.
@@ -73,8 +110,16 @@ class MainActivity : ComponentActivity() {
                     return true
                 }
             }
-            // Needed for the game's confirm() ("Delete your save and start over?").
-            webChromeClient = WebChromeClient()
+            // Needed for the game's confirm() ("Delete your save and start over?") and file picker.
+            webChromeClient = object : WebChromeClient() {
+                override fun onShowFileChooser(view: WebView, callback: ValueCallback<Array<Uri>>, params: FileChooserParams): Boolean {
+                    filePick?.onReceiveValue(null)
+                    filePick = callback
+                    pickFile.launch("*/*")
+                    return true
+                }
+            }
+            addJavascriptInterface(Bridge(), "PixAndroid")
         }
 
         val root = FrameLayout(this).apply {

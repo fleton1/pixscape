@@ -5,6 +5,7 @@ import { spawnNpc, tickNpc } from './npc.js';
 import { Mover, touchingCardinal, rectDist } from './entity.js';
 import { playerAttack, tickTelegraphs, canHitFrom, tickPoison } from './combat.js';
 import { gracefulPieces } from './agility.js';
+import { slayerCheck } from './slayer.js';
 import { magicAttack } from './magic.js';
 import { tickAction } from './skilling.js';
 import { findPath } from '../world/path.js';
@@ -268,6 +269,7 @@ export const game = {
         if (canHitFrom(p, n, p.x, p.y, t.spell)) {
           p.path = [];
           p.faceTile(n.x + (n.size - 1) / 2, n.y + (n.size - 1) / 2);
+          if (!slayerCheck(n)) { p.target = null; return; }
           // a single cast, then stop (autocast keeps going through Attack)
           if (p.attackCd <= 0) { if (t.option === 'Cast') { magicAttack(n, t.spell); p.target = null; } else playerAttack(n); }
         } else if (before) this.pathToTarget(false);
@@ -411,7 +413,7 @@ export const game = {
       v: SAVE_VERSION,
       p: {
         map: G.world.id, x: p.x, y: p.y, name: p.name, skills: p.skills, inv: p.inv, equip: p.equip, bank: p.bank, quests: p.quests, qp: p.questPoints,
-        collection: p.collection, pet: p.pet, clue: p.clue, flags: p.flags, stats: p.stats, style: p.style, rstyle: p.rangedStyle, autocast: p.autocast, running: p.running, runEnergy: p.runEnergy, look: p.look,
+        collection: p.collection, pet: p.pet, clue: p.clue, flags: p.flags, stats: p.stats, style: p.style, rstyle: p.rangedStyle, autocast: p.autocast, slayer: p.slayer, spts: p.slayerPoints, running: p.running, runEnergy: p.runEnergy, look: p.look,
       },
       settings: G.settings,
     };
@@ -436,9 +438,19 @@ export const game = {
     for (const k of Object.keys(p.equip)) p.equip[k] = item(d.equip?.[k]);
     p.bank = (d.bank || []).filter(item);
     p.quests = d.quests || {}; p.questPoints = d.qp || 0; p.collection = d.collection || {}; p.pet = d.pet || null; p.clue = d.clue || null;
-    p.flags = d.flags || {}; p.stats = { ...p.stats, ...(d.stats || {}) }; p.style = d.style || 'accurate'; p.rangedStyle = d.rstyle || 'accurate'; p.autocast = d.autocast || null; p.running = d.running ?? true; p.runEnergy = d.runEnergy ?? 100;
+    p.flags = d.flags || {}; p.stats = { ...p.stats, ...(d.stats || {}) }; p.style = d.style || 'accurate'; p.rangedStyle = d.rstyle || 'accurate'; p.autocast = d.autocast || null; p.slayer = d.slayer || null; p.slayerPoints = d.spts || 0; p.running = d.running ?? true; p.runEnergy = d.runEnergy ?? 100;
     if (d.look) p.look = d.look;
     return true;
+  },
+  saveText() { try { return localStorage.getItem(SAVE_KEY) || ''; } catch (e) { return ''; } },
+  // Replace the save with an exported one. Returns an error message, or null on success.
+  importSave(text) {
+    let data;
+    try { data = JSON.parse(String(text).trim()); } catch (e) { return 'That doesn\'t look like a PixScape save.'; }
+    if (!data || !data.p || !data.p.skills) return 'That doesn\'t look like a PixScape save.';
+    G.player.dead = true;   // stop the autosave from overwriting it before the reload
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(data)); } catch (e) { return 'Could not store the save.'; }
+    return null;
   },
   reset() {
     try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignore */ }

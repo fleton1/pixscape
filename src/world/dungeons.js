@@ -8,7 +8,7 @@ import { RUNES } from '../data/magic.js';
 
 // Common dungeon scaffolding: fill with wall, carve rooms and corridors, void unreachable rock.
 function scaffold(def) {
-  const w = new World(def.id, def.W, def.H, { name: def.name, kind: 'dungeon', music: def.music, dark: def.dark ?? 0.86, entrance: def.entrance });
+  const w = new World(def.id, def.W, def.H, { name: def.name, kind: 'dungeon', music: def.music, dark: def.dark ?? 0.86, entrance: def.entrance, wild: def.wild, multi: def.multi });
   const rng = mulberry32(def.seed || 1);
   const R = () => rng();
   const B = makeBuilder(w, R);
@@ -69,7 +69,7 @@ function catacombs() {
   place('boss_chest', 45, 52, { mossy: true });
   place('torch', 6, 44); w.addObject('torch', 13, 44);
   spawnIn('skeleton', 7, 13, 29, 7); spawnIn('hill_giant', 6, 40, 28, 7); spawnIn('giant_spider', 6, 14, 9, 8); spawnIn('zombie', 6, 38, 49, 8); spawnIn('rat', 3, 10, 49, 3);
-  spawnIn('giant_bat', 3, 40, 28, 6); spawnIn('ghost', 2, 38, 49, 6); spawnIn('skeleton_archer', 4, 13, 29, 7);
+  spawnIn('giant_bat', 3, 40, 28, 6); spawnIn('ghost', 2, 38, 49, 6); spawnIn('skeleton_archer', 4, 13, 29, 7); spawnIn('grave_crawler', 5, 38, 49, 7);
   B.finish([[D.PEBBLES, 0.03], [D.BONES, 0.015], [D.MUSHROOM, 0.005]]);
   return w;
 }
@@ -153,7 +153,7 @@ function deeps() {
   for (const [x, y] of [[13, 25], [36, 12], [44, 26], [58, 44]]) w.addObject('torch', x, y);
   w.fishHints = [[47, 34, 'spot_cave'], [51, 38, 'spot_cave']];
   spawnIn('cave_goblin', 7, 13, 33, 7); spawnIn('giant_bat', 4, 45, 12, 8); spawnIn('tunnel_crawler', 5, 46, 35, 7);
-  spawnIn('rock_golem_mob', 5, 66, 50, 9); spawnIn('tunnel_crawler', 3, 58, 57, 4);
+  spawnIn('rock_golem_mob', 5, 66, 50, 9); spawnIn('tunnel_crawler', 3, 58, 57, 4); spawnIn('stonegaze', 4, 66, 50, 9);
   B.finish([[D.PEBBLES, 0.05], [D.BONES, 0.008], [D.MUSHROOM, 0.006]]);
   fishSpots(w, B);
   return w;
@@ -179,7 +179,7 @@ function crypt() {
   B.placeNear('chest_50', 36, 13);
   for (const [x, y] of [[24, 9], [30, 10], [12, 32], [20, 33]]) w.addObject('skulls', x, y);
   spawnIn('zombie', 4, 10, 8, 5); spawnIn('skeleton_warrior', 5, 30, 9, 6); spawnIn('banshee', 6, 48, 13, 6);
-  spawnIn('ghoul', 5, 17, 31, 9); spawnIn('wraith', 4, 40, 38, 5); spawnIn('necromancer', 3, 17, 31, 8);
+  spawnIn('ghoul', 5, 17, 31, 9); spawnIn('wraith', 4, 40, 38, 5); spawnIn('necromancer', 3, 17, 31, 8); spawnIn('grave_crawler', 4, 10, 8, 4); spawnIn('bloodveld', 4, 17, 31, 9);
   B.npc('drowned_abbot', 46, 38, { wander: 2 });
   B.finish([[D.BONES, 0.02], [D.CRACKS, 0.03], [D.PEBBLES, 0.01]]);
   return w;
@@ -239,9 +239,44 @@ function depths() {
   scatter('rune_rock', 2, 40, 36, 9); scatter('adamant_rock', 3, 40, 36, 9); scatter('coal_rock', 3, 14, 18, 7);
   for (const [x, y] of [[20, 12], [36, 6], [46, 44], [70, 18], [58, 46]]) place('lava_rock', x, y);
   scatter('fire_lily_plant', 4, 14, 18, 6);
-  spawnIn('lava_imp', 5, 14, 18, 7); spawnIn('fire_giant', 5, 40, 12, 8); spawnIn('cinderhound', 4, 40, 12, 8);
+  spawnIn('lava_imp', 5, 14, 18, 7); spawnIn('pyrefiend', 5, 14, 18, 7); spawnIn('fire_giant', 5, 40, 12, 8); spawnIn('cinderhound', 4, 40, 12, 8);
   spawnIn('obsidian_golem', 4, 40, 38, 9); spawnIn('fire_giant', 2, 40, 38, 9); spawnIn('red_dragon', 4, 65, 22, 8); spawnIn('black_dragon', 4, 64, 50, 9);
   B.finish([[D.EMBERS, 0.04], [D.CRACKS, 0.04], [D.BONES, 0.01]]);
+  return w;
+}
+
+// ------------------------------------------------------------------ The Bloodhollow (Wilderness 35, multi-combat)
+function bloodhollow() {
+  const { w, B } = scaffold({ id: 'bloodhollow', name: 'The Bloodhollow', W: 70, H: 60, floor: T.CAVE, wall: T.CAVE_WALL, biome: BIOME.LAVACAVE, music: 'wild', dark: 0.82, seed: 51, wild: 35, multi: true });
+  const { cavern, corridor, place, spawnIn, blob } = B;
+  cavern(10, 12, 7); cavern(30, 14, 9); cavern(14, 40, 9); cavern(46, 40, 11); cavern(56, 14, 7);
+  corridor(10, 12, 30, 14); corridor(10, 12, 14, 40); corridor(30, 14, 46, 40); corridor(14, 40, 46, 40); corridor(30, 14, 56, 14);
+  for (const [x, y, r] of [[30, 16, 2], [46, 44, 2.5]]) blob(x, y, r, T.LAVA, 0.3, (xx, yy) => w.t(xx, yy) === T.CAVE);
+  B.area('The Bloodhollow', 0, 0, 69, 59, 'wild');
+  place('cave_exit', 6, 7, { toMain: true, msg: 'You climb out into the Wilderness.' });
+  w.points.arrive = [7, 10];
+  place('rope_down', 48, 36, { to: [8, 11, 'rift'], msg: 'You climb down into the rift. Something vast is watching.' });
+  for (const [x, y] of [[20, 10], [38, 18], [8, 38], [40, 46], [58, 12]]) place('obelisk', x, y);
+  spawnIn('lesser_demon', 3, 30, 12, 6); spawnIn('greater_demon', 4, 30, 14, 7); spawnIn('gargoyle', 6, 14, 40, 7);
+  spawnIn('nechryael', 5, 46, 40, 8); spawnIn('greater_demon', 2, 56, 14, 5); spawnIn('cultist', 3, 10, 14, 5);
+  B.finish([[D.BONES, 0.03], [D.CRACKS, 0.04], [D.EMBERS, 0.02]]);
+  return w;
+}
+
+// ------------------------------------------------------------------ The Abyssal Rift (Wilderness 50, multi-combat)
+function rift() {
+  const { w, B } = scaffold({ id: 'rift', name: 'The Abyssal Rift', W: 66, H: 60, floor: T.CAVE, wall: T.WALL_DARK, biome: BIOME.CRYPT, music: 'boss', dark: 0.86, seed: 52, wild: 50, multi: true });
+  const { cavern, corridor, place, spawnIn } = B;
+  cavern(10, 12, 6); cavern(26, 16, 9); cavern(18, 42, 9); cavern(44, 26, 10); cavern(50, 48, 9);
+  corridor(10, 12, 26, 16); corridor(26, 16, 44, 26); corridor(26, 16, 18, 42); corridor(18, 42, 50, 48); corridor(44, 26, 50, 48);
+  B.area('Throne of the Rift', 42, 40, 65, 59, 'boss');
+  B.area('The Abyssal Rift', 0, 0, 65, 59, 'boss');
+  place('rope_up', 8, 8, { to: [48, 38, 'bloodhollow'], msg: 'You climb back up to the Bloodhollow.' });
+  w.points.arrive = [8, 11];
+  for (const [x, y] of [[22, 12], [30, 20], [40, 22], [48, 30], [46, 44], [55, 44]]) place('crystal', x, y);
+  spawnIn('voidstalker', 6, 26, 16, 7); spawnIn('shadow_hound', 4, 18, 42, 7); spawnIn('black_demon', 4, 44, 26, 8);
+  B.npc('riftlord', 50, 48, { wander: 2 });
+  B.finish([[D.BONES, 0.03], [D.CRACKS, 0.05]]);
   return w;
 }
 
@@ -295,7 +330,7 @@ function altarRealm(rune) {
   return w;
 }
 
-export const DUNGEONS = { catacombs, tomb, sewers, deeps, crypt, hollowroot, icecaves, depths, essence, ...Object.fromEntries(RUNES.map((r) => ['altar_' + r.id, () => altarRealm(r)])) };
+export const DUNGEONS = { catacombs, tomb, sewers, deeps, crypt, hollowroot, icecaves, depths, essence, bloodhollow, rift, ...Object.fromEntries(RUNES.map((r) => ['altar_' + r.id, () => altarRealm(r)])) };
 
 export function buildDungeons() {
   return Object.values(DUNGEONS).map((f) => f());

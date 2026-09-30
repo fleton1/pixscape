@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PixScape sprite gallery</title>
+  <style>
+    @font-face { font-family: 'Pixelify Sans'; src: url('fonts/PixelifySans.ttf'); }
+    body { margin: 0; padding: 16px; background: #2b251d; color: #e8d8a8; font-family: 'Pixelify Sans', monospace; }
+    h1 { margin: 0 0 4px; } h2 { margin: 24px 0 8px; color: #ff981f; }
+    .hint { color: #a89878; margin-bottom: 8px; }
+    .grid { display: flex; flex-wrap: wrap; gap: 6px; }
+    .cell { background: #3e3529; border: 1px solid #5b4f3c; border-radius: 4px; padding: 4px; display: flex; flex-direction: column; align-items: center; min-width: 64px; }
+    .cell canvas, .cell img { image-rendering: pixelated; }
+    .cell span { font-size: 11px; color: #c8b890; max-width: 96px; text-align: center; overflow-wrap: anywhere; }
+    input { background: #1e1a14; color: #fff; border: 1px solid #5b4f3c; padding: 4px 8px; font-family: inherit; }
+  </style>
+</head>
+<body>
+  <h1>PixScape sprite gallery</h1>
+  <div class="hint">Every procedurally drawn sprite, for reviewing art. Run a static server at the repo root and open /gallery.html.</div>
+  <input id="filter" placeholder="filter by name">
+  <div id="out"></div>
+  <script type="module" src="src/gallery.js"></script>
+</body>
+</html>

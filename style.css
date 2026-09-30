@@ -157,6 +157,8 @@ button { font-family: var(--font); cursor: pointer; }
 .set select { width: 100%; background: #2b251d; color: #ff981f; border: 1px solid #5b4f3c; font-family: var(--font); }
 .set.chk label { display: flex; gap: 6px; align-items: center; }
 .set.btns { display: flex; gap: 6px; } .set.btns button { flex: 1; }
+#imp-text { width: 100%; margin-top: 8px; font-family: monospace; font-size: 11px; }
+#imp-file { margin-top: 6px; max-width: 100%; }
 .danger { color: #ff5050 !important; }
 .keys { color: #a89878; font-size: 12px; line-height: 1.4; }
 

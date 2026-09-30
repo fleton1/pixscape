@@ -75,6 +75,7 @@ function draw(icon, p) {
     case 'sword': diagBlade(p, 5, 10, 8, c, 2); p.line(3, 10, 6, 13, '#8a6a2a'); p.line(2, 14, 4, 12, '#5a3a1e'); break;
     case 'mace': p.line(3, 14, 10, 7, '#6a4a2a'); p.ball(11, 5, 3.5, 3.5, c); p.set(10, 4, hi); for (const [x, y] of [[11, 1], [15, 5], [8, 3], [13, 8]]) p.set(x, y, sh); break;
     case 'warhammer': p.line(2, 14, 10, 6, '#6a4a2a'); p.poly([[7, 4], [11, 0], [15, 4], [11, 8]], c); p.line(11, 0, 15, 4, hi); break;
+    case 'lash': p.line(2, 14, 5, 11, '#3a1a4a'); for (let t = 0; t < 10; t++) p.set(5 + t, 11 - t + Math.round(Math.sin(t) * 1.5), t % 2 ? c : shade(c, 0.3)); break;
     case 'frostblade': diagBlade(p, 4, 11, 10, c, 2, 1); p.line(1, 14, 4, 11, '#2a4a6a'); p.set(8, 7, '#e8f8ff'); p.set(11, 4, '#e8f8ff'); break;
     case 'herb': {
       const hc = icon.grimy ? mix(c, '#4a4a2a', 0.45) : c;

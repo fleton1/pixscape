@@ -20,6 +20,7 @@ function buildIcons() {
   MAP_ICONS.fish = mk((p) => { p.ellipse(5, 5.5, 3, 1.8, '#6ab0e8'); p.set(8, 4, '#6ab0e8'); p.set(8, 6, '#6ab0e8'); p.set(3, 5, '#1a1a1a'); });
   MAP_ICONS.mine = mk((p) => { p.line(3, 8, 7, 4, '#8a5a2a'); p.line(3, 3, 8, 5, '#b0b0b0'); });
   MAP_ICONS.quest = mk((p) => { p.ellipse(5.5, 5.5, 4, 4, '#2a5ad8'); p.vline(5, 3, 6, '#ffffff'); p.set(5, 8, '#ffffff'); });
+  MAP_ICONS.slayer = mk((p) => { p.ball(5.5, 5, 3.5, 3, '#e8e4d8'); p.set(4, 5, '#1a1a1a'); p.set(7, 5, '#1a1a1a'); p.rect(4, 7, 4, 2, '#e8e4d8'); });
   MAP_ICONS.agility = mk((p) => { p.ball(6, 3, 1.3, 1.3, '#e0b088'); p.line(6, 4, 5, 7, '#6ae0e0'); p.line(5, 7, 3, 9, '#6ae0e0'); p.line(5, 7, 7, 9, '#6ae0e0'); p.line(3, 5, 8, 5, '#6ae0e0'); });
   MAP_ICONS.rune = mk((p) => { p.ball(5.5, 5.5, 3.5, 3.5, '#a8a098'); p.line(4, 4, 7, 7, '#e8c13a'); p.line(7, 4, 4, 7, '#e8c13a'); });
   MAP_ICONS.craft = mk((p) => { p.line(3, 8, 8, 3, '#c8c8c8'); p.ball(4, 4, 1.5, 1.5, '#e8c13a'); p.set(7, 7, '#8a5a2a'); });

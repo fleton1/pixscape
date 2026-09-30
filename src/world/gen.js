@@ -485,6 +485,14 @@ export function generateWorld() {
   }
   spawnIn('cultist', 5, 285, 62, 6); spawnIn('cultist', 3, 268, 68, 5);
 
+  // ================================================================ 1.5: SLAYER & MONSTERS
+  entrance('cave_entrance', 200, 24, 'bloodhollow', 'You enter the Bloodhollow. The air tastes of iron.');
+  npc('brannoc', 216, 160, { wander: 1 }); icon('slayer', 216, 160);
+  npc('vessa', 240, 122, { wander: 1 }); icon('slayer', 240, 122);
+  npc('morvain', 342, 110, { wander: 1 }); icon('slayer', 342, 110);
+  spawnIn('mugger', 4, 200, 192, 6); spawnIn('giant_frog', 5, 196, 246, 10); spawnIn('swamp_leech', 4, 214, 240, 8);
+  spawnIn('desert_snake', 6, 330, 250, 12); spawnIn('hobgoblin', 5, 150, 110, 6); spawnIn('ogre', 5, 285, 100, 8); spawnIn('crocodile', 4, 348, 252, 8);
+
   // ================================================================ 1.4: AGILITY & HERBLORE
   // course tiles, plus a margin kept free of trees (the scatter pass skips reserved tiles)
   const clearTile = (x, y, t) => { const o = w.obj(x, y); if (o) w.removeObject(o); setT(x, y, t); reserve(x - 1, y - 1, 3, 3); };

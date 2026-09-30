@@ -1,11 +1,11 @@
-export const SKILLS = ['attack', 'hitpoints', 'mining', 'strength', 'thieving', 'smithing', 'defence', 'crafting', 'fishing', 'ranged', 'fletching', 'cooking', 'prayer', 'firemaking', 'woodcutting', 'magic', 'runecraft', 'herblore', 'agility'];
+export const SKILLS = ['attack', 'hitpoints', 'mining', 'strength', 'thieving', 'smithing', 'defence', 'crafting', 'fishing', 'ranged', 'fletching', 'cooking', 'prayer', 'firemaking', 'woodcutting', 'magic', 'runecraft', 'herblore', 'agility', 'slayer'];
 export const SKILL_NAMES = {
   attack: 'Attack', hitpoints: 'Hitpoints', mining: 'Mining', strength: 'Strength', thieving: 'Thieving', smithing: 'Smithing', defence: 'Defence',
-  crafting: 'Crafting', fishing: 'Fishing', prayer: 'Prayer', firemaking: 'Firemaking', cooking: 'Cooking', woodcutting: 'Woodcutting', ranged: 'Ranged', fletching: 'Fletching', magic: 'Magic', runecraft: 'Runecraft', herblore: 'Herblore', agility: 'Agility',
+  crafting: 'Crafting', fishing: 'Fishing', prayer: 'Prayer', firemaking: 'Firemaking', cooking: 'Cooking', woodcutting: 'Woodcutting', ranged: 'Ranged', fletching: 'Fletching', magic: 'Magic', runecraft: 'Runecraft', herblore: 'Herblore', agility: 'Agility', slayer: 'Slayer',
 };
 export const SKILL_COLORS = {
   attack: '#9b2020', hitpoints: '#d83030', mining: '#5a5a5a', strength: '#1f8a3a', thieving: '#6a3a8a', smithing: '#6a6a6a', defence: '#4a6ab0',
-  crafting: '#8a6a3a', fishing: '#4a8ac8', prayer: '#e8e8d0', firemaking: '#e0701a', cooking: '#7a2a8a', woodcutting: '#3a7a2a', ranged: '#5a8a2a', fletching: '#2a7a6a', magic: '#3a4ad8', runecraft: '#c8a040', herblore: '#3a8a3a', agility: '#2a4a8a',
+  crafting: '#8a6a3a', fishing: '#4a8ac8', prayer: '#e8e8d0', firemaking: '#e0701a', cooking: '#7a2a8a', woodcutting: '#3a7a2a', ranged: '#5a8a2a', fletching: '#2a7a6a', magic: '#3a4ad8', runecraft: '#c8a040', herblore: '#3a8a3a', agility: '#2a4a8a', slayer: '#3a3a3a',
 };
 
 export const PRAYERS = [

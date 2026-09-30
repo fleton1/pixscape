@@ -9,6 +9,7 @@ import { recipesForPair, recipesForStation, offerRecipes, pickCrop, shear, searc
 import { castOnItem, castOnNpc, castOnObject, clearSpell, rubJewellery, enterRuins, craftRunes } from './magic.js';
 import { SPELL } from '../data/magic.js';
 import { crossObstacle } from './agility.js';
+import { masterTalk, taskText } from './slayer.js';
 import { HERBS } from '../data/items.js';
 import { DIALOGUE, searchObject, pickObject, combineTablets, tombDoor, openChest, dig, readClue, openCasket, rubLamp } from './quests.js';
 import { npcLevelColor } from './combat.js';
@@ -90,6 +91,10 @@ export function performNpc(n, option) {
     case 'Bank': G.ui.openBank(); break;
     case 'Pickpocket': pickpocket(n); break;
     case 'Shear': shear(n); break;
+    case 'Assignment': case 'Rewards':
+      n.busyUntil = G.tick + 200;
+      G.ui.dialogue(n, (d) => masterTalk(d, n, option), () => { n.busyUntil = G.tick + 2; });
+      break;
     case 'Teleport': {
       const w = G.worlds.get('essence');
       n.say('Senventior disthine molenko!');
@@ -262,6 +267,7 @@ export function itemOptions(slot) {
   if (s.id === 'spade') E.push({ text: `Dig ${nm}`, fn: () => { p.path = []; p.target = null; dig(); } });
   if (s.id === 'bird_nest') E.push({ text: `Search ${nm}`, fn: () => searchNest(slot) });
   if (it.herb) E.push({ text: `Clean ${nm}`, fn: () => cleanHerb(slot) });
+  if (s.id === 'slayer_gem') E.push({ text: `Check ${nm}`, fn: () => msg(taskText()) });
   if (it.jewelTele) E.push({ text: `Rub ${nm}`, fn: () => rubJewellery(slot) });
   E.push({ text: `Use ${nm}`, fn: () => { G.useItem = { slot, id: s.id }; G.ui.dirty('inv'); } });
   E.push({ text: `Drop ${nm}`, fn: () => dropSlot(slot) });

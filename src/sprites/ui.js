@@ -32,6 +32,7 @@ const SKILL_DRAW = {
   runecraft: (p) => { p.ball(8, 8, 6, 6, '#8a8278'); p.ball(8, 8, 4.5, 4.5, '#a8a098'); p.line(6, 5, 10, 11, '#c8a040'); p.line(10, 5, 6, 11, '#c8a040'); p.set(8, 8, '#ffe070'); },
   herblore: (p) => { p.line(8, 15, 8, 6, '#3a7a2a'); p.ball(5, 7, 3, 2, '#4a9a3a'); p.ball(11, 5, 3, 2, '#5aaa4a'); p.ball(8, 3, 2.5, 2, '#6ab04a'); p.ball(8, 12, 3, 2.5, '#3a8a3a'); },
   agility: (p) => { p.ball(10, 3, 2, 2, '#e0b088'); p.line(9, 5, 7, 10, '#2a4a8a'); p.line(7, 10, 3, 12, '#2a4a8a'); p.line(7, 10, 10, 14, '#2a4a8a'); p.line(8, 7, 13, 6, '#2a4a8a'); p.line(8, 7, 4, 5, '#2a4a8a'); },
+  slayer: (p) => { p.ball(8, 7, 5.5, 5, '#e8e4d8'); p.rect(5, 11, 6, 3, '#e8e4d8'); p.rect(5, 6, 2, 2, '#1a1a1a'); p.rect(9, 6, 2, 2, '#1a1a1a'); p.set(8, 9, '#1a1a1a'); p.vline(6, 12, 13, '#8a8a8a'); p.vline(9, 12, 13, '#8a8a8a'); },
   woodcutting: (p) => { p.line(4, 15, 11, 5, '#8a5a2a'); p.poly([[9, 2], [14, 1], [15, 7], [11, 7]], '#9a9a9a'); p.set(3, 4, '#3a7a2a'); p.ball(4, 5, 2.5, 2.5, '#3a7a2a'); },
 };
 export function skillIcon(s) { return mk('sk_' + s, 16, 16, SKILL_DRAW[s]); }

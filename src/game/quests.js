@@ -1,6 +1,7 @@
 // Quests, NPC dialogue scripts, clue scrolls and quest-specific world hooks.
 import { G, msg, sfx, after } from './state.js';
 import { tannerTalk } from './crafting.js';
+import { masterTalk } from './slayer.js';
 import { ITEMS, GRACEFUL } from '../data/items.js';
 import { SKILL_NAMES } from '../data/skills.js';
 import { randInt, pickWeighted, commas, cheb } from '../util.js';
@@ -82,6 +83,7 @@ const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
 export const DIALOGUE = {
   tanner: (d) => tannerTalk(d),
+  slayer: (d, n) => masterTalk(d, n),
   async grace(d) {
     const p = G.player;
     await d.npc('Marks of grace turn up for those who run the courses well. Bring them to me and I\'ll make you something light to wear.');

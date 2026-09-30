@@ -40,6 +40,7 @@ function weaponPixels(p, kind, color, hx, hy, ang, s, glow) {
     case 'dart': dot(1, 0, color); dot(2, 0, hi); dot(0, 0, '#e8e8e8'); break;
     case 'dagger': dot(1, -1, guard); dot(1, 1, guard); blade(L(4), 1); dot(L(4) + 1, 0, hi); break;
     case 'sword': for (let o = -1; o <= 1; o++) dot(1, o, guard); blade(L(7), 2); dot(L(7) + 1, 0, hi); break;
+    case 'lash': for (let t = 1; t <= L(9); t++) dot(t, Math.round(Math.sin(t * 0.8) * 1.5), t % 2 ? color : hi); break;
     case 'frostblade': for (let o = -1; o <= 1; o++) dot(1, o, '#2a4a6a'); blade(L(9), 2, -1); glow && glow.push(pt(L(6), 0)); break;
     case 'fang': for (let o = -1; o <= 1; o++) dot(1, o, '#3a1a10'); blade(L(9), 2, -1.3); glow && glow.push(pt(L(6), 0)); break;
     case 'cleaver': for (let t = 1; t <= L(3); t++) dot(t, 0, grip); for (let t = L(3); t <= L(8); t++) for (let o = 0; o <= L(3); o++) dot(t, o, o === L(3) ? hi : t === L(8) ? sh : color); break;
@@ -382,6 +383,17 @@ function creature(look, anim, frame) {
     }
     case 'wolf': case 'bear': {
       const bear = k === 'bear';
+      if (look.big && !look._scaled) {
+        // big variants reuse the normal shape at 1.5x
+        const small = creature({ ...look, _scaled: true }, anim, frame).p;
+        p = new Painter(Math.round(small.w * 1.5), Math.round(small.h * 1.5));
+        for (let y = 0; y < p.h; y++) for (let x = 0; x < p.w; x++) {
+          const sx = Math.floor(x / 1.5), sy = Math.floor(y / 1.5), i = (sy * small.w + sx) * 4;
+          if (small.d[i + 3]) p.set(x, y, '#' + [0, 1, 2].map((c) => small.d[i + c].toString(16).padStart(2, '0')).join(''));
+        }
+        if (look.color === '#1a1a24') { p.set(Math.round(p.w * 0.83), Math.round(p.h * 0.28), '#b060ff'); }
+        break;
+      }
       p = new Painter(bear ? 30 : 28, bear ? 22 : 18);
       const lg = walk ? [1, -1][f2] : 0;
       const by = bear ? 11 : 9;
@@ -526,6 +538,71 @@ function creature(look, anim, frame) {
       p.rect(S(2) - sw, S(9) - f2 * b, S(2), S(3), shade(gc, -0.15)); p.rect(S(10) + sw, S(9) + f2 * b, S(2), S(3), shade(gc, -0.15));
       p.set(S(5), S(11), look.vein || '#4ab7c8'); p.set(S(9), S(8), look.vein2 || '#c8743a');
       if (b > 1) { p.line(S(4), S(12), S(6), S(9), look.vein || '#4ab7c8'); p.line(S(8), S(12), S(10), S(9), look.vein2 || '#c8743a'); }
+      break;
+    }
+    case 'hand': {
+      p = new Painter(16, 12);
+      const w2 = walk ? f2 : 0;
+      p.ball(8, 8, 4.5, 3, col);
+      for (let i = 0; i < 4; i++) p.line(5 + i * 2, 6, 3 + i * 3 - w2, 2 + (i % 2), col);
+      p.line(12, 8, 15, 6 + w2, col);
+      p.hline(5, 11, 10, sh); p.set(4, 7, '#8a2a2a');
+      break;
+    }
+    case 'cockatrice': {
+      p = new Painter(20, 20);
+      const lg = walk ? f2 : 0, peck = atk && frame === 1 ? 2 : 0;
+      p.line(3, 12, 0, 16, sh); p.line(2, 11, 0, 13, sh);
+      p.ball(8, 12, 5.5, 4, col);
+      p.poly([[5, 9], [3, 5], [7, 8]], shade(col, 0.2));
+      p.ball(13 + peck * 0.5, 6 + peck, 3, 3, col);
+      p.set(14 + peck, 5 + peck, '#ff2020'); p.set(13 + peck, 3 + peck, '#c83a2a'); p.set(12 + peck, 2 + peck, '#c83a2a');
+      p.poly([[16 + peck, 6 + peck], [19 + peck, 7 + peck], [16 + peck, 8 + peck]], '#e8a020');
+      p.vline(7 + lg, 16, 19, '#c8a020'); p.vline(10 - lg, 16, 19, '#c8a020');
+      break;
+    }
+    case 'bloodveld': {
+      p = new Painter(22, 24);
+      const b = f2;
+      p.ball(11, 14 - b, 7, 8, col);
+      p.ball(11, 8 - b, 5, 4, shade(col, 0.15));
+      p.rect(8, 21, 2, 3, sh); p.rect(13, 21, 2, 3, sh);
+      p.set(8, 7 - b, '#ffd84a'); p.set(13, 7 - b, '#ffd84a');
+      const t = atk && frame === 1 ? 8 : 3;
+      for (let i = 0; i < t; i++) p.rect(10, 11 - b + i, 3, 1, '#e86a8a');
+      p.ellipse(11, 12 - b, 3, 1.5, '#5a0a0a');
+      break;
+    }
+    case 'frog': {
+      p = new Painter(20, 14);
+      const hop = walk && f2 ? -2 : 0;
+      p.ball(10, 9 + hop, 7, 4.5, col);
+      p.ball(6, 5 + hop, 2.2, 2.2, shade(col, 0.15)); p.ball(14, 5 + hop, 2.2, 2.2, shade(col, 0.15));
+      p.set(6, 5 + hop, '#1a1a1a'); p.set(14, 5 + hop, '#1a1a1a');
+      p.hline(7, 13, 10 + hop, sh);
+      p.line(3, 11 + hop, 1, 13, sh); p.line(17, 11 + hop, 19, 13, sh);
+      if (atk && frame === 1) p.line(10, 10, 10, 13, '#e86a8a');
+      break;
+    }
+    case 'snake': {
+      p = new Painter(22, 10);
+      const wv = walk ? f2 : 0;
+      for (let i = 0; i < 9; i++) p.ball(2 + i * 2, 6 + Math.round(Math.sin(i * 0.9 + wv * 1.5) * 1.5), 1.8, 1.8, i % 2 ? col : shade(col, -0.12));
+      const ha = atk && frame === 1 ? 2 : 0;
+      p.ball(19 + ha, 5, 2.3, 2, col);
+      if (look.leech) { p.ellipse(21 + ha, 5, 1.2, 1.5, '#8a1a1a'); }
+      else { p.set(20 + ha, 4, '#ffd84a'); p.set(22 + ha - 1, 6, '#e82a2a'); }
+      break;
+    }
+    case 'crocodile': {
+      p = new Painter(36, 14);
+      const lg = walk ? f2 : 0, jaw = atk && frame === 1 ? 2 : 0;
+      p.poly([[0, 8], [8, 6], [8, 10]], col);
+      p.ball(15, 8, 8, 3.5, col);
+      for (let i = 0; i < 5; i++) p.set(9 + i * 3, 5, shade(col, 0.25));
+      p.poly([[22, 6], [35, 7 - jaw], [35, 8], [22, 9]], col); p.poly([[22, 9], [35, 9 + jaw], [35, 10 + jaw], [22, 10]], shade(col, -0.1));
+      p.set(24, 5, '#ffd84a');
+      for (const [x, o] of [[10, lg], [19, -lg]]) p.rect(x + o, 11, 2, 3, sh);
       break;
     }
     case 'bat': {
@@ -677,7 +754,7 @@ function creatureLook(look) {
     case 'skeleton': return { kind: 'human', skin: '#e4e0cc', shirt: '#e4e0cc', pants: '#e4e0cc', shoes: '#d0ccb8', hairStyle: 'bald', skeleton: true, tiny: look.pet, weapon: look.pet ? null : look.weapon || { kind: 'scimitar', color: '#7d7a78' }, shield: look.pet ? null : look.shield !== undefined ? look.shield : { kind: 'woodshield', color: '#8a5a2b' }, helm: look.helm, body: look.body, glowEyes: look.glowEyes, big: look.big };
     case 'bigskeleton': return { kind: 'human', skin: '#e4e0cc', shirt: '#e4e0cc', pants: '#e4e0cc', shoes: '#d0ccb8', hairStyle: 'bald', skeleton: true, big: true, huge: true, glowEyes: true, hat: { kind: 'crown', color: '#8a7a3a' }, cape: { color: '#4a1a4a', trim: '#8a7a3a' }, weapon: { kind: 'maul', color: '#d8d0b0' } };
     case 'mummy': return { kind: 'human', skin: '#d8cfb0', shirt: '#d8cfb0', pants: '#c8bf9e', shoes: '#b8af8e', hairStyle: 'bald', mummy: true };
-    case 'demon': return { kind: 'human', skin: col, shirt: col, pants: '#2a1a1a', shoes: '#1a1010', hairStyle: 'bald', big: true, horns: true, wings: true, tail: true, sleeveless: true, glowEyes: true };
+    case 'demon': return { kind: 'human', skin: col, shirt: col, pants: '#2a1a1a', shoes: '#1a1010', hairStyle: 'bald', big: true, huge: look.huge, horns: true, wings: true, tail: true, sleeveless: true, glowEyes: true, hat: look.hat, weapon: look.weapon };
     case 'imp': return { kind: 'human', skin: col, shirt: col, pants: shade(col, -0.3), shoes: shade(col, -0.4), hairStyle: 'bald', tiny: true, horns: true, tail: true, sleeveless: true, glowEyes: true };
   }
   return look;

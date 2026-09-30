@@ -7,6 +7,7 @@ import { SKILL_NAMES } from '../data/skills.js';
 import { startAction } from './skilling.js';
 import { wildLevel } from './world_info.js';
 import { npcDefRoll, hitChance, killNpc, projectile } from './combat.js';
+import { helmBonus } from './slayer.js';
 import { randInt, commas, aOrAn } from '../util.js';
 
 // ------------------------------------------------------------------ runes
@@ -166,8 +167,9 @@ export function magicAttack(n, spellId) {
   const flight = 1 + Math.floor(dist / 4);
   projectile(p, n, s.color, flight, s.tier === 'Wave' || s.tier === 'Blast' ? 'fire' : 'bolt');
   sfx('teleport');
-  const hit = Math.random() < hitChance(magicRoll(p), npcDefRoll(n, 'magic'));
-  const dmg = hit ? randInt(0, s.max) : 0;
+  const bonus = helmBonus(n);
+  const hit = Math.random() < hitChance(magicRoll(p) * bonus, npcDefRoll(n, 'magic'));
+  const dmg = hit ? randInt(0, Math.floor(s.max * bonus)) : 0;
   p.addXp('magic', s.xp);
   if (!n.target) { n.target = p; n.returning = false; if (n.attackCd <= 0) n.attackCd = 1 + flight; }
   after(flight, () => {

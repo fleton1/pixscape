@@ -66,6 +66,11 @@ for (const r of magic.RUNES) addSource(r.item, 'runecraft');
 for (const s of magic.SPELLS) if (s.orb) addSource(s.orb, 'charge orb');
 const { HERBS, GRACEFUL } = await import(src('data/items.js'));
 for (const id of Object.keys(GRACEFUL)) addSource(id, 'grace');
+const slayer = await import(src('data/slayer.js'));
+for (const r of slayer.SLAYER_REWARDS) { if (r.item) addSource(r.item, 'slayer reward'); for (const [id] of r.bundle || []) itemOk(id, 'slayer reward'); }
+for (const [cat, c] of Object.entries(slayer.CATEGORIES)) for (const id of c.npcs) if (!NPCS[id]) err(`slayer category ${cat}: unknown npc ${id}`);
+for (const [m, M] of Object.entries(slayer.MASTERS)) for (const [cat] of M.tasks) if (!slayer.CATEGORIES[cat]) err(`master ${m}: unknown category ${cat}`);
+for (const id of Object.keys(slayer.SLAYER_REQ)) if (!NPCS[id]) err(`slayer req for unknown npc ${id}`);
 for (const h of HERBS) { addSource('grimy_' + h.id, 'herb drops'); addSource(h.id, 'cleaning'); }
 for (const s of magic.SPELLS) for (const rn of Object.keys(s.runes)) if (!magic.RUNE[rn]) err(`spell ${s.id}: unknown rune ${rn}`);
 for (const r of content.RECIPES || []) {
@@ -86,6 +91,10 @@ for (const w of worlds.values()) {
   for (const s of w.spawns) if (!NPCS[s.npc]) err(`${w.id}: spawn of unknown npc '${s.npc}' at ${s.x},${s.y}`);
 }
 
+// monsters that never appear anywhere (summoned ones count)
+const summoned = new Set(Object.values(NPCS).flatMap((n) => (n.mechs || []).filter((m) => m.npc).map((m) => m.npc)).concat(['goblin_warrior', 'scarab_swarm', 'skeleton', 'death_spawn']));
+const spawned = new Set([...worlds.values()].flatMap((w) => w.spawns.map((s) => s.npc)));
+for (const [id, n] of Object.entries(NPCS)) if (n.hp && !spawned.has(id) && !summoned.has(id)) warn(`monster '${id}' is never spawned`);
 const unsourced = Object.keys(ITEMS).filter((id) => !sources.has(id) && !new RegExp(`['"\`]${id}['"\`]`).test(code));
 for (const id of unsourced) warn(`item '${id}' (${ITEMS[id].name}) has no source`);
 

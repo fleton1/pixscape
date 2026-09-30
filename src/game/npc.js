@@ -112,7 +112,7 @@ export function tickNpc(n) {
     const wl = wildLevel(p.x, p.y);
     const range = n.boss ? 6 : wl ? 5 : 3;
     const lvlOk = n.boss || wl > 0 || p.combatLevel() <= n.def.lvl * 2;
-    const single = n.boss || !p.lastHitBy || p.lastHitBy === n || G.tick - p.lastHitTick > 8;
+    const single = n.boss || G.world.multi || !p.lastHitBy || p.lastHitBy === n || G.tick - p.lastHitTick > 8;
     const d = n.distTo(p.x, p.y);
     if (d <= range && lvlOk && single && !p.flags.tolerant?.[n.id]) {
       n.target = p; n.returning = false;

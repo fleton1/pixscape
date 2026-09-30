@@ -493,6 +493,7 @@ export class UI {
       <div class="set chk"><label><input type="checkbox" id="set-part" ${s.particles ? 'checked' : ''}> Weather &amp; particles</label></div>
       <div class="set chk"><label><input type="checkbox" id="set-xpd" ${s.xpDrops ? 'checked' : ''}> XP drops</label></div>
       <div class="set btns"><button id="set-save">Save game</button><button id="set-reset" class="danger">Reset</button></div>
+      <div class="set btns"><button id="set-export">Export save</button><button id="set-import">Import save</button></div>
       ${G.touch
     ? '<div class="keys"><b>Touch</b><br>Tap: walk / first option<br>Press &amp; hold: all options<br>Pinch: zoom &middot; Chat bar: talk<br>Tap the open tab to hide the panel<br>Back: close windows</div>'
     : '<div class="keys"><b>Keys</b><br>Enter: chat &middot; M: world map<br>Space / 1-5: dialogue<br>Shift+click: drop item<br>F1-F8: side tabs &middot; Esc: close</div>'}`;
@@ -504,6 +505,40 @@ export class UI {
     $('#set-xpd').onchange = (e) => { s.xpDrops = e.target.checked; $('#xp-counter').style.display = s.xpDrops ? '' : 'none'; };
     $('#set-save').onclick = () => { G.game.save(); msg('Game saved.'); };
     $('#set-reset').onclick = () => { if (confirm('Delete your save and start over?')) G.game.reset(); };
+    $('#set-export').onclick = () => this.exportSave();
+    $('#set-import').onclick = () => this.importSave();
+  }
+
+  // ================================================================ save backup
+  exportSave() {
+    G.game.save();
+    const text = G.game.saveText();
+    const name = `pixscape-${G.player.name.replace(/[^a-z0-9]/gi, '')}-${new Date().toISOString().slice(0, 10)}.json`;
+    if (window.PixAndroid && window.PixAndroid.saveFile) {
+      // the Android app writes it to Downloads
+      const ok = window.PixAndroid.saveFile(name, text);
+      msg(ok ? `Save exported to Downloads/${name}.` : 'Could not write the save file.', ok ? '#0000aa' : '#ef1020');
+      return;
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+    a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    msg('Save exported.', '#0000aa');
+  }
+  importSave() {
+    this.openWindow('import', `<div class="scroll"><p>Choose a save file you exported, or paste its contents below. <b>This replaces your current character.</b></p>
+      <input type="file" id="imp-file" accept=".json,application/json,text/plain">
+      <textarea id="imp-text" rows="4" placeholder="...or paste the save here"></textarea>
+      <div class="bankbtns"><button id="imp-go">Import</button></div><div id="imp-msg" class="danger"></div></div>`, 'Import save');
+    const go = (text) => {
+      const err = G.game.importSave(text);
+      if (err) { $('#imp-msg').textContent = err; return; }
+      location.reload();
+    };
+    $('#imp-file').onchange = (e) => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => go(r.result); r.readAsText(f); };
+    $('#imp-go').onclick = () => go($('#imp-text').value);
   }
 
   // ================================================================ windows

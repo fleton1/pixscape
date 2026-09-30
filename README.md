@@ -41,6 +41,16 @@ On a phone or tablet:
 | Tap the dialogue box | Continue |
 | Back button | Close the top-most menu, window, map or panel |
 
+## Save backup
+
+Settings has **Export save** and **Import save**. In a browser the export downloads a `.json` file;
+in the Android app it goes to Downloads, and import opens the system file picker (or paste the save).
+
+## Sprite gallery
+
+`gallery.html` shows every generated monster, pet, object and item icon on one page with a filter,
+for reviewing art. Open it from the same static server as the game.
+
 ## Checking content
 
 `node tools/validate.mjs` builds every map and checks that every referenced item, NPC and object
@@ -85,13 +95,18 @@ like the other sideloaded apps. APKs are attached to the [GitHub releases](https
   - The kingdom of Aldermoor: Brindlewood, Highcrest, Port Selby, Hilda's farm and the goblin camp.
   - The Wilderness (aggressive monsters, level counter, lose-items-on-death), Frostpeak, and the Sundral Desert with Sandhaven and the Great Pyramid.
   - Mortmire Swamp, the elven continent of Elderglen, Palmera Isle and the volcanic Cinderhold.
+- **Two Wilderness dungeons** below the Wilderness: the Bloodhollow (level 35) and the Abyssal Rift
+  (level 50), multi-combat, with gargoyles, nechryaels, voidstalkers, shadow hounds and the Riftlord.
 - **Eight dungeons**, each its own map with its own lighting and music: Brindlewood Sewers, the
   Highcrest Catacombs, Crestfall Deeps (a dwarven mining town with a pitch-black lower seam; bring a
   light), Mortmire Crypt, Hollowroot Caverns, Frostpeak Ice Caves, the Tomb of the Scarab and the
   Cinderhold Depths.
-- **19 skills** on the OSRS XP curve (levels 1-99) at 1x by default: Attack, Strength, Defence,
-  Ranged, Magic, Hitpoints, Prayer, Agility, Herblore, Woodcutting, Fletching, Firemaking, Fishing,
-  Cooking, Mining, Smithing, Crafting, Runecraft and Thieving. Every skill has unlocks all the way up. Tap a skill for its guide.
+- **20 skills** on the OSRS XP curve (levels 1-99) at 1x by default: Attack, Strength, Defence,
+  Ranged, Magic, Hitpoints, Prayer, Agility, Herblore, Slayer, Woodcutting, Fletching, Firemaking,
+  Fishing, Cooking, Mining, Smithing, Crafting, Runecraft and Thieving.
+  - Slayer: tasks from Brannoc (Brindlewood), Vessa (Highcrest) and Morvain (Frosthold); XP per kill
+    on task, points and streak bonuses, a reward shop (slayer helmet, mirror shield, rock hammer).
+    Eight slayer-only monsters from grave crawlers (5) to shadow hounds (90), with their own rules. Every skill has unlocks all the way up. Tap a skill for its guide.
   - Ranged: shortbows and longbows (normal to heartwood), crossbows, darts; arrows and bolts from
     bronze to dragon, which you can pick back up; accurate / rapid / longrange styles; line of sight.
   - Fletching: knife on logs for shafts, bows and stocks; string bows and crossbows; arrows, darts

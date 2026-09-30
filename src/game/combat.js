@@ -8,6 +8,7 @@ import { spawnNpc } from './npc.js';
 import { wildLevel } from './world_info.js';
 import { touchingCardinal, withinRange } from './entity.js';
 import { magicAttack, jewelleryOnHit } from './magic.js';
+import { preventKill, onKill, helmBonus, gaze } from './slayer.js';
 
 const STYLE_XP = { accurate: 'attack', aggressive: 'strength', defensive: 'defence' };
 
@@ -58,9 +59,15 @@ function playerRangedAttack(n) {
   const flight = 1 + Math.floor(dist / 4);
   projectile(p, n, ITEMS[ammoId].icon.color || '#c8c8c8', flight, r.type === 'thrown' ? 'dart' : 'arrow');
   sfx('miss');
-  const hit = Math.random() < hitChance(playerRangedRoll(p), npcDefRoll(n, 'ranged'));
-  const mh = playerRangedMaxHit(p);
-  const dmg = hit ? randInt(Math.min(1, mh), mh) : 0;
+  const bonus = helmBonus(n);
+  const roll = () => { const mh = Math.floor(playerRangedMaxHit(p) * bonus); return Math.random() < hitChance(playerRangedRoll(p) * bonus, npcDefRoll(n, 'ranged')) ? randInt(Math.min(1, mh), mh) : 0; };
+  let dmg = roll();
+  // the shadowbow looses a second arrow when there is one to spare
+  if (r.double && p.equip.ammo && p.equip.ammo.qty > 0) {
+    if (--p.equip.ammo.qty <= 0) p.equip.ammo = null;
+    projectile(p, n, ITEMS[ammoId].icon.color || '#c8c8c8', flight + 1, 'arrow');
+    dmg += roll();
+  }
   if (!n.target) { n.target = p; n.returning = false; if (n.attackCd <= 0) n.attackCd = 1 + flight; }
   after(flight, () => {
     if (Math.random() < 0.75) dropAmmo(ammoId, n.x + Math.floor(n.size / 2), n.y + Math.floor(n.size / 2));
@@ -110,8 +117,9 @@ export function playerAttack(n) {
   p.attackCd = p.attackSpeed();
   p.playAnim('attack', 2);
   p.faceTile(n.x + (n.size - 1) / 2, n.y + (n.size - 1) / 2);
-  const hit = Math.random() < hitChance(playerAttRoll(p), npcDefRoll(n, 'melee'));
-  const mh = playerMaxHit(p);
+  const bonus = helmBonus(n);
+  const hit = Math.random() < hitChance(playerAttRoll(p) * bonus, npcDefRoll(n, 'melee'));
+  const mh = Math.floor(playerMaxHit(p) * bonus);
   const dmg = hit ? randInt(Math.min(1, mh), mh) : 0;
   const real = Math.min(dmg, n.hp);
   n.hp -= real;
@@ -222,6 +230,7 @@ export function npcAttack(n) {
   sfx(dmg ? 'hit' : 'miss');
   damagePlayer(dmg, n);
   if (d.poison && dmg > 0) tryPoison(d.poison);
+  gaze(n);
 }
 
 function dragonfire(n, max) {
@@ -336,6 +345,7 @@ export function tickTelegraphs() {
 // ------------------------------------------------------------------ death & loot
 export function killNpc(n) {
   const p = G.player;
+  if (n.dead || preventKill(n)) return;
   n.dead = true;
   n.target = null;
   n.respawnAt = G.tick + (n.def.respawn || 20);
@@ -347,6 +357,7 @@ export function killNpc(n) {
   const cx = n.x + Math.floor((n.size - 1) / 2), cy = n.y + Math.floor((n.size - 1) / 2);
   after(1, () => dropLoot(n, cx, cy));
   if (n.temp) after(2, () => { const i = G.npcs.indexOf(n); if (i >= 0) G.npcs.splice(i, 1); G.npcById.delete(n.id); });
+  onKill(n);
   G.game.onNpcKilled && G.game.onNpcKilled(n);
 }
 

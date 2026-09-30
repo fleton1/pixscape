@@ -25,8 +25,8 @@ Status legend: **[done]**, **[next]**, **[later]**.
 | [done] | **Content validator** (`node tools/validate.mjs`): every referenced item/npc/object exists, every item has a source and a use, every dungeon's entrances, exits and spawns are connected. Runs without a browser. |
 | [done] | **Use-item recipe system** shared by Cooking prep, Crafting, and later Fletching and Herblore. |
 | [done] | **Skill guides:** tap a skill to see every unlock by level, generated from the game data so it can't go stale. |
-| [next] | Sprite gallery dev page (every generated sprite on one page, for reviewing new art). |
-| [next] | Save export/import (backup the WebView save to a file). |
+| [done] | Sprite gallery dev page (every generated sprite on one page, for reviewing new art). |
+| [done] | Save export/import (backup the WebView save to a file). |
 
 ## Phase 1 — Build out the existing 13 skills [done in 1.1]
 
@@ -68,7 +68,7 @@ In dependency order, one release each:
 3. **Herblore** [done in 1.4] — herbs from monster drops, vials from glassblowing; shop potions become craftable,
    plus antifire and antipoison (poison added to combat).
 4. **Agility** [done in 1.4] — a course per town, shortcuts around the map, marks of grace → graceful outfit.
-5. **Slayer** [next] — three slayer masters, tasks, slayer-only monsters with unique drops.
+5. **Slayer** [done in 1.5] — three slayer masters, tasks, slayer-only monsters with unique drops.
 6. **Farming + Hunter** — patches that grow in real time (works while the game is closed); traps and
    creatures.
 
@@ -89,7 +89,7 @@ Dungeons (separate maps):
 | [done] | Frostpeak Ice Caves | Frosthold | 50–110 | frost trolls, ice spiders, frost wyrms; Hrimfang boss |
 | [done] | Tomb of the Scarab | the Great Pyramid | 45–140 | (existing) mummies, scarabs, the Scarab King |
 | [done] | Cinderhold Depths | the volcano | 70–150 | fire giants, cinderhounds, obsidian golems, black dragons |
-| [later] | Wilderness dungeons | deep Wilderness | 50–200 | multi-combat, best rewards, highest risk |
+| [done] | The Bloodhollow + Abyssal Rift | deep Wilderness | 90–290 | multi-combat Wilderness 35 / 50, slayer monsters, the Riftlord |
 
 New creature sprites: bats, slimes, crabs, snakes, treants, trolls, golems, wyrms; variants of ghosts,
 skeletons, giants and dragons. Rock and sand crabs on beaches give low-effort 1x combat training.
@@ -102,7 +102,7 @@ The overworld grows east and south (existing coordinates stay valid, so saves ke
 - The old underground strip in the north-west becomes ocean and islands.
 - Travel network: spells, jewellery teleports, agility shortcuts, standing-stone rings.
 
-## Phase 5 — Quests and diaries [later]
+## Phase 5 — Quests and diaries [next]
 
 - From 5 quests to about 20, in story chains: the royal knights of Aldermoor, the desert, the
   elves of Elderglen, the witches of Mortmire, and the dwarves of Crestfall.
@@ -126,6 +126,6 @@ economy.
 | 1.2 [done] | Ranged + Fletching, combat triangle |
 | 1.3 [done] | Magic + Runecraft |
 | 1.4 [done] | Herblore + Agility |
-| 1.5 | Slayer, more monsters, Wilderness dungeons |
+| 1.5 [done] | Slayer, more monsters, Wilderness dungeons, save export/import, sprite gallery |
 | 1.6 | Quest wave + achievement diaries |
 | 1.7 | Overworld growth, Farming + Hunter |
