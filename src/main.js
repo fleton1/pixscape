@@ -1,6 +1,6 @@
 // Boot, title screen, input and the main loop.
 import { G, msg, sfx, TICK_MS } from './game/state.js';
-import { generateWorld } from './world/gen.js';
+import { buildWorlds } from './world/maps.js';
 import { buildObjectSprites } from './sprites/objects.js';
 import { buildSprite } from './sprites/chars.js';
 import { game } from './game/game.js';
@@ -38,12 +38,12 @@ async function boot() {
   buildObjectSprites();
   status('Shaping the world...');
   await nextFrame();
-  const world = generateWorld();
+  const worlds = buildWorlds();
   status('Waking the townsfolk...');
   await nextFrame();
   G.settings.xpRate = 4;
   if (Math.min(innerWidth, innerHeight) < 600) G.settings.zoom = 2; // phones see more of the world
-  game.init(world);
+  game.init(worlds);
   G.audio = new AudioEngine();
   G.renderer = new Renderer($('#view'));
   G.ui = new UI();

@@ -8,7 +8,6 @@ import { chop, mine, fish, cook, lightLogs, stealStall, pickpocket, bury, offerB
 import { DIALOGUE, searchObject, pickObject, combineTablets, tombDoor, openChest, dig, readClue, openCasket, rubLamp } from './quests.js';
 import { npcLevelColor } from './combat.js';
 import { placeName, areaAt } from './world_info.js';
-import { AREAS } from '../world/gen.js';
 import { commas, cap } from '../util.js';
 
 const Y = (s) => `<span class="m-npc">${s}</span>`;
@@ -112,11 +111,11 @@ export function performObj(o, option, useItem) {
     case 'Climb-down': case 'Climb-up':
       p.playAnim('attack', 1);
       sfx('ladder');
-      G.game.teleport(o.to[0], o.to[1], o.msg);
+      G.game.teleport(o.to[0], o.to[1], o.msg, true, o.to[2]);
       break;
     case 'Enter':
       if (o.type === 'tomb_door') tombDoor(o, false);
-      else if (o.type === 'portal') G.game.teleport(...G.world.points.spawn, 'The portal whisks you away.');
+      else if (o.type === 'portal') G.game.teleport(...G.game.home(), 'The portal whisks you away.', true, 'main');
       break;
     case 'Search': searchObject(o); break;
     case 'Take-flour':
@@ -132,10 +131,10 @@ export function performObj(o, option, useItem) {
 function readSign(o) {
   if (o.type === 'wild_sign') { G.ui.showClue('WARNING!<br><br>Beyond this point is the Wilderness. Monsters here are vicious and will attack on sight.<br><br>If you die here, you will lose all but your three most valuable items.<br><br>Deeper = deadlier.'); return; }
   const dirs = [];
-  for (const a of AREAS) {
+  for (const a of G.world.areas) {
     const cx = (a.x0 + a.x1) / 2, cy = (a.y0 + a.y1) / 2;
     const dx = cx - o.x, dy = cy - o.y, d = Math.hypot(dx, dy);
-    if (d < 8 || d > 90 || a.x0 < 100 && a.y0 < 62) continue;
+    if (d < 8 || d > 90) continue;
     const ang = Math.atan2(dy, dx);
     const dir = ['East', 'South-east', 'South', 'South-west', 'West', 'North-west', 'North', 'North-east'][((Math.round(ang / (Math.PI / 4)) % 8) + 8) % 8];
     dirs.push({ d, t: `<b>${dir}:</b> ${a.name}` });

@@ -68,10 +68,10 @@ export class NPC extends Mover {
   distTo(x, y) { const [dx, dy] = rectDist(x, y, this.x, this.y, this.size); return Math.max(dx, dy); }
 }
 
-export function spawnNpc(defId, spawn) {
+export function spawnNpc(defId, spawn, world = G.world) {
   const n = new NPC(defId, spawn);
-  G.npcs.push(n);
-  G.npcById.set(n.id, n);
+  world.npcs.push(n);
+  world.npcById.set(n.id, n);
   return n;
 }
 

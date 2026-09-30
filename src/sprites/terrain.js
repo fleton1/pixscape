@@ -1,5 +1,5 @@
 // Bakes the ground layer into 512px chunk canvases with organic, noise-displaced terrain edges.
-import { W, H, TS, T, TINFO, D } from '../world/map.js';
+import { TS, T, TINFO, D } from '../world/map.js';
 import { valueNoise, fbm, hash2, rgb, shade, mix, mulberry32 } from '../util.js';
 import { Painter, OUTLINE } from '../painter.js';
 import { OBJECTS } from '../data/objects.js';
@@ -283,6 +283,7 @@ function buildDecor() {
 
 // ---------------------------------------------------------------- chunk bake
 export function bakeChunk(world, cx, cy) {
+  const W = world.W, H = world.H;
   if (!DECOR) buildDecor();
   const x0 = cx * SZ, y0 = cy * SZ;
   const M = SZ + 4;
@@ -378,6 +379,7 @@ export function bakeChunk(world, cx, cy) {
 export const MAP_SCALE = 4;
 export function bakeMap(world) {
   const S = MAP_SCALE;
+  const W = world.W, H = world.H;
   const c = document.createElement('canvas');
   c.width = W * S; c.height = H * S;
   const ctx = c.getContext('2d');

@@ -158,6 +158,8 @@ export class Player extends Mover {
   }
   weapon() { return this.equip.weapon ? ITEMS[this.equip.weapon.id] : null; }
   attackSpeed() { const w = this.weapon(); return w ? w.equip.speed || 4 : 4; }
+  // A lit lantern or candle (item.light) carried or worn lights up pitch-black caves.
+  lightSource() { return [...this.inv, ...Object.values(this.equip)].some((s) => s && ITEMS[s.id].light); }
   hasAntifire() { const s = this.equip.shield; return s && ITEMS[s.id].equip.antifire; }
   prayerMult(stat) {
     let m = 1;

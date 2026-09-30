@@ -1,10 +1,11 @@
 // Circular minimap and the full-screen world map.
 import { G } from '../game/state.js';
-import { W, H, TS } from '../world/map.js';
+import { TS } from '../world/map.js';
 import { bakeMap, MAP_SCALE } from '../sprites/terrain.js';
 import { Painter, OUTLINE } from '../painter.js';
-import { AREAS } from '../world/gen.js';
-import { underground } from '../game/world_info.js';
+
+// Each map's minimap image is baked once, the first time the player is there.
+function mapImage(w) { return w.mapImage || (w.mapImage = bakeMap(w)); }
 
 export const MAP_ICONS = {};
 function buildIcons() {
@@ -27,10 +28,11 @@ export class Minimap {
     this.cv = canvas;
     this.ctx = canvas.getContext('2d');
     buildIcons();
-    this.map = bakeMap(G.world);
     this.S = MAP_SCALE;
     this.questIcons = [];
   }
+  get map() { return mapImage(G.world); }
+  mapChanged() { this.refreshQuestIcons(); }
   refreshQuestIcons() {
     const starts = { cook: 'feast', hilda: 'goblin_trouble', sylwen: 'lost_grove', petra: 'sands', king: 'dragons_bane' };
     this.questIcons = [];
@@ -49,13 +51,6 @@ export class Minimap {
     const cx = (rx + 0.5) * S, cy = (ry + 0.5) * S;
     ctx.drawImage(this.map, Math.round(cx - R), Math.round(cy - R), R * 2, R * 2, 0, 0, R * 2, R * 2);
     const toM = (x, y) => [R + (x + 0.5) * S - cx, R + (y + 0.5) * S - cy];
-    if (underground(p.x, p.y)) {
-      // hide the overworld around dungeon edges
-      ctx.fillStyle = '#000';
-      const [ex, ey] = toM(-0.5, -0.5);
-      ctx.fillRect(ex + 100 * S, 0, R * 2, R * 2);
-      ctx.fillRect(0, ey + 59 * S, R * 2, R * 2);
-    }
     // map icons
     for (const ic of G.world.mapIcons) {
       const [mx, my] = toM(ic.x, ic.y);
@@ -148,10 +143,17 @@ export class WorldMap {
     }, { passive: false });
   }
   resize() { this.cv.width = this.cv.clientWidth; this.cv.height = this.cv.clientHeight; this.draw(); }
+  // The world map always shows the overworld. Inside a dungeon it marks the dungeon's entrance.
+  here() {
+    const w = G.world, p = G.player;
+    if (w === G.overworld) return { x: p.x, y: p.y, name: null };
+    const [x, y] = w.entrance || G.overworld.points.spawn;
+    return { x, y, name: w.name };
+  }
   open() {
-    const p = G.player;
     this.cv.width = this.cv.clientWidth; this.cv.height = this.cv.clientHeight;
-    if (underground(p.x, p.y)) { this.ox = 225; this.oy = 160; } else { this.ox = p.x; this.oy = p.y; }
+    const h = this.here();
+    this.ox = h.x; this.oy = h.y;
     this.draw();
   }
   draw() {
@@ -162,29 +164,29 @@ export class WorldMap {
     const x0 = this.ox - cw / 2 / s, y0 = this.oy - ch / 2 / s;
     ctx.save();
     ctx.translate(-x0 * s, -y0 * s);
-    ctx.drawImage(this.mm.map, 0, 0, W * MAP_SCALE, H * MAP_SCALE, 0, 0, W * s, H * s);
-    // hide the underground region
-    ctx.fillStyle = '#2e5a96'; ctx.fillRect(0, 0, 100 * s, 62 * s);
+    const ow = G.overworld, W = ow.W, H = ow.H;
+    ctx.drawImage(mapImage(ow), 0, 0, W * MAP_SCALE, H * MAP_SCALE, 0, 0, W * s, H * s);
     ctx.imageSmoothingEnabled = false;
-    for (const ic of G.world.mapIcons) {
-      if (ic.x < 100 && ic.y < 62) continue;
+    for (const ic of ow.mapIcons) {
       const img = MAP_ICONS[ic.type];
       if (img && this.zoom >= 0.4) ctx.drawImage(img, ic.x * s - 5, ic.y * s - 5);
     }
     // labels
     ctx.textAlign = 'center';
-    for (const l of G.world.labels) {
-      if (l.x < 100 && l.y < 62) continue;
+    for (const l of ow.labels) {
       const size = [0, 12, 16, 22][l.size] * Math.min(1.4, Math.max(0.8, this.zoom * 1.4));
       ctx.font = `${l.faint ? 'italic ' : ''}${size}px "Pixelify Sans", monospace`;
       ctx.fillStyle = '#000'; ctx.fillText(l.name, l.x * s + 1, l.y * s + 1);
       ctx.fillStyle = l.faint ? 'rgba(255,240,200,0.75)' : '#ff981f'; ctx.fillText(l.name, l.x * s, l.y * s);
     }
-    const p = G.player;
-    if (!underground(p.x, p.y)) {
-      const t = performance.now();
-      ctx.fillStyle = '#fff'; ctx.strokeStyle = '#000'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(p.x * s, p.y * s, 4 + Math.sin(t / 200), 0, 7); ctx.fill(); ctx.stroke();
+    const h = this.here();
+    const t = performance.now();
+    ctx.fillStyle = h.name ? '#ffd84a' : '#fff'; ctx.strokeStyle = '#000'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(h.x * s, h.y * s, 4 + Math.sin(t / 200), 0, 7); ctx.fill(); ctx.stroke();
+    if (h.name) {
+      ctx.font = '14px "Pixelify Sans", monospace'; ctx.textAlign = 'center';
+      ctx.fillStyle = '#000'; ctx.fillText(`You are in ${h.name}`, h.x * s + 1, h.y * s - 11);
+      ctx.fillStyle = '#ffd84a'; ctx.fillText(`You are in ${h.name}`, h.x * s, h.y * s - 12);
     }
     ctx.restore();
     ctx.font = '14px "Pixelify Sans", monospace'; ctx.textAlign = 'left'; ctx.fillStyle = '#ffdd88';

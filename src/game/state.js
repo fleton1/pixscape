@@ -2,11 +2,10 @@
 export const TICK_MS = 600;
 
 export const G = {
-  world: null,
+  world: null,      // the map the player is on
+  worlds: null,     // Map of id -> World (overworld 'main' + dungeons)
+  overworld: null,
   player: null,
-  npcs: [],
-  npcById: new Map(),
-  groundItems: [],
   projectiles: [],
   effects: [],
   telegraphs: [],
@@ -21,6 +20,14 @@ export const G = {
   // true on phones/tablets: tap = left-click, press-and-hold = right-click, pinch = zoom
   touch: typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches,
 };
+
+// NPCs and ground items belong to a map; these always refer to the current one.
+const NO_NPCS = new Map();
+Object.defineProperties(G, {
+  npcs: { get() { return G.world ? G.world.npcs : []; } },
+  npcById: { get() { return G.world ? G.world.npcById : NO_NPCS; } },
+  groundItems: { get() { return G.world ? G.world.groundItems : []; }, set(v) { G.world.groundItems = v; } },
+});
 
 // Schedule fn to run after n ticks.
 export function after(n, fn) { G.timers.push({ at: G.tick + n, fn }); }

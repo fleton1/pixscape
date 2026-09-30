@@ -1,7 +1,8 @@
 // Tile map: terrain, decor, objects, collision.
 import { OBJECTS } from '../data/objects.js';
 
-export const W = 420, H = 320;
+// The overworld's size. Dungeons and other areas are separate World instances with their own size.
+export const OW_W = 420, OW_H = 320;
 export const TS = 16; // pixels per tile
 
 export const T = {
@@ -48,8 +49,16 @@ def(T.WALL_ICE, { name: 'Ice wall', block: true, crisp: true, wall: true, map: '
 
 export const D = { NONE: 0, FLOWER_W: 1, FLOWER_B: 2, FLOWER_Y: 3, FLOWER_R: 4, TUFT: 5, PEBBLES: 6, MUSHROOM: 7, BONES: 8, SNOWTUFT: 9, DEADBUSH: 10, LILY: 11, REEDS: 12, SHELL: 13, CRACKS: 14, FERN: 15, LEAVES: 16, EMBERS: 17 };
 
+// One map: the overworld ('main') or a dungeon. Only the map the player is on is simulated; the
+// others keep their NPCs, ground items and objects frozen until the player comes back.
+//   kind:     'overworld' | 'dungeon'
+//   dark:     0..1 darkness overlay (dungeons); light sources and the player cut through it
+//   entrance: [x, y] on the overworld, shown on the world map while the player is inside
 export class World {
-  constructor() {
+  constructor(id = 'main', W = OW_W, H = OW_H, meta = {}) {
+    this.id = id; this.W = W; this.H = H;
+    this.name = meta.name || ''; this.kind = meta.kind || 'overworld';
+    this.music = meta.music || null; this.dark = meta.dark || 0; this.entrance = meta.entrance || null;
     this.ground = new Uint8Array(W * H);
     this.decor = new Uint8Array(W * H);
     this.biome = new Uint8Array(W * H);
@@ -58,21 +67,29 @@ export class World {
     this.objects = [];
     this.spawns = [];
     this.labels = [];
-    this.fixedNpcs = [];
-    this.dirtyChunks = new Set();
+    this.areas = [];
+    this.mapIcons = [];
+    this.itemSpawns = [];
+    this.points = {};
+    this.docks = {};
+    // live state
+    this.npcs = [];
+    this.npcById = new Map();
+    this.groundItems = [];
+    this.chunks = new Map(); // baked ground chunks (renderer cache)
   }
-  idx(x, y) { return y * W + x; }
-  inb(x, y) { return x >= 0 && y >= 0 && x < W && y < H; }
-  t(x, y) { return this.inb(x, y) ? this.ground[y * W + x] : T.VOID; }
-  set(x, y, t) { if (this.inb(x, y)) this.ground[y * W + x] = t; }
+  idx(x, y) { return y * this.W + x; }
+  inb(x, y) { return x >= 0 && y >= 0 && x < this.W && y < this.H; }
+  t(x, y) { return this.inb(x, y) ? this.ground[y * this.W + x] : T.VOID; }
+  set(x, y, t) { if (this.inb(x, y)) this.ground[y * this.W + x] = t; }
   obj(x, y) {
     if (!this.inb(x, y)) return null;
-    const i = this.objAt[y * W + x];
+    const i = this.objAt[y * this.W + x];
     return i >= 0 ? this.objects[i] : null;
   }
   blocked(x, y) {
     if (!this.inb(x, y)) return true;
-    const i = y * W + x;
+    const i = y * this.W + x;
     if (TINFO[this.ground[i]].block) return true;
     const o = this.objAt[i];
     if (o >= 0) {

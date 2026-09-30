@@ -445,14 +445,14 @@ export function combineTablets() {
 export function tombDoor(o, usingTablet) {
   const p = G.player;
   const s = p.stage('sands');
-  if (s >= 3) { G.game.teleport(...G.world.points.tomb, 'You descend into the darkness of the tomb...'); return; }
+  if (s >= 3) { G.game.teleport(...G.worlds.get('tomb').points.arrive, 'You descend into the darkness of the tomb...', true, 'tomb'); return; }
   if (usingTablet && p.has('scarab_tablet') && s === 1) {
     p.remove('scarab_tablet');
     p.setStage('sands', 3);
     msg('You press the tablet into the door. The ground rumbles... the tomb is open!', '#ef1020');
     sfx('rumble');
     G.effects.push({ kind: 'shake', t: performance.now() });
-    after(3, () => G.game.teleport(...G.world.points.tomb, 'You descend into the darkness of the tomb...'));
+    after(3, () => G.game.teleport(...G.worlds.get('tomb').points.arrive, 'You descend into the darkness of the tomb...', true, 'tomb'));
     return;
   }
   msg('The stone door is sealed. There is a tablet-shaped hollow in its centre.');

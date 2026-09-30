@@ -1,6 +1,6 @@
 // World renderer.
 import { G, TICK_MS } from '../game/state.js';
-import { W, H, TS, T, TINFO } from '../world/map.js';
+import { TS, T, TINFO } from '../world/map.js';
 import { bakeChunk, CH } from '../sprites/terrain.js';
 import { OBJ_SPRITES } from '../sprites/objects.js';
 import { buildSprite } from '../sprites/chars.js';
@@ -10,7 +10,7 @@ import { ITEMS } from '../data/items.js';
 import { PETS } from '../data/npcs.js';
 import { hash2, clamp } from '../util.js';
 import { BIOME } from '../world/gen.js';
-import { biomeAt, underground, wildLevel } from '../game/world_info.js';
+import { biomeAt, wildLevel } from '../game/world_info.js';
 
 const FLAT = new Set(['torch', 'banner_blue', 'banner_red', 'skulls', 'spinning_web', 'trapdoor', 'wheat', 'moonpetal', 'chair', 'stool']);
 const LIGHTS = { torch: [3.5, '#ffb050'], fire: [4, '#ffa040'], campfire: [4.5, '#ffa040'], fireplace: [3.5, '#ffa040'], candles: [2.5, '#ffd080'], crystal: [3, '#80d0ff'], obelisk: [3, '#c060ff'], lamp_post: [3.5, '#ffe0a0'], furnace: [3.5, '#ff9040'], portal: [3, '#c090ff'], moonpetal: [2, '#d0e8ff'], cauldron: [2, '#80ff80'], range: [2.5, '#ff9040'] };
@@ -19,7 +19,6 @@ export class Renderer {
   constructor(canvas) {
     this.cv = canvas;
     this.ctx = canvas.getContext('2d');
-    this.chunks = new Map();
     this.light = document.createElement('canvas');
     this.lctx = this.light.getContext('2d');
     this.particles = [];
@@ -35,8 +34,10 @@ export class Renderer {
   }
   get Z() { return G.settings.zoom; }
 
+  // Baked ground chunks are cached on each map, so switching maps and back costs nothing.
+  get chunks() { return G.world.chunks; }
   chunk(cx, cy, force) {
-    const k = cy * 100 + cx;
+    const k = cy * 1000 + cx;
     let c = this.chunks.get(k);
     if (c) return c;
     if (!force && this.bakedThisFrame >= 1) return null;
@@ -45,7 +46,8 @@ export class Renderer {
     this.chunks.set(k, c);
     return c;
   }
-  invalidateTile(x, y) { this.chunks.delete(Math.floor(y / CH) * 100 + Math.floor(x / CH)); }
+  invalidateTile(x, y) { this.chunks.delete(Math.floor(y / CH) * 1000 + Math.floor(x / CH)); }
+  mapChanged() { this.warmed = false; this.particles.length = 0; this.clicks.length = 0; }
 
   // ------------------------------------------------------------- camera
   camera(now) {
@@ -97,6 +99,7 @@ export class Renderer {
     ctx.setTransform(Z, 0, 0, Z, -this.camX * Z, -this.camY * Z);
     ctx.imageSmoothingEnabled = false;
     const tx0 = Math.max(0, Math.floor(this.camX / TS) - 1), ty0 = Math.max(0, Math.floor(this.camY / TS) - 1);
+    const W = w.W, H = w.H;
     const tx1 = Math.min(W - 1, Math.ceil((this.camX + this.vw) / TS) + 1), ty1 = Math.min(H - 1, Math.ceil((this.camY + this.vh) / TS) + 3);
     this.view = { tx0, ty0, tx1, ty1 };
     // ground chunks
@@ -111,9 +114,10 @@ export class Renderer {
     if (this.bakedThisFrame === 0 && !this.idleBaking) {
       const cx0 = Math.floor(tx0 / CH) - 1, cx1 = Math.floor(tx1 / CH) + 1, cy0 = Math.floor(ty0 / CH) - 1, cy1 = Math.floor(ty1 / CH) + 1;
       outer: for (let cy = cy0; cy <= cy1; cy++) for (let cx = cx0; cx <= cx1; cx++) {
-        if (cx < 0 || cy < 0 || cx * CH >= W || cy * CH >= H || this.chunks.has(cy * 100 + cx)) continue;
+        if (cx < 0 || cy < 0 || cx * CH >= W || cy * CH >= H || this.chunks.has(cy * 1000 + cx)) continue;
         this.idleBaking = true;
-        const go = () => { this.bakedThisFrame = 0; this.chunk(cx, cy, true); this.idleBaking = false; };
+        const bakeFor = G.world;
+        const go = () => { this.idleBaking = false; if (G.world !== bakeFor) return; this.bakedThisFrame = 0; this.chunk(cx, cy, true); };
         if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 500 }); else setTimeout(go, 50);
         break outer;
       }
@@ -161,7 +165,7 @@ export class Renderer {
     const t = now / 1000;
     for (let ty = ty0; ty <= ty1; ty++)
       for (let tx = tx0; tx <= tx1; tx++) {
-        const g = w.ground[ty * W + tx];
+        const g = w.ground[ty * w.W + tx];
         if (g === T.OCEAN || g === T.WATER) {
           const h = hash2(tx, ty, 5);
           const ph = (t * 0.6 + h * 10) % 3;
@@ -242,7 +246,7 @@ export class Renderer {
     const byTile = new Map();
     for (const g of G.groundItems) {
       if (g.x < v.tx0 || g.x > v.tx1 || g.y < v.ty0 || g.y > v.ty1) continue;
-      const k = g.y * W + g.x;
+      const k = g.y * 100000 + g.x;
       if (!byTile.has(k)) byTile.set(k, []);
       byTile.get(k).push(g);
     }
@@ -463,7 +467,8 @@ export class Renderer {
     const ctx = this.ctx;
     const p = G.player;
     const b = biomeAt(p.x, p.y);
-    const kind = { [BIOME.FROST]: 'snow', [BIOME.DESERT]: 'sand', [BIOME.WILD]: 'ember', [BIOME.VOLCANIC]: 'ember', [BIOME.SWAMP]: 'firefly', [BIOME.ELVEN]: 'firefly', [BIOME.CAVE]: 'dust', [BIOME.TOMB]: 'dust', [BIOME.TROPIC]: 'pollen', [BIOME.KINGDOM]: 'pollen' }[b];
+    const kind = { [BIOME.FROST]: 'snow', [BIOME.DESERT]: 'sand', [BIOME.WILD]: 'ember', [BIOME.VOLCANIC]: 'ember', [BIOME.SWAMP]: 'firefly', [BIOME.ELVEN]: 'firefly', [BIOME.CAVE]: 'dust', [BIOME.TOMB]: 'dust', [BIOME.TROPIC]: 'pollen', [BIOME.KINGDOM]: 'pollen',
+      [BIOME.SEWER]: 'dust', [BIOME.CRYPT]: 'dust', [BIOME.ICECAVE]: 'snow', [BIOME.LAVACAVE]: 'ember', [BIOME.HOLLOW]: 'firefly' }[b];
     const target = { snow: 140, sand: 60, ember: 50, firefly: 30, dust: 40, pollen: 14 }[kind] || 0;
     const dt = Math.min(50, now - (this.lastPT || now)); this.lastPT = now;
     while (this.particles.length < target) this.particles.push(this.newParticle(kind, true));
@@ -504,14 +509,14 @@ export class Renderer {
 
   drawLighting(now) {
     const p = G.player;
-    const ug = underground(p.x, p.y);
+    const dark = G.world.dark;
     const ctx = this.ctx;
     const Wd = this.cv.width, Hd = this.cv.height;
-    if (ug) {
+    if (dark) {
       const l = this.lctx;
       l.globalCompositeOperation = 'source-over';
       l.clearRect(0, 0, Wd, Hd);
-      l.fillStyle = 'rgba(6,4,10,0.86)';
+      l.fillStyle = `rgba(6,4,10,${dark})`;
       l.fillRect(0, 0, Wd, Hd);
       l.globalCompositeOperation = 'destination-out';
       const Z = this.Z;
@@ -523,7 +528,7 @@ export class Renderer {
         l.fillStyle = g; l.beginPath(); l.arc(sx, sy, rr, 0, 7); l.fill();
       };
       const [rx, ry] = p.renderPos(now);
-      hole((rx + 0.5) * TS, (ry + 0.3) * TS, 6.5);
+      hole((rx + 0.5) * TS, (ry + 0.3) * TS, G.game.playerLight());
       const v = this.view;
       for (let ty = v.ty0; ty <= v.ty1; ty++) for (let tx = v.tx0; tx <= v.tx1; tx++) {
         const o = G.world.obj(tx, ty);

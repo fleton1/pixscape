@@ -16,13 +16,16 @@ import { performNpc, performObj, pickupItem } from './actions.js';
 import { commas, cheb } from '../util.js';
 
 const SAVE_KEY = 'pixscape_save_v1';
+const SAVE_VERSION = 2;
 
 export const game = {
-  init(world) {
-    G.world = world;
-    const [sx, sy] = world.points.spawn;
+  init(worlds) {
+    G.worlds = worlds;
+    G.overworld = worlds.get('main');
+    G.world = G.overworld;
+    const [sx, sy] = G.overworld.points.spawn;
     G.player = new Player(sx, sy);
-    for (const s of world.spawns) spawnNpc(s.npc, s);
+    for (const w of worlds.values()) for (const s of w.spawns) spawnNpc(s.npc, s, w);
     G.dynObjs = [];
     const loaded = this.load();
     if (!loaded) this.newGame();
@@ -32,7 +35,8 @@ export const game = {
   },
 
   resetPlayer() {
-    const [sx, sy] = G.world.points.spawn;
+    G.world = G.overworld;
+    const [sx, sy] = G.overworld.points.spawn;
     G.player = new Player(sx, sy);
     G.groundItems = [];
     this.newGame();
@@ -161,6 +165,7 @@ export const game = {
     const name = placeName(p.x, p.y);
     if (name !== this.lastArea) {
       if (this.lastArea !== null) G.ui && G.ui.areaBanner(name);
+      if (this.lastArea === undefined) this.lastArea = null;
       this.lastArea = name;
       G.audio && G.audio.setTrack(musicAt(p.x, p.y));
     }
@@ -312,10 +317,12 @@ export const game = {
   removeGround(g) { const i = G.groundItems.indexOf(g); if (i >= 0) G.groundItems.splice(i, 1); },
 
   // ------------------------------------------------------------ travel
-  teleport(x, y, text, anim = true) {
+  // Move the player, optionally to another map ('main' is the overworld).
+  teleport(x, y, text, anim = true, map = null) {
     const p = G.player;
     p.path = []; p.target = null; p.action = null;
     const go = () => {
+      if (map && map !== G.world.id) this.enterMap(map);
       // settle on a walkable tile
       for (let r = 0; r < 4; r++) for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) {
         if (!G.world.blocked(x + i, y + j)) { p.teleport(x + i, y + j); if (G.pet) G.pet.teleport(x + i, y + j); r = 9; j = 9; i = 9; }
@@ -324,6 +331,24 @@ export const game = {
       this.checkArea();
     };
     if (anim && G.ui) G.ui.fade(go); else go();
+  },
+  enterMap(id) {
+    const w = G.worlds.get(id);
+    if (!w) throw new Error('No map ' + id);
+    G.world = w;
+    G.projectiles.length = 0; G.effects.length = 0; G.telegraphs.length = 0;
+    G.hoverTile = null;
+    for (const n of w.npcs) if (n.target) { n.target = null; n.returning = true; }
+    G.renderer && G.renderer.mapChanged();
+    G.minimap && G.minimap.mapChanged();
+    this.lastArea = undefined;
+  },
+  home() { return G.overworld.points.spawn; },
+  // Radius of the light around the player in dark maps. Pitch-black areas need a light source.
+  playerLight() {
+    const p = G.player, a = areaAt(p.x, p.y);
+    if (!a || !a.pitch) return 6.5;
+    return p.lightSource() ? 5.5 : 1.6;
   },
   sail(dest) {
     const d = G.world.docks[dest];
@@ -355,8 +380,8 @@ export const game = {
       fn: () => {
         G.effects.push({ kind: 'sparkle', follow: p, t: performance.now() });
         if (++n < 6) return 1;
-        const [x, y] = G.world.points.spawn;
-        this.teleport(x, y, 'You teleport home to Brindlewood.', false);
+        const [x, y] = this.home();
+        this.teleport(x, y, 'You teleport home to Brindlewood.', false, 'main');
         G.effects.push({ kind: 'sparkle', follow: p, t: performance.now() });
         return false;
       },
@@ -378,9 +403,9 @@ export const game = {
     const p = G.player;
     if (!p || p.dead) return;
     const data = {
-      v: 1,
+      v: SAVE_VERSION,
       p: {
-        x: p.x, y: p.y, name: p.name, skills: p.skills, inv: p.inv, equip: p.equip, bank: p.bank, quests: p.quests, qp: p.questPoints,
+        map: G.world.id, x: p.x, y: p.y, name: p.name, skills: p.skills, inv: p.inv, equip: p.equip, bank: p.bank, quests: p.quests, qp: p.questPoints,
         collection: p.collection, pet: p.pet, clue: p.clue, flags: p.flags, stats: p.stats, style: p.style, running: p.running, runEnergy: p.runEnergy, look: p.look,
       },
       settings: G.settings,
@@ -391,16 +416,20 @@ export const game = {
     let data;
     try { data = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (e) { data = null; }
     if (!data || !data.p) return false;
+    migrateSave(data);
     const p = G.player, d = data.p;
     Object.assign(G.settings, data.settings || {});
+    const w = G.worlds.get(d.map) || G.overworld;
+    G.world = w;
     p.teleport(d.x, d.y);
-    if (G.world.blocked(d.x, d.y)) p.teleport(...G.world.points.spawn);
+    if (w.blocked(d.x, d.y)) p.teleport(...(w.points.arrive || w.points.spawn));
     p.name = d.name || p.name;
     for (const s of SKILLS) if (d.skills?.[s]) p.skills[s] = d.skills[s];
-    p.inv = (d.inv || []).map((s) => (s && ITEMS[s.id] ? s : null));
+    const item = (s) => (s && ITEMS[s.id] ? s : null);
+    p.inv = (d.inv || []).map(item);
     while (p.inv.length < 28) p.inv.push(null);
-    for (const k of Object.keys(p.equip)) p.equip[k] = d.equip?.[k] && ITEMS[d.equip[k].id] ? d.equip[k] : null;
-    p.bank = (d.bank || []).filter((b) => ITEMS[b.id]);
+    for (const k of Object.keys(p.equip)) p.equip[k] = item(d.equip?.[k]);
+    p.bank = (d.bank || []).filter(item);
     p.quests = d.quests || {}; p.questPoints = d.qp || 0; p.collection = d.collection || {}; p.pet = d.pet || null; p.clue = d.clue || null;
     p.flags = d.flags || {}; p.stats = { ...p.stats, ...(d.stats || {}) }; p.style = d.style || 'accurate'; p.running = d.running ?? true; p.runEnergy = d.runEnergy ?? 100;
     if (d.look) p.look = d.look;
@@ -412,5 +441,24 @@ export const game = {
   },
   hasSave() { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } },
 };
+
+// Bring an older save up to SAVE_VERSION.
+export function migrateSave(data) {
+  const d = data.p;
+  if ((data.v || 1) < 2) {
+    // v1 kept the dungeons in the overworld's north-west corner; they are separate maps now.
+    d.map = 'main';
+    if (d.x < 100 && d.y < 62) {
+      if (d.x <= 52) d.map = 'catacombs';
+      else { d.map = 'tomb'; d.x -= 54; }
+    }
+  }
+  // Renamed items: old id -> new id.
+  const rename = (s) => { if (s && ITEM_ALIASES[s.id]) s.id = ITEM_ALIASES[s.id]; return s; };
+  (d.inv || []).forEach(rename); (d.bank || []).forEach(rename); Object.values(d.equip || {}).forEach(rename);
+  data.v = SAVE_VERSION;
+  return data;
+}
+const ITEM_ALIASES = {};
 
 G.game = game;

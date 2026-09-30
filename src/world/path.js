@@ -1,5 +1,4 @@
 // A* pathfinding (8-directional, no corner cutting) + a small binary heap.
-import { W, H } from './map.js';
 
 export class Heap {
   constructor() { this.a = []; this.p = []; }
@@ -36,14 +35,18 @@ export class Heap {
 }
 
 const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
-const gScore = new Float32Array(W * H);
-const came = new Int32Array(W * H);
-const stamp = new Uint32Array(W * H);
+let gScore = new Float32Array(0), came = new Int32Array(0), stamp = new Uint32Array(0);
 let curStamp = 1;
+function ensure(n) {
+  if (stamp.length >= n) return;
+  gScore = new Float32Array(n); came = new Int32Array(n); stamp = new Uint32Array(n); curStamp = 1;
+}
 
 // Finds a path from (sx,sy) to any tile where goal(x,y) is true. Returns array of [x,y] steps (excluding start).
 // If unreachable, returns a path to the explored tile closest to (tx,ty).
 export function findPath(world, sx, sy, goal, tx, ty, maxNodes = 12000) {
+  const W = world.W, H = world.H;
+  ensure(W * H);
   curStamp++;
   const heap = new Heap();
   const start = sy * W + sx;

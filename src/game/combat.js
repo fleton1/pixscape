@@ -279,8 +279,10 @@ export function killPlayer() {
     for (const s of Object.keys(p.skills)) p.skills[s].cur = p.skills[s].lvl;
     p.runEnergy = 100;
     p.dead = false;
-    const [sx, sy] = G.world.points.spawn;
+    const [sx, sy] = G.game.home();
+    if (G.world !== G.overworld) G.game.enterMap('main');
     p.teleport(sx, sy);
+    if (G.pet) G.pet.teleport(sx, sy);
     p.stats.deaths++;
     msg(wl > 0 ? 'You have been returned to Brindlewood.' : 'You wake up in Brindlewood, your belongings safe. Death is kind outside the Wilderness.', '#0000ff');
     G.ui && (G.ui.dirty('inv'), G.ui.dirty('equip'), G.ui.dirty('orbs'), G.ui.dirty('skills'));

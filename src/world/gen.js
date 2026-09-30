@@ -1,10 +1,11 @@
 // Deterministic world generation: continents, biomes, rivers, towns, roads, dungeons and spawns.
-import { World, W, H, T, TINFO, D } from './map.js';
+import { World, OW_W, OW_H, T, TINFO, D } from './map.js';
 import { mulberry32, fbm, valueNoise, hash2 } from '../util.js';
 import { Heap } from './path.js';
 import { OBJECTS } from '../data/objects.js';
+import { makeBuilder } from './build.js';
 
-export const BIOME = { OCEAN: 0, KINGDOM: 1, WILD: 2, FROST: 3, DESERT: 4, SWAMP: 5, ELVEN: 6, TROPIC: 7, VOLCANIC: 8, CAVE: 9, TOMB: 10 };
+export const BIOME = { OCEAN: 0, KINGDOM: 1, WILD: 2, FROST: 3, DESERT: 4, SWAMP: 5, ELVEN: 6, TROPIC: 7, VOLCANIC: 8, CAVE: 9, TOMB: 10, SEWER: 11, CRYPT: 12, ICECAVE: 13, LAVACAVE: 14, HOLLOW: 15 };
 export const BIOME_INFO = {
   [BIOME.OCEAN]: { name: 'The Endless Sea', music: 'sea' },
   [BIOME.KINGDOM]: { name: 'Aldermoor', music: 'kingdom' },
@@ -17,22 +18,21 @@ export const BIOME_INFO = {
   [BIOME.VOLCANIC]: { name: 'Cinderhold', music: 'volcano' },
   [BIOME.CAVE]: { name: 'Highcrest Catacombs', music: 'cave' },
   [BIOME.TOMB]: { name: 'Tomb of the Scarab', music: 'tomb' },
+  [BIOME.SEWER]: { name: 'Sewers', music: 'cave' },
+  [BIOME.CRYPT]: { name: 'Crypt', music: 'cave' },
+  [BIOME.ICECAVE]: { name: 'Ice caves', music: 'frost' },
+  [BIOME.LAVACAVE]: { name: 'Depths', music: 'volcano' },
+  [BIOME.HOLLOW]: { name: 'Caverns', music: 'cave' },
 };
 
-export const AREAS = [];
-const area = (name, x0, y0, x1, y1, music) => AREAS.push({ id: AREAS.length + 1, name, x0, y0, x1, y1, music });
-
+// The overworld. Dungeons live in dungeons.js as their own maps.
 export function generateWorld() {
-  const w = new World();
+  const W = OW_W, H = OW_H;
+  const w = new World('main', W, H, { kind: 'overworld' });
   const rng = mulberry32(20260926);
   const R = () => rng();
-  const reserved = new Uint8Array(W * H);
-  const idx = (x, y) => y * W + x;
-  const inb = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
-  const reserve = (x, y, ww = 1, hh = 1) => { for (let j = y; j < y + hh; j++) for (let i = x; i < x + ww; i++) if (inb(i, j)) reserved[idx(i, j)] = 1; };
-  const setT = (x, y, t) => { if (inb(x, y)) w.ground[idx(x, y)] = t; };
-  const getT = (x, y) => w.t(x, y);
-  w.points = {}; w.docks = {}; w.itemSpawns = []; w.mapIcons = [];
+  const B = makeBuilder(w, R);
+  const { reserved, idx, inb, reserve, setT, getT, area, place, fill, building, fenceRect, npc, walkable, spawnIn, icon, carve, blob } = B;
 
   // ------------------------------------------------------------ landmasses
   const MAIN = [[116, 12], [180, 8], [260, 10], [330, 14], [372, 26], [380, 60], [372, 100], [386, 130], [414, 150], [419, 319], [262, 319], [250, 262], [232, 258], [210, 262], [186, 252], [160, 236], [142, 212], [126, 198], [118, 176], [124, 150], [112, 130], [114, 100], [108, 60], [110, 30]];
@@ -48,7 +48,6 @@ export function generateWorld() {
   const inEll = (x, y, cx, cy, rx, ry) => ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1;
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++) {
-      if (x < 100 && y < 62) { w.ground[idx(x, y)] = T.VOID; continue; } // underground zone
       const nx = x + (fbm(x / 14, y / 14, 1, 4) - 0.5) * 18;
       const ny = y + (fbm(x / 14, y / 14, 2, 4) - 0.5) * 18;
       let land = 0;
@@ -85,28 +84,6 @@ export function generateWorld() {
     }
 
   // ------------------------------------------------------------ rivers & lakes
-  const carve = (pts, width, t = T.WATER) => {
-    for (let s = 0; s + 1 < pts.length; s++) {
-      const [x0, y0] = pts[s], [x1, y1] = pts[s + 1];
-      const len = Math.hypot(x1 - x0, y1 - y0);
-      for (let k = 0; k <= len * 2; k++) {
-        const f = k / (len * 2);
-        const cx = x0 + (x1 - x0) * f + (valueNoise(k * 0.08 + s * 3, 0, 50) - 0.5) * 3, cy = y0 + (y1 - y0) * f + (valueNoise(0, k * 0.08 + s * 3, 51) - 0.5) * 3;
-        const r = width * (0.85 + valueNoise(k * 0.1, s, 52) * 0.3);
-        for (let j = Math.floor(cy - r); j <= Math.ceil(cy + r); j++)
-          for (let i = Math.floor(cx - r); i <= Math.ceil(cx + r); i++)
-            if ((i - cx) ** 2 + (j - cy) ** 2 <= r * r && inb(i, j) && getT(i, j) !== T.OCEAN && getT(i, j) !== T.VOID) setT(i, j, t);
-      }
-    }
-  };
-  const blob = (cx, cy, r, t, amp = 0.35, pred = () => true) => {
-    for (let j = Math.floor(cy - r - 3); j <= cy + r + 3; j++)
-      for (let i = Math.floor(cx - r - 3); i <= cx + r + 3; i++) {
-        if (!inb(i, j)) continue;
-        const d = Math.hypot(i - cx, j - cy) / r;
-        if (d < 1 + (valueNoise(i / 3, j / 3, 60 + r) - 0.5) * amp * 2 && pred(i, j)) setT(i, j, t);
-      }
-  };
   carve([[318, 60], [300, 84], [276, 104], [258, 128], [244, 150], [239, 175], [230, 200], [216, 230], [210, 266]], 1.5);
   carve([[272, 8], [266, 38], [282, 66], [300, 84]], 1.2);
   carve([[416, 150], [386, 186], [362, 220], [347, 255], [340, 290], [334, 319]], 1.7);
@@ -142,57 +119,6 @@ export function generateWorld() {
       if (oceanDist[idx(x, y)] <= 1 && t === T.ASH && b === BIOME.VOLCANIC) setT(x, y, T.DIRT);
     }
   }
-
-  // ------------------------------------------------------------ helpers for structures
-  const place = (type, x, y, extra) => {
-    const o = w.addObject(type, x, y, extra);
-    if (o) reserve(x, y, o.w, o.h);
-    return o;
-  };
-  const fill = (x0, y0, x1, y1, t) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) setT(x, y, t); };
-  const building = (x, y, ww, hh, o = {}) => {
-    const wall = o.wall ?? T.WALL, floor = o.floor ?? T.WOOD;
-    for (let j = 0; j < hh; j++) for (let i = 0; i < ww; i++) {
-      const edge = i === 0 || j === 0 || i === ww - 1 || j === hh - 1;
-      setT(x + i, y + j, edge ? wall : floor);
-    }
-    reserve(x - 1, y - 1, ww + 2, hh + 2);
-    for (const [dx, dy] of o.doors || []) {
-      setT(x + dx, y + dy, floor);
-      const vert = dx === 0 || dx === ww - 1;
-      w.addObject(o.gate ? 'gate' : 'door', x + dx, y + dy, { vert });
-      // clear the outside step
-      const ox = x + dx + (dx === 0 ? -1 : dx === ww - 1 ? 1 : 0), oy = y + dy + (dy === 0 ? -1 : dy === hh - 1 ? 1 : 0);
-      if (TINFO[getT(ox, oy)].block && !TINFO[getT(ox, oy)].wall) setT(ox, oy, T.DIRT);
-    }
-    for (const [dx, dy] of o.open || []) setT(x + dx, y + dy, floor);
-  };
-  const fenceLine = (x0, y0, x1, y1, gates = []) => {
-    const pts = [];
-    if (y0 === y1) for (let x = x0; x <= x1; x++) pts.push([x, y0]);
-    else for (let y = y0; y <= y1; y++) pts.push([x0, y]);
-    for (const [x, y] of pts) {
-      if (gates.some(([gx, gy]) => gx === x && gy === y)) { w.addObject('gate', x, y, { vert: x0 === x1 }); continue; }
-      if (w.obj(x, y)) continue;
-      w.addObject('fence', x, y); reserve(x, y);
-    }
-  };
-  const fenceRect = (x0, y0, x1, y1, gates = []) => {
-    reserve(x0, y0, x1 - x0 + 1, y1 - y0 + 1);
-    fenceLine(x0, y0, x1, y0, gates); fenceLine(x0, y1, x1, y1, gates);
-    fenceLine(x0, y0 + 1, x0, y1 - 1, gates); fenceLine(x1, y0 + 1, x1, y1 - 1, gates);
-  };
-  const npc = (id, x, y, extra = {}) => w.spawns.push({ npc: id, x, y, ...extra });
-  const walkable = (x, y) => inb(x, y) && !w.blocked(x, y);
-  const spawnIn = (id, n, cx, cy, r, extra = {}) => {
-    let tries = 0;
-    while (n > 0 && tries++ < 500) {
-      const x = Math.round(cx + (R() * 2 - 1) * r), y = Math.round(cy + (R() * 2 - 1) * r);
-      if (!walkable(x, y) || w.biome[idx(x, y)] === BIOME.OCEAN) continue;
-      npc(id, x, y, extra); n--;
-    }
-  };
-  const icon = (type, x, y) => w.mapIcons.push({ type, x, y });
 
   // ================================================================ BRINDLEWOOD
   area('Brindlewood', 184, 144, 232, 186, 'town');
@@ -291,7 +217,7 @@ export function generateWorld() {
   npc('shopkeeper', 236, 116, { shop: 'armour', name: 'Armourer', wander: 1 }); icon('shop', 236, 116);
   // crypt
   building(242, 116, 7, 7, { floor: T.STONEFLOOR, wall: T.WALL_DARK, doors: [[3, 0]] });
-  place('trapdoor', 245, 119, { to: [12, 50], msg: 'You climb down into the catacombs.' }); icon('ladder', 245, 119);
+  place('trapdoor', 245, 119, { to: [12, 50, 'catacombs'], msg: 'You climb down into the catacombs.' }); icon('ladder', 245, 119);
   place('candles', 243, 117); place('candles', 247, 117); place('sarcophagus', 243, 119);
   for (const [x, y] of [[235, 121], [237, 123], [239, 121], [233, 123]]) place('gravestone', x, y);
   // stalls & square
@@ -512,59 +438,6 @@ export function generateWorld() {
   w.labels.push({ name: 'Cinderhold', x: 96, y: 296, size: 1 });
   w.points.cinderholdDock = w.docks.cinderhold;
 
-  // ================================================================ UNDERGROUND
-  // Catacombs (x 2..52, y 2..58)
-  const underground = (x0, y0, x1, y1, floor, wall, biome, rooms, corridors) => {
-    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { setT(x, y, wall); w.biome[idx(x, y)] = biome; }
-    for (const [rx, ry, rw, rh] of rooms)
-      for (let y = ry; y < ry + rh; y++) for (let x = rx; x < rx + rw; x++) {
-        const edge = Math.min(x - rx, rx + rw - 1 - x, y - ry, ry + rh - 1 - y);
-        if (edge > 0 || hash2(x, y, 70) > 0.45) setT(x, y, floor);
-      }
-    for (const [ax, ay, bx, by] of corridors) {
-      let x = ax, y = ay;
-      while (x !== bx || y !== by) {
-        setT(x, y, floor); setT(x + 1, y, floor); setT(x, y + 1, floor);
-        if (x !== bx) x += Math.sign(bx - x); else y += Math.sign(by - y);
-      }
-      setT(bx, by, floor);
-    }
-    // void anything not near a floor tile
-    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
-      if (getT(x, y) !== wall) continue;
-      let near = false;
-      for (let j = -2; j <= 2 && !near; j++) for (let i = -2; i <= 2; i++) if (getT(x + i, y + j) === floor) { near = true; break; }
-      if (!near) setT(x, y, T.VOID);
-    }
-    reserve(x0, y0, x1 - x0 + 1, y1 - y0 + 1);
-  };
-  underground(2, 2, 52, 58, T.CAVE, T.CAVE_WALL, BIOME.CAVE,
-    [[6, 44, 14, 11], [5, 24, 18, 11], [31, 19, 18, 18], [5, 4, 20, 11], [29, 44, 20, 11]],
-    [[12, 44, 12, 34], [22, 29, 32, 29], [13, 24, 13, 14], [40, 36, 40, 44], [20, 49, 29, 49]]);
-  area('Highcrest Catacombs', 2, 2, 52, 58, 'cave');
-  place('ladder_up', 12, 51, { to: [245, 120], msg: 'You climb back up into the crypt.' });
-  w.points.catacombs = [12, 50];
-  for (const [x, y] of [[8, 6], [20, 8], [16, 12], [7, 11], [22, 5]]) w.addObject('spinning_web', x, y);
-  for (const [x, y] of [[8, 26], [20, 26], [8, 32], [20, 32]]) place('broken_pillar', x, y);
-  for (const [x, y] of [[33, 52], [46, 46], [31, 45]]) w.addObject('skulls', x, y);
-  place('boss_chest', 45, 52, { mossy: true });
-  place('torch', 6, 44); w.addObject('torch', 13, 44);
-  spawnIn('skeleton', 7, 13, 29, 7); spawnIn('hill_giant', 6, 40, 28, 7); spawnIn('giant_spider', 6, 14, 9, 8); spawnIn('zombie', 6, 38, 49, 8); spawnIn('rat', 3, 10, 49, 3);
-  // Tomb (x 56..98, y 2..58)
-  underground(56, 2, 98, 58, T.SANDFLOOR, T.WALL_SAND, BIOME.TOMB,
-    [[58, 46, 12, 10], [60, 28, 10, 12], [74, 36, 14, 16], [70, 6, 24, 18]],
-    [[64, 46, 64, 40], [69, 33, 76, 38], [80, 36, 80, 24], [64, 28, 72, 18]]);
-  area('Tomb of the Scarab', 56, 2, 98, 58, 'tomb');
-  place('ladder_up', 63, 53, { to: [372, 287], msg: 'You climb back into the desert sun.' });
-  w.points.tomb = [63, 52];
-  for (const [x, y] of [[74, 9], [89, 9], [74, 20], [89, 20]]) place('pillar', x, y);
-  place('sarcophagus', 81, 7); place('sarcophagus', 84, 7);
-  for (const [x, y] of [[61, 30], [67, 30], [77, 40], [85, 48]]) place('sarcophagus', x, y);
-  w.addObject('torch', 70, 6); w.addObject('torch', 93, 6); w.addObject('torch', 58, 46);
-  place('boss_chest', 82, 12, { boss: 'scarab' });
-  npc('scarab_king', 81, 15, { wander: 1 });
-  spawnIn('mummy', 5, 80, 44, 6); spawnIn('scarab_swarm', 4, 64, 34, 4); spawnIn('mummy', 2, 64, 49, 4);
-
   // ================================================================ ROADS
   const roadCost = (x, y) => {
     const t = getT(x, y);
@@ -667,8 +540,8 @@ export function generateWorld() {
     icon('mine', m.cx, m.cy);
   }
 
-  for (const a of AREAS) for (let y = a.y0; y <= a.y1; y++) for (let x = a.x0; x <= a.x1; x++) if (inb(x, y) && !w.area[idx(x, y)]) w.area[idx(x, y)] = a.id;
-  const townAreas = new Set(AREAS.filter((a) => ['town', 'city', 'port', 'desert_town', 'farm', 'elven'].includes(a.music)).map((a) => a.id));
+  B.applyAreas();
+  const townAreas = new Set(w.areas.filter((a) => ['town', 'city', 'port', 'desert_town', 'farm', 'elven'].includes(a.music)).map((a) => a.id));
 
   // ================================================================ SCATTER: trees, rocks, decor
   const nearWater = (x, y, r) => { for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) if (getT(x + i, y + j) === T.WATER || getT(x + i, y + j) === T.SWAMPWATER) return true; return false; };
@@ -743,12 +616,6 @@ export function generateWorld() {
         if (dd < 0.03) w.decor[k] = D.DEADBUSH; else if (dd < 0.045) w.decor[k] = D.BONES; else if (dd < 0.08 && (b === BIOME.VOLCANIC || y < 50)) w.decor[k] = D.CRACKS; else if (dd < 0.09) w.decor[k] = D.EMBERS;
       } else if (t === T.SWAMP) { if (dd < 0.05) w.decor[k] = D.DEADBUSH; else if (dd < 0.1 && nearWater(x, y, 1)) w.decor[k] = D.REEDS; else if (dd < 0.12) w.decor[k] = D.MUSHROOM; }
     }
-  // decor inside the caves
-  for (let y = 2; y < 58; y++) for (let x = 2; x < 98; x++) if ((getT(x, y) === T.CAVE || getT(x, y) === T.SANDFLOOR) && !w.obj(x, y)) {
-    const dd = hash2(x, y, 84);
-    if (dd < 0.03) w.decor[idx(x, y)] = D.PEBBLES; else if (dd < 0.045) w.decor[idx(x, y)] = D.BONES; else if (dd < 0.05 && getT(x, y) === T.CAVE) w.decor[idx(x, y)] = D.MUSHROOM;
-  }
-
   // ================================================================ ROAMING SPAWNS
   spawnIn('chicken', 3, 196, 186, 5); spawnIn('rat', 4, 214, 186, 10);
   spawnIn('spider', 5, 170, 170, 10); spawnIn('giant_rat', 4, 150, 140, 10);
