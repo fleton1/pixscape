@@ -2,6 +2,7 @@
 import { G } from '../game/state.js';
 import { TS } from '../world/map.js';
 import { bakeMap, MAP_SCALE } from '../sprites/terrain.js';
+import { bakeAtlasSoon, ATLAS_SCALE } from './atlas.js';
 import { Painter, OUTLINE } from '../painter.js';
 import { storyStarters } from '../game/questengine.js';
 
@@ -102,22 +103,30 @@ export class Minimap {
   }
 }
 
+// Map icons worth showing when zoomed out; the rest appear as you zoom in.
+const KEY_ICONS = new Set(['bank', 'quest', 'altar', 'rune', 'ladder', 'agility', 'slayer', 'stones', 'minigame']);
+const MIN_ZOOM = 0.25, MAX_ZOOM = 2.5;
+
 export class WorldMap {
   constructor(canvas, minimap) {
     this.cv = canvas;
     this.ctx = canvas.getContext('2d');
     this.mm = minimap;
-    this.zoom = 0.5; this.ox = 0; this.oy = 0;
+    this.zoom = 0.6; this.target = 0.6; this.ox = 0; this.oy = 0;
+    this.anchor = null; // screen point that stays put while zooming
     this.drag = null;
-    canvas.addEventListener('mousedown', (e) => { this.drag = [e.offsetX, e.offsetY, this.ox, this.oy]; });
-    window.addEventListener('mouseup', () => { this.drag = null; });
+    const pt = (e) => { const r = canvas.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+    canvas.addEventListener('mousedown', (e) => { const [x, y] = pt(e); this.drag = [x, y, this.ox, this.oy]; canvas.classList.add('grabbing'); });
+    window.addEventListener('mouseup', () => { this.drag = null; canvas.classList.remove('grabbing'); });
     canvas.addEventListener('mousemove', (e) => {
       if (!this.drag) return;
-      this.ox = this.drag[2] - (e.offsetX - this.drag[0]) / (this.zoom * MAP_SCALE);
-      this.oy = this.drag[3] - (e.offsetY - this.drag[1]) / (this.zoom * MAP_SCALE);
-      this.draw();
+      const [x, y] = pt(e), s = this.zoom * MAP_SCALE;
+      this.ox = this.drag[2] - (x - this.drag[0]) / s;
+      this.oy = this.drag[3] - (y - this.drag[1]) / s;
+      this.kick();
     });
-    canvas.addEventListener('wheel', (e) => { e.preventDefault(); this.zoom = Math.max(0.25, Math.min(2, this.zoom * (e.deltaY > 0 ? 0.85 : 1.18))); this.draw(); }, { passive: false });
+    canvas.addEventListener('wheel', (e) => { e.preventDefault(); this.zoomBy(e.deltaY > 0 ? 0.8 : 1.25, ...pt(e)); }, { passive: false });
+    canvas.addEventListener('dblclick', (e) => this.zoomBy(1.6, ...pt(e)));
     // touch: one finger pans, two fingers pinch-zoom around their midpoint
     let g = null;
     const grab = (e) => {
@@ -133,7 +142,7 @@ export class WorldMap {
       const s = this.zoom * MAP_SCALE;
       const f = grab(e);
       // the world point under the fingers stays under the fingers
-      g = { ...f, zoom: this.zoom, wx: this.ox + (f.cx - this.cv.width / 2) / s, wy: this.oy + (f.cy - this.cv.height / 2) / s };
+      g = { ...f, zoom: this.zoom, wx: this.ox + (f.cx - this.lw / 2) / s, wy: this.oy + (f.cy - this.lh / 2) / s };
     };
     canvas.addEventListener('touchstart', start, { passive: false });
     canvas.addEventListener('touchend', start, { passive: false });
@@ -142,14 +151,30 @@ export class WorldMap {
       if (!g) return;
       const f = grab(e);
       if (f.n !== g.n) return;
-      if (f.n > 1 && g.d) this.zoom = Math.max(0.25, Math.min(2, g.zoom * f.d / g.d));
+      if (f.n > 1 && g.d) this.zoom = this.target = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, g.zoom * f.d / g.d));
+      this.anchor = null;
       const s = this.zoom * MAP_SCALE;
-      this.ox = g.wx - (f.cx - this.cv.width / 2) / s;
-      this.oy = g.wy - (f.cy - this.cv.height / 2) / s;
-      this.draw();
+      this.ox = g.wx - (f.cx - this.lw / 2) / s;
+      this.oy = g.wy - (f.cy - this.lh / 2) / s;
+      this.kick();
     }, { passive: false });
+    const btn = (id, fn) => { const b = document.getElementById(id); if (b) b.onclick = (e) => { e.stopPropagation(); fn(); }; };
+    btn('wm-in', () => this.zoomBy(1.5));
+    btn('wm-out', () => this.zoomBy(1 / 1.5));
+    btn('wm-me', () => { const h = this.here(); this.glide = { x: h.x, y: h.y }; this.kick(); });
   }
-  resize() { this.cv.width = this.cv.clientWidth; this.cv.height = this.cv.clientHeight; this.draw(); }
+  // zoom toward a screen point (default: the centre), eased over a few frames
+  zoomBy(f, sx = this.lw / 2, sy = this.lh / 2) {
+    this.target = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, this.target * f));
+    const s = this.zoom * MAP_SCALE;
+    this.anchor = { sx, sy, wx: this.ox + (sx - this.lw / 2) / s, wy: this.oy + (sy - this.lh / 2) / s };
+    this.kick();
+  }
+  // the canvas is sized in device pixels for sharp text and edges; everything else works in CSS pixels
+  get lw() { return this.cv.width / (this.dpr || 1); }
+  get lh() { return this.cv.height / (this.dpr || 1); }
+  fit() { this.dpr = Math.min(2, window.devicePixelRatio || 1); this.cv.width = Math.round(this.cv.clientWidth * this.dpr); this.cv.height = Math.round(this.cv.clientHeight * this.dpr); }
+  resize() { this.fit(); this.draw(); }
   // The world map always shows the overworld. Inside a dungeon it marks the dungeon's entrance.
   here() {
     const w = G.world, p = G.player;
@@ -158,46 +183,128 @@ export class WorldMap {
     return { x, y, name: w.name };
   }
   open() {
-    this.cv.width = this.cv.clientWidth; this.cv.height = this.cv.clientHeight;
+    this.fit();
     const h = this.here();
     this.ox = h.x; this.oy = h.y;
+    // settle in from a little further out
+    this.zoom = Math.max(MIN_ZOOM, this.target * 0.8);
+    this.anchor = null; this.glide = null;
+    bakeAtlasSoon(G.overworld);
     this.draw();
   }
+  kick() { if (!this.anim) { this.anim = true; requestAnimationFrame(() => { this.anim = false; if (this.cv.offsetParent) this.draw(); }); } }
+  step() {
+    let moving = false;
+    if (Math.abs(this.target - this.zoom) > 0.001) {
+      this.zoom += (this.target - this.zoom) * 0.22;
+      if (Math.abs(this.target - this.zoom) < 0.002) this.zoom = this.target;
+      if (this.anchor) {
+        const s = this.zoom * MAP_SCALE, a = this.anchor;
+        this.ox = a.wx - (a.sx - this.lw / 2) / s;
+        this.oy = a.wy - (a.sy - this.lh / 2) / s;
+      }
+      moving = true;
+    } else this.anchor = null;
+    if (this.glide) {
+      this.ox += (this.glide.x - this.ox) * 0.18; this.oy += (this.glide.y - this.oy) * 0.18;
+      if (Math.hypot(this.glide.x - this.ox, this.glide.y - this.oy) < 0.3) this.glide = null;
+      moving = true;
+    }
+    return moving;
+  }
   draw() {
-    const ctx = this.ctx, cw = this.cv.width, ch = this.cv.height;
+    this.step();
+    const ctx = this.ctx, cw = this.lw, ch = this.lh;
+    ctx.setTransform(this.dpr || 1, 0, 0, this.dpr || 1, 0, 0);
     const s = this.zoom * MAP_SCALE;
-    ctx.fillStyle = '#2e5a96'; ctx.fillRect(0, 0, cw, ch);
-    ctx.imageSmoothingEnabled = this.zoom < 1;
+    const ow = G.overworld, W = ow.W, H = ow.H;
+    // the painted atlas once it is ready; the minimap's plain image until then
+    const atlas = ow.atlas || mapImage(ow);
+    const AS = ow.atlas ? ATLAS_SCALE : MAP_SCALE;
+    // the open sea beyond the edges
+    ctx.fillStyle = '#2b5689'; ctx.fillRect(0, 0, cw, ch);
     const x0 = this.ox - cw / 2 / s, y0 = this.oy - ch / 2 / s;
     ctx.save();
-    ctx.translate(-x0 * s, -y0 * s);
-    const ow = G.overworld, W = ow.W, H = ow.H;
-    ctx.drawImage(mapImage(ow), 0, 0, W * MAP_SCALE, H * MAP_SCALE, 0, 0, W * s, H * s);
+    ctx.translate(Math.round(-x0 * s), Math.round(-y0 * s));
+    const k = s / AS;
+    ctx.imageSmoothingEnabled = k < 1;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(atlas, 0, 0, W * AS, H * AS, 0, 0, W * s, H * s);
     ctx.imageSmoothingEnabled = false;
-    for (const ic of ow.mapIcons) {
-      const img = MAP_ICONS[ic.type];
-      if (img && this.zoom >= 0.4) ctx.drawImage(img, ic.x * s - 5, ic.y * s - 5);
+    // icons: the key ones from afar, all of them up close
+    if (this.zoom >= 0.4) {
+      const all = this.zoom >= 0.85, big = this.zoom >= 1.6 ? 2 : 1;
+      for (const ic of ow.mapIcons) {
+        if (!all && !KEY_ICONS.has(ic.type)) continue;
+        const img = MAP_ICONS[ic.type];
+        if (img) ctx.drawImage(img, Math.round(ic.x * s - 5.5 * big), Math.round(ic.y * s - 5.5 * big), 11 * big, 11 * big);
+      }
     }
-    // labels
-    ctx.textAlign = 'center';
-    for (const l of ow.labels) {
-      const size = [0, 12, 16, 22][l.size] * Math.min(1.4, Math.max(0.8, this.zoom * 1.4));
-      ctx.font = `${l.faint ? 'italic ' : ''}${size}px "Pixelify Sans", monospace`;
-      ctx.fillStyle = '#000'; ctx.fillText(l.name, l.x * s + 1, l.y * s + 1);
-      ctx.fillStyle = l.faint ? 'rgba(255,240,200,0.75)' : '#ff981f'; ctx.fillText(l.name, l.x * s, l.y * s);
+    // labels, biggest first; a label that would overlap one already placed is left out
+    const placed = [];
+    const labels = [...ow.labels].sort((a, b) => b.size - a.size);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+    for (const l of labels) {
+      if (l.size === 1 && this.zoom < 0.7) continue;
+      if (l.size === 2 && this.zoom < 0.35) continue;
+      const base = [0, 12, 15, 21][l.size];
+      const size = Math.round(base * Math.min(1.5, Math.max(0.85, this.zoom * 1.25)));
+      const region = l.size === 3;
+      ctx.font = `${l.faint ? 'italic ' : ''}${region ? 600 : 400} ${size}px "Pixelify Sans", monospace`;
+      if ('letterSpacing' in ctx) ctx.letterSpacing = region ? `${Math.round(size * 0.18)}px` : '0px';
+      const text = region ? l.name.toUpperCase() : l.name;
+      const tw = ctx.measureText(text).width, x = l.x * s, y = l.y * s;
+      const box = [x - tw / 2 - 4, y - size / 2 - 3, x + tw / 2 + 4, y + size / 2 + 3];
+      if (placed.some((b) => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1])) continue;
+      placed.push(box);
+      ctx.lineWidth = region ? 4 : 3.5;
+      ctx.strokeStyle = region ? 'rgba(28,22,14,0.7)' : 'rgba(20,16,10,0.85)';
+      ctx.strokeText(text, x, y);
+      ctx.fillStyle = region ? (l.faint ? 'rgba(244,234,208,0.8)' : '#f4ead0') : l.faint ? 'rgba(255,240,205,0.85)' : '#ffd98a';
+      ctx.fillText(text, x, y);
     }
+    if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
+    // you are here
     const h = this.here();
     const t = performance.now();
-    ctx.fillStyle = h.name ? '#ffd84a' : '#fff'; ctx.strokeStyle = '#000'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(h.x * s, h.y * s, 4 + Math.sin(t / 200), 0, 7); ctx.fill(); ctx.stroke();
+    const hx = h.x * s, hy = h.y * s;
+    const ring = (t % 1600) / 1600;
+    ctx.strokeStyle = `rgba(255,255,255,${0.8 * (1 - ring)})`; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(hx, hy, 5 + ring * 14, 0, 7); ctx.stroke();
+    ctx.fillStyle = h.name ? '#ffd84a' : '#ffffff'; ctx.strokeStyle = '#1a1510'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(hx, hy, 4.5, 0, 7); ctx.fill(); ctx.stroke();
     if (h.name) {
-      ctx.font = '14px "Pixelify Sans", monospace'; ctx.textAlign = 'center';
-      ctx.fillStyle = '#000'; ctx.fillText(`You are in ${h.name}`, h.x * s + 1, h.y * s - 11);
-      ctx.fillStyle = '#ffd84a'; ctx.fillText(`You are in ${h.name}`, h.x * s, h.y * s - 12);
+      ctx.font = '14px "Pixelify Sans", monospace'; ctx.textBaseline = 'alphabetic';
+      ctx.lineWidth = 3.5; ctx.strokeStyle = 'rgba(20,16,10,0.85)'; ctx.strokeText(`You are in ${h.name}`, hx, hy - 13);
+      ctx.fillStyle = '#ffd84a'; ctx.fillText(`You are in ${h.name}`, hx, hy - 13);
     }
     ctx.restore();
-    ctx.font = '14px "Pixelify Sans", monospace'; ctx.textAlign = 'left'; ctx.fillStyle = '#ffdd88';
-    ctx.fillText(G.touch ? 'Drag to pan - Pinch to zoom' : 'Drag to pan - Scroll to zoom - M or Esc to close', 12, ch - 12);
-    if (!this.anim) { this.anim = true; requestAnimationFrame(() => { this.anim = false; if (this.cv.offsetParent) this.draw(); }); }
+    ctx.textBaseline = 'alphabetic';
+    // soft vignette at the edges, like an old chart
+    const vg = ctx.createRadialGradient(cw / 2, ch / 2, Math.min(cw, ch) * 0.45, cw / 2, ch / 2, Math.hypot(cw, ch) * 0.6);
+    vg.addColorStop(0, 'rgba(20,14,6,0)'); vg.addColorStop(1, 'rgba(20,14,6,0.45)');
+    ctx.fillStyle = vg; ctx.fillRect(0, 0, cw, ch);
+    this.compass(ctx, cw - 44, ch - 48);
+    ctx.font = '13px "Pixelify Sans", monospace'; ctx.textAlign = 'left';
+    const hint = G.touch ? 'Drag to pan, pinch to zoom' : 'Drag to pan, scroll or double-click to zoom, M or Esc to close';
+    const hw = ctx.measureText(hint).width;
+    ctx.fillStyle = 'rgba(26,21,16,0.8)'; ctx.fillRect(8, ch - 30, hw + 16, 22);
+    ctx.fillStyle = '#e8dcc0'; ctx.fillText(hint, 16, ch - 15);
+    // keep animating while zooming or gliding, and for the pulsing marker
+    this.kick();
+  }
+  compass(ctx, x, y) {
+    ctx.save(); ctx.translate(x, y);
+    ctx.fillStyle = 'rgba(26,21,16,0.75)'; ctx.beginPath(); ctx.arc(0, 0, 24, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#8a7a5a'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(0, 0, 21, 0, 7); ctx.stroke();
+    const pt = (a, r) => [Math.sin(a) * r, -Math.cos(a) * r];
+    for (let i = 0; i < 4; i++) {
+      const a = i * Math.PI / 2;
+      ctx.fillStyle = i === 0 ? '#d8a84a' : '#e8dcc0';
+      ctx.beginPath(); ctx.moveTo(...pt(a, 17)); ctx.lineTo(...pt(a + 0.35, 5)); ctx.lineTo(0, 0); ctx.lineTo(...pt(a - 0.35, 5)); ctx.closePath(); ctx.fill();
+    }
+    ctx.font = '11px "Pixelify Sans", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#f4ead0';
+    ctx.fillText('N', 0, -25 + 2);
+    ctx.restore();
   }
 }

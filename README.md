@@ -34,7 +34,7 @@ On a phone or tablet:
 | --- | --- |
 | Tap | Walk / do the default action |
 | Press and hold | Options menu (same as right-click), with a short buzz |
-| Pinch | Zoom (world view and world map) |
+| Pinch | Zoom (world view and world map); double-click also zooms the map |
 | Drag | Pan the world map |
 | Tap the chat bar | Type a chat message |
 | Tap the open side tab | Hide the side panel to see more of the world |
@@ -167,6 +167,12 @@ like the other sideloaded apps. APKs are attached to the [GitHub releases](https
   milestones on the stats page.
 - **Treasure trails.** Clue scrolls drop from monsters. Dig or talk your way to reward caskets (partyhats exist...).
 - **Towns and travel.** Banks, shops, furnaces and anvils, ships between islands, and a home teleport.
+- **Animation.** Every weapon swings its own way (slash, stab, crush, bow draw, spellcasting),
+  skills have their own motions (chopping, mining, fishing, digging, working), characters breathe
+  and blink, strides match walking and running speed, and hits flash, flinch and knock monsters
+  over. Spells trail and burst on impact, trees sway, and drops bounce.
+- **An illustrated world map.** Painted coastlines, depth-shaded seas, rooftops, forests and roads,
+  with smooth zoom (scroll, pinch, double-click or the buttons) and labels that never pile up.
 - **Procedural soundtrack.** A different theme per region, plus synthesized sound effects.
 - **Autosave** to `localStorage`.
 
@@ -187,7 +193,7 @@ src/
   world/             maps + collision, overworld generator, dungeons, map linking, A* pathfinding
   game/              state, player, npcs, combat, skilling, crafting (recipes), actions, quests, loop
   sprites/           procedural terrain, characters/monsters, objects, item & UI icons
-  render/            world renderer, minimap + world map
+  render/            world renderer, minimap + world map (atlas.js paints the world map)
   ui/                DOM interface (sidebar tabs, chat, dialogue, bank, shops...)
 fonts/               Pixelify Sans (SIL OFL), bundled so the game works offline
 android/             the Android app (see above)

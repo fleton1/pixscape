@@ -264,7 +264,10 @@ function dragonfire(n, max) {
 }
 
 export function projectile(from, to, color, ticks, kind) {
-  G.projectiles.push({ fx: from.x + ((from.size || 1) - 1) / 2, fy: from.y + ((from.size || 1) - 1) / 2, target: to, color, t0: performance.now(), dur: ticks * 600 * 0.9, kind });
+  // land on the tick the damage does, even when the shot starts part-way through a tick
+  const now = performance.now();
+  const dur = Math.max(180, ticks * 600 - (now - (G.lastTickAt || now)) - 50);
+  G.projectiles.push({ fx: from.x + ((from.size || 1) - 1) / 2, fy: from.y + ((from.size || 1) - 1) / 2, target: to, color, t0: now, dur, kind });
 }
 
 // Boss behaviour that runs every tick while engaged.

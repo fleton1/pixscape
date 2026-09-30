@@ -137,3 +137,4 @@ The overworld grows east and south (existing coordinates stay valid, so saves ke
 | 1.6 [done] | Quest wave (18 quests) + achievement diaries (7 regions) |
 | 1.7 [done] | Overworld growth (560x440: the Vesperan Steppe, Tanglewood, the Ashen Reach), standing stones, Farming + Hunter |
 | 1.8 [done] | Bank tabs and placeholders, collection and adventure logs, world events, the Frost Heart, the Vesper Exchange |
+| 1.9 [done] | Animation pass (weapon and skilling poses, hit reactions, deaths, spell trails, swaying trees, UI transitions) and an illustrated world map |

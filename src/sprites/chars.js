@@ -81,6 +81,46 @@ function shieldPixels(p, kind, color, x, y, s, side) {
   else if (side !== 'back') { p.set(x, y - S(1), sh); p.set(x, y, sh); p.set(x - 1, y, sh); p.set(x + 1, y, sh); p.set(x, y + 1, sh); }
 }
 
+// ------------------------------------------------------------------ poses
+// Arm poses for attacks and skilling, four frames each: wind-up, swing, impact, recover.
+// Units are the same as human(): x right, y up from the feet (negative). Angles are screen angles
+// for the held weapon (0 = right, -PI/2 = straight up). Side poses face right; left is mirrored.
+const PI = Math.PI;
+const SIDE = {
+  slash: [[[-2, -21], -2.6], [[2, -21], -1.7], [[6, -14], 0.05], [[5, -11], 0.6]],
+  stab: [[[-1, -13], 0], [[1, -13], 0], [[7, -13], 0], [[4, -12], 0.1]],
+  crush: [[[-2, -22], -2.8], [[1, -23], -1.9], [[6, -13], 0.4], [[5, -11], 0.8]],
+  chop: [[[-3, -17], -2.7], [[1, -17], -1.6], [[6, -15], -0.1], [[5, -13], 0.3]],
+  dig: [[[-1, -19], -2.4], [[2, -19], -1.6], [[5, -10], 0.9], [[4, -9], 1.2]],
+  throw: [[[-3, -19], -2.5], [[0, -20], -1.8], [[6, -16], -0.3], [[4, -12], 0.3]],
+  punch: [[[-1, -13], 0], [[1, -13], 0], [[6, -13], 0], [[3, -12], 0]],
+  bow: [[[5, -14], 0, [3, -14]], [[5, -14], 0, [1, -14]], [[5, -14], 0, [0, -14]], [[5, -14], 0, [4, -14]]],
+  cast: [[[3, -15], -1.1, [2, -15]], [[5, -16], -0.9, [4, -16], 1], [[7, -16], -0.7, [6, -16], 1], [[4, -13], -1.2, [3, -13]]],
+  work: [[[4, -11], 0.3, [3, -11]], [[5, -10], 0.4, [4, -10]], [[4, -9], 0.5, [3, -9]], [[5, -10], 0.4, [4, -10]]],
+  fish: [[[4, -13], -0.5, [3, -12]], [[4, -12], -0.45, [3, -11]], [[4, -13], -0.5, [3, -12]], [[4, -12], -0.45, [3, -11]]],
+};
+const FRONT = {
+  slash: [[[6, -22], -2.2], [[7, -19], -1.4], [[2, -10], 1.9], [[4, -9], 1.2]],
+  stab: [[[6, -16], -PI / 2], [[6, -15], -1.2], [[4, -11], PI / 2], [[5, -11], 1.3]],
+  crush: [[[5, -23], -1.7], [[5, -24], -PI / 2], [[4, -10], 1.4], [[5, -9], 1.6]],
+  chop: [[[7, -18], -2.5], [[7, -16], -1.9], [[1, -12], 2.4], [[3, -11], 2.0]],
+  dig: [[[5, -20], -1.6], [[5, -21], -PI / 2], [[3, -9], 1.3], [[4, -8], 1.5]],
+  throw: [[[6, -21], -1.9], [[6, -20], -1.6], [[4, -12], 1.2], [[5, -10], 1.4]],
+  punch: [[[5, -13], 0], [[5, -13], 0], [[3, -12], 0], [[4, -12], 0]],
+  bow: [[[1, -13], PI / 2, [2, -13]], [[1, -13], PI / 2, [3, -15]], [[1, -13], PI / 2, [4, -16]], [[1, -13], PI / 2, [2, -13]]],
+  cast: [[[4, -15], -PI / 2, [-4, -15]], [[4, -17], -PI / 2, [-4, -17], 1], [[3, -18], -PI / 2, [-3, -18], 1], [[4, -14], -PI / 2, [-4, -14]]],
+  work: [[[3, -11], 1.2, [-3, -11]], [[3, -10], 1.3, [-3, -10]], [[3, -9], 1.4, [-3, -9]], [[3, -10], 1.3, [-3, -10]]],
+  fish: [[[4, -13], -1.0, [-2, -12]], [[4, -12], -0.95, [-2, -11]], [[4, -13], -1.0, [-2, -12]], [[4, -12], -0.95, [-2, -11]]],
+};
+export const POSE_STYLES = Object.keys(SIDE);
+function armPose(style, frame, view) {
+  const table = view === 'side' ? SIDE : FRONT;
+  const row = (table[style] || table.slash)[frame % 4];
+  let [hand, ang, off, glow] = row;
+  if (view === 'back') { hand = [-hand[0], hand[1]]; ang = PI - ang; off = off && [-off[0], off[1]]; }
+  return { hand, ang, off, glow: !!glow };
+}
+
 // ------------------------------------------------------------------ humans
 function human(look, facing, anim, frame) {
   const s = look.big ? (look.huge ? 2.1 : 1.55) : look.short ? 0.82 : look.tiny ? 0.62 : 1;
@@ -95,8 +135,12 @@ function human(look, facing, anim, frame) {
     for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) p.set(x, y, c, a);
   };
   const skin = look.skin, skinSh = shade(skin, -0.18);
-  const walk = anim === 'walk', atk = anim === 'attack';
-  const bob = (walk && (frame === 1 || frame === 3)) ? -1 : anim === 'idle' && frame === 1 ? 0.6 : 0;
+  const walk = anim === 'walk';
+  // attacks and skilling come as 'atk:<style>' with four frames: wind-up, swing, impact, recover
+  const style = anim === 'attack' ? 'slash' : anim.startsWith('atk:') ? anim.slice(4) : null;
+  const atk = !!style;
+  const blink = anim === 'idle' && frame === 2;
+  const bob = (walk && (frame === 1 || frame === 3)) ? -1 : anim === 'idle' && frame === 1 ? -1 : 0;
   const B = (u) => u + bob;
   const liftL = walk && frame === 0 ? 1 : 0, liftR = walk && frame === 2 ? 1 : 0;
   const body = look.body, legs = look.legs;
@@ -145,7 +189,7 @@ function human(look, facing, anim, frame) {
     R(3, B(-9), 1, 4, shade(pants, -0.25));
     R(-3, -2, 2, 2, look.shoes); R(1, -2, 2, 2, look.shoes);
   } else if (side) {
-    const st = walk ? [1, 0, -1, 0][frame] : 0;
+    const st = walk ? [2, 0, -2, 0][frame] : atk && (frame === 2 || frame === 3) && style !== 'work' && style !== 'fish' ? 1 : 0;
     const legC = legs && legs.kind === 'platelegs' ? legs.color : pants;
     const legW = skel ? 1 : 3;
     R(-1 - st - (legW === 1 ? -1 : 0), B(-8), legW, 6 + (st ? 0 : 0) - bob, shade(legC, -0.25));
@@ -198,25 +242,40 @@ function human(look, facing, anim, frame) {
   const armC = metalBody ? shirt : robe ? body.color : (look.sleeveless ? skin : shirt);
   const handC = look.gloves || skin;
   let handFront = null; // [x, y] in pixel space for weapon
-  if (side) {
-    const swing = walk ? [1, 0, -1, 0][frame] : 0;
-    if (atk && frame === 0) {
-      R(-1, B(-19), 2, 5, armC); R(-1, B(-21), 2, 2, handC); handFront = [X(0), Y(B(-20))];
-    } else if (atk) {
-      R(0, B(-14), 5, 2, armC); R(5, B(-14), 2, 2, handC); handFront = [X(6), Y(B(-13))];
-    } else {
-      R(-1 + swing, B(-15), 2, 5, shade(armC, -0.05)); R(-1 + swing, B(-10), 2, 2, handC); handFront = [X(swing), Y(B(-9))];
+  let wAng = null;      // weapon angle from the pose (attacks), else the resting angle below
+  // a 2-unit-thick limb from shoulder to hand
+  const limb = (ax, ay, bx, by, c) => {
+    const n = Math.max(1, Math.ceil(Math.max(Math.abs(bx - ax), Math.abs(by - ay))));
+    for (let i = 0; i <= n; i++) { const t = i / n; R(Math.round(ax + (bx - ax) * t) - 1, Math.round(ay + (by - ay) * t) - 1, 2, 2, c); }
+  };
+  const pose = atk ? armPose(style, frame, side ? 'side' : back ? 'back' : 'front') : null;
+  if (pose) {
+    const [fx, fy] = pose.hand;
+    const sx = side ? 0 : back ? -5 : 5, sy = -14;
+    // the off arm: posed (bow string, casting, working) or hanging at rest
+    if (pose.off) {
+      const [ox, oy] = pose.off, osx = side ? -1 : back ? 5 : -5;
+      if (!side) limb(osx, sy, ox, oy, armC);
+      else limb(osx, sy, ox, oy, shade(armC, -0.1));
+      R(ox - 1, oy - 1, 2, 2, handC);
+    } else if (!side) {
+      const ox = back ? 4 : -6;
+      R(ox + (skel ? 1 : 0), -15, skel ? 1 : 2, 5, armC); R(ox, -10, 2, 2, handC);
     }
+    limb(sx, sy, fx, fy, armC);
+    R(fx - 1, fy - 1, 2, 2, handC);
+    handFront = [X(fx), Y(fy)];
+    wAng = pose.ang;
+    if (pose.glow) { const gx = pose.off ? (fx + pose.off[0]) / 2 : fx; glow.push([X(gx), Y(fy - 1)]); }
+    if (metalBody && !side) { R(-6, -15, 2, 1, shade(shirt, 0.3)); R(4, -15, 2, 1, shade(shirt, 0.3)); }
+  } else if (side) {
+    const swing = walk ? [1, 0, -1, 0][frame] : 0;
+    R(-1 + swing, B(-15), 2, 5, shade(armC, -0.05)); R(-1 + swing, B(-10), 2, 2, handC); handFront = [X(swing), Y(B(-9))];
   } else {
     const swing = walk ? [1, 0, -1, 0][frame] : 0;
     const armL = skel ? 1 : 2;
     R(-6 + (skel ? 1 : 0), B(-15), armL, 5 - swing, armC); R(-6, B(-10 - swing), 2, 2, handC);
-    if (atk && !back) {
-      if (frame === 0) { R(4, B(-20), 2, 5, armC); R(4, B(-22), 2, 2, handC); handFront = [X(5), Y(B(-21))]; }
-      else { R(4, B(-15), 2, 4, armC); R(5, B(-11), 2, 2, handC); handFront = [X(6), Y(B(-10))]; }
-    } else {
-      R(4, B(-15), armL, 5 + swing, armC); R(4, B(-10 + swing), 2, 2, handC); handFront = [X(5), Y(B(-9 + swing))];
-    }
+    R(4, B(-15), armL, 5 + swing, armC); R(4, B(-10 + swing), 2, 2, handC); handFront = [X(5), Y(B(-9 + swing))];
     if (metalBody) { R(-6, B(-15), 2, 1, shade(shirt, 0.3)); R(4, B(-15), 2, 1, shade(shirt, 0.3)); }
   }
 
@@ -229,7 +288,10 @@ function human(look, facing, anim, frame) {
   p.clear(X(hx), Y(hy)); p.clear(X(hx + 6) - 1, Y(hy));
   if (!back) {
     const eye = skel || mummy ? '#1a1010' : '#1e1a18';
-    if (side) {
+    if (blink && !skel && !mummy && !look.glowEyes) {
+      if (side) R(hx + 4, hy + 3, 1, 1, skinSh);
+      else { R(hx + 1, hy + 3, 1, 1, skinSh); R(hx + 4, hy + 3, 1, 1, skinSh); }
+    } else if (side) {
       R(hx + 4, hy + 3, 1, 1, eye); R(hx + 6, hy + 3, 1, 1, skin);
       if (mummy || look.glowEyes) R(hx + 4, hy + 3, 1, 1, '#ff4020');
     } else {
@@ -296,12 +358,13 @@ function human(look, facing, anim, frame) {
 
   // ---- weapon & shield (front)
   const wpn = look.weapon;
-  if (wpn && handFront) {
+  // working with bare hands (cooking, crafting, farming) puts the weapon away
+  if (wpn && handFront && !(style === 'work' && !look.tool) && style !== 'punch') {
     let ang = -Math.PI / 2 - 0.25;
-    if (side) ang = atk ? (frame === 0 ? -Math.PI * 0.85 : -0.15) : -Math.PI / 2 + 0.35;
-    else if (atk) ang = frame === 0 ? -Math.PI * 0.72 : -0.35;
+    if (side) ang = -Math.PI / 2 + 0.35;
     if (back) ang = -Math.PI / 2 + 0.25;
-    const [wx, wy] = back ? [X(-5), Y(B(-9))] : handFront;
+    if (wAng !== null) ang = wAng;
+    const [wx, wy] = back && wAng === null ? [X(-5), Y(B(-9))] : handFront;
     weaponPixels(p, wpn.kind, wpn.color, wx, wy, ang, Math.max(0.8, s), glow);
   }
   if (sh && !side) shieldPixels(p, sh.kind, sh.color, back ? X(5) : X(-6), Y(B(-11)), s, back ? 'back' : 'front');
@@ -722,43 +785,50 @@ function creatureHuman(look, anim, frame) {
 // ------------------------------------------------------------------ public
 const cache = new Map();
 
-function frameCounts() { return { idle: 2, walk: 4, attack: 2 }; }
+// idle: 0 rest, 1 breathe in, 2 blink (humanoids); walk: four-step cycle; attack: creature strike.
+// Humanoid attack and skilling poses ('atk:slash', 'atk:bow', ...) are built on first use.
+function frameCounts(humanLike) { return { idle: humanLike ? 3 : 2, walk: 4, attack: 2 }; }
 
 export function buildSprite(look, key) {
   if (key && cache.has(key)) return cache.get(key);
   const set = { frames: {}, humanoid: false };
-  const counts = frameCounts();
   const isHuman = look.kind === 'human';
   const humanLike = isHuman || ['skeleton', 'bigskeleton', 'mummy', 'demon', 'imp'].includes(look.kind);
   set.humanoid = humanLike;
+  const render = (facing, anim, f) => {
+    let res;
+    const fc = facing === 'left' ? 'right' : facing;
+    if (isHuman) res = human(look, fc, anim, f);
+    else if (humanLike) res = human(creatureLook(look), fc, anim, f);
+    else {
+      res = creature(look, anim, f);
+      if (!res.noOutline) res.p.outline(OUTLINE);
+    }
+    let glow = res.glow && res.glow.length ? res.glow : null;
+    if (facing === 'left') { res.p = res.p.flipped(); if (glow) glow = glow.map(([x, y]) => [res.p.w - 1 - x, y]); }
+    set.w = res.p.w; set.h = res.p.h;
+    const c = res.p.canvas();
+    c._glow = glow; // glowing bits (staff tips, enchanted blades, casting hands) for this frame
+    return c;
+  };
   for (const facing of FACINGS) {
     set.frames[facing] = {};
-    for (const [anim, n] of Object.entries(counts)) {
+    for (const [anim, n] of Object.entries(frameCounts(humanLike))) {
       set.frames[facing][anim] = [];
-      for (let f = 0; f < n; f++) {
-        let res;
-        if (isHuman) {
-          const fc = facing === 'left' ? 'right' : facing;
-          res = human(look, fc, anim, f);
-          if (facing === 'left') res.p = res.p.flipped();
-        } else if (humanLike) {
-          const base = look.kind === 'skeleton' || look.kind === 'bigskeleton' || look.kind === 'mummy' || look.kind === 'demon' || look.kind === 'imp';
-          const fc = facing === 'left' ? 'right' : facing;
-          const hl = creatureLook(look);
-          res = base ? human(hl, fc, anim, f) : creature(look, anim, f);
-          if (facing === 'left') res.p = res.p.flipped();
-        } else {
-          res = creature(look, anim, f);
-          if (!res.noOutline) res.p.outline(OUTLINE);
-          if (facing === 'left' || (facing !== 'right' && f === -1)) res.p = res.p.flipped();
-        }
-        set.frames[facing][anim].push(res.p.canvas());
-        set.w = res.p.w; set.h = res.p.h;
-        set.glow = res.glow && res.glow.length ? res.glow : set.glow;
-      }
+      for (let f = 0; f < n; f++) set.frames[facing][anim].push(render(facing, anim, f));
     }
   }
-  // creature facings: up/down reuse last horizontal (handled by renderer), keep 'down' = right-facing
+  // any frame, drawn on demand: attack styles for humanoids fall back to the strike frames for creatures
+  set.get = (facing, anim, f) => {
+    const byFace = set.frames[facing];
+    if (!byFace[anim]) {
+      if (!humanLike && anim.startsWith('atk:')) return byFace.attack[f === 1 || f === 2 ? 1 : 0];
+      byFace[anim] = [];
+    }
+    const list = byFace[anim];
+    if (!list[f]) list[f] = render(facing, anim, f);
+    return list[f];
+  };
   set.ax = Math.floor(set.w / 2);
   set.ay = set.h - 2;
   if (key) cache.set(key, set);

@@ -255,10 +255,15 @@ export class UI {
       const s = p.inv[i], el = slots[i];
       const key = s ? s.id + ':' + s.qty + (G.useItem && G.useItem.slot === i ? ':sel' : '') : '';
       if (el.dataset.key === key) continue;
+      // a new item landing in a slot pops in (not on the first draw, and not when only the count changes)
+      const id = s ? s.id : '';
+      if (this.invDrawn && id && el.dataset.id !== id) { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+      el.dataset.id = id;
       el.dataset.key = key;
       el.classList.toggle('selected', !!(G.useItem && G.useItem.slot === i));
       el.innerHTML = s ? `<img src="${iconURL(s.id, s.qty)}">${ITEMS[s.id].stack ? `<span class="qty ${s.qty >= 10000000 ? 'g' : s.qty >= 100000 ? 'w' : ''}">${fmtNum(s.qty)}</span>` : ''}` : '';
     }
+    this.invDrawn = true;
     if (this.window === 'bank') this.dirty('bank');
     if (this.tab === 'magic') this.dirtySet.add('magic');
   }

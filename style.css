@@ -447,3 +447,31 @@ html.touch .copt button { width: 38px; height: 30px; }
   #window { top: 6px; transform: translateX(-50%); max-height: calc(100vh - var(--dock) - 12px); }
   .wbody { max-height: calc(100vh - var(--dock) - 62px); }
 }
+
+/* ---------- motion: small, quick transitions (the individual `scale`/`translate` properties stack
+   on top of each layout's own transform, so the window stays where every layout puts it) ---------- */
+#window { animation: win-in .16s ease-out; }
+@keyframes win-in { from { opacity: 0; scale: .96; } to { opacity: 1; scale: 1; } }
+#ctx-menu { animation: menu-in .09s ease-out; }
+@keyframes menu-in { from { opacity: 0; translate: 0 -3px; } to { opacity: 1; translate: 0 0; } }
+.panel.show { animation: panel-in .14s ease-out; }
+@keyframes panel-in { from { opacity: 0; translate: 0 3px; } to { opacity: 1; translate: 0 0; } }
+#dialogue[style*="flex"] { animation: panel-in .15s ease-out; }
+.slot.pop img { animation: slot-pop .22s ease-out; }
+@keyframes slot-pop { 0% { scale: .6; opacity: .3; } 60% { scale: 1.12; opacity: 1; } 100% { scale: 1; } }
+.tab.active { transition: background-color .15s, box-shadow .15s; }
+#chat-log .line:last-child { animation: line-in .18s ease-out; }
+@keyframes line-in { from { opacity: 0; translate: -4px 0; } to { opacity: 1; translate: 0 0; } }
+@media (prefers-reduced-motion: reduce) {
+  #window, #ctx-menu, .panel.show, #dialogue, .slot.pop img, #chat-log .line:last-child { animation: none; }
+}
+
+/* world map controls */
+#worldmap canvas { cursor: grab; }
+#worldmap canvas.grabbing { cursor: grabbing; }
+#worldmap .wm-ctrl { position: absolute; top: 54px; right: 8px; display: flex; flex-direction: column; gap: 6px; }
+#worldmap .wm-ctrl button { width: 38px; height: 38px; background: #3a3024; border: 2px solid #1a1510; box-shadow: inset 0 0 0 1px #7a6a4e; color: #f4ead0; font-size: 20px; line-height: 1; border-radius: 4px; cursor: pointer; font-family: inherit; }
+#worldmap .wm-ctrl button:hover { background: #4a3e2e; }
+html.touch #worldmap .wm-ctrl button { width: 46px; height: 46px; font-size: 24px; }
+#worldmap { animation: win-in .18s ease-out; }
+@media (prefers-reduced-motion: reduce) { #worldmap { animation: none; } }

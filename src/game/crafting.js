@@ -117,7 +117,7 @@ export function pickCrop(o) {
   const p = G.player, d = OBJECTS[o.type];
   if (o.depleted > G.tick) { msg('There is nothing left to pick yet.'); return; }
   if (!p.canAdd(d.crop)) { msg('Your inventory is full.'); return; }
-  p.playAnim('attack', 1);
+  p.playAnim('attack', 1, 'work');
   p.add(d.crop);
   msg(`You pick ${aOrAn(ITEMS[d.crop].name.toLowerCase())}.`);
   sfx('pickup');
@@ -129,7 +129,7 @@ export function shear(n) {
   if (!p.has('shears')) { msg('You need a set of shears to do this.'); return; }
   if (n.shornUntil > G.tick) { msg('This sheep has already been shorn.'); return; }
   if (!p.canAdd('wool')) { msg('Your inventory is full.'); return; }
-  p.playAnim('attack', 2);
+  p.playAnim('attack', 2, 'work');
   if (Math.random() < 0.25) { msg('The sheep manages to get away from you!'); return; }
   n.shornUntil = G.tick + 60;
   p.add('wool');
@@ -147,7 +147,7 @@ export function searchChest(o) {
   if (p.lvl('thieving') < c.lvl) { msg(`You need a Thieving level of ${c.lvl} to open this chest.`); return; }
   if (o.depleted > G.tick) { msg('The chest is empty. Someone got here first... you.'); return; }
   msg('You search the chest for traps...');
-  p.playAnim('attack', 2);
+  p.playAnim('attack', 2, 'work');
   startAction(() => {
     const ok = Math.random() < clamp(0.6 + (p.lvl('thieving') - c.lvl) * 0.02, 0.6, 0.95);
     if (!ok) { msg('You set off a trap!', '#ef1020'); damagePlayer(randInt(2, Math.max(3, Math.floor(c.lvl / 10))), null); return false; }

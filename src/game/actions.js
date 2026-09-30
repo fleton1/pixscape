@@ -112,7 +112,7 @@ export function performNpc(n, option) {
     }
     case 'Milk':
       if (!p.has('bucket')) { msg('You need a bucket to milk the cow.'); return; }
-      p.playAnim('attack', 2);
+      p.playAnim('attack', 2, 'work');
       after(1, () => { p.remove('bucket'); p.add('bucket_of_milk'); msg('You milk the cow.'); sfx('splash'); });
       break;
     case 'Travel': {
@@ -149,7 +149,7 @@ export function performObj(o, option, useItem) {
     case 'Read': readSign(o); break;
     case 'Climb-down': case 'Climb-up': case 'Walk-down': case 'Walk-up': case 'Exit':
       if (!o.to) { msg('It doesn\'t lead anywhere.'); break; }
-      p.playAnim('attack', 1);
+      p.playAnim('attack', 1, 'work');
       sfx('ladder');
       G.game.teleport(o.to[0], o.to[1], o.msg, true, o.to[2]);
       break;

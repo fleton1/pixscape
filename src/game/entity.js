@@ -42,7 +42,9 @@ export class Mover {
     return [s[i][0] + (s[i + 1][0] - s[i][0]) * k, s[i][1] + (s[i + 1][1] - s[i][1]) * k];
   }
   isMoving(now) { return this.seg.length > 1 && now - this.segStart < TICK_MS; }
-  playAnim(name, ticks, now = performance.now()) { this.anim = name; this.animStart = now; this.animUntil = now + ticks * TICK_MS; }
+  // style picks the pose for humanoids ('slash', 'bow', 'cast', 'chop', 'work', ...); null lets the
+  // renderer work it out from what the entity is holding
+  playAnim(name, ticks, style = null) { const now = performance.now(); this.anim = name; this.animStyle = style; this.animStart = now; this.animUntil = now + ticks * TICK_MS; }
   hitsplat(dmg, kind = 'hit') {
     this.hitsplats.push({ dmg, kind, t: performance.now() });
     if (this.hitsplats.length > 4) this.hitsplats.shift();

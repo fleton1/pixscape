@@ -8,6 +8,7 @@ import { givePet } from './combat.js';
 import { damagePlayer } from './combat.js';
 import { mineStar } from './events.js';
 
+// anim: true (pose from the tool in hand), false (none) or a pose style such as 'fish' or 'work'
 export function startAction(fn, delay = 1, anim = true) {
   const p = G.player;
   p.action = { fn, next: G.tick + delay, anim };
@@ -18,7 +19,7 @@ export function tickAction() {
   const p = G.player;
   const a = p.action;
   if (!a || p.dead) return;
-  if (a.anim) p.playAnim('attack', 2);
+  if (a.anim) p.playAnim('attack', 2, typeof a.anim === 'string' ? a.anim : ({ axe: 'chop', pickaxe: 'crush' })[p.toolLook && p.toolLook.kind] || 'work');
   if (G.tick < a.next) return;
   const r = a.fn();
   if (r === false || r === undefined) { if (p.action === a) p.action = null; return; }
@@ -177,7 +178,7 @@ export function fish(o, option) {
       }
     }
     return 4;
-  }, 3);
+  }, 3, 'fish');
 }
 
 // ------------------------------------------------------------ firemaking
@@ -350,7 +351,7 @@ export function stealStall(o) {
   if (o.depleted > G.tick) { msg('The stall is empty right now.'); return; }
   if (p.freeSlots() === 0) { msg('You don\'t have enough inventory space.'); return; }
   p.faceTile(o.x, o.y);
-  p.playAnim('attack', 2);
+  p.playAnim('attack', 2, 'work');
   after(1, () => {
     // guards may notice
     const guard = G.npcs.find((n) => !n.dead && n.defId === 'guard' && n.distTo(p.x, p.y) <= 4);
@@ -375,7 +376,7 @@ export function pickpocket(n) {
   if (G.tick < p.stunnedUntil) { msg('You\'re stunned!'); return; }
   msg(`You attempt to pick the ${n.name.toLowerCase()}'s pocket.`);
   p.faceTile(n.x, n.y);
-  p.playAnim('attack', 2);
+  p.playAnim('attack', 2, 'work');
   n.busyUntil = G.tick + 2;
   after(1, () => {
     const chance = clamp(0.55 + (p.lvl('thieving') - pp.lvl) * 0.018, 0.5, 0.95);
@@ -407,7 +408,7 @@ export function bury(slot) {
   if (G.tick < (p.buryCd || 0)) return;
   p.buryCd = G.tick + 2;
   p.removeSlot(slot, 1);
-  p.playAnim('attack', 1);
+  p.playAnim('attack', 1, 'work');
   msg('You dig a hole in the ground...');
   sfx('bury');
   after(1, () => { msg('You bury the bones.'); p.addXp('prayer', BONES[s.id]); });
@@ -428,7 +429,7 @@ export function offerBones(itemId, o) {
 export function prayAt(o) {
   const p = G.player;
   const pr = p.skills.prayer;
-  p.playAnim('attack', 2);
+  p.playAnim('attack', 2, 'work');
   if (pr.cur >= pr.lvl) { msg('You already have full prayer points.'); return; }
   pr.cur = pr.lvl;
   msg('You recharge your Prayer points.');

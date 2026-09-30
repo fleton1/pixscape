@@ -157,6 +157,20 @@ function stall(awning, goods) {
 
 export const OBJ_SPRITES = {};
 
+// Breeze frames for a tree: the crown leans a pixel or two while the trunk stays put.
+function swayFrames(img, amp) {
+  const w = img.width, h = img.height;
+  return [0, 1, 0, -1].map((dir) => {
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const x = c.getContext('2d');
+    for (let y = 0; y < h; y++) {
+      const reach = y < h * 0.3 ? 1 : y < h * 0.5 ? 0.5 : 0;
+      x.drawImage(img, 0, y, w, 1, Math.trunc(dir * amp * reach), y, w, 1);
+    }
+    return c;
+  });
+}
+
 // Farming patches change as they grow: weeds, bare soil, then four stages in the crop's colour.
 export function patchSprite(kind, stage, color) {
   const key = `patch_${kind}_${stage}_${color || ''}`;
@@ -190,7 +204,10 @@ export function patchSprite(kind, stage, color) {
 
 export function buildObjectSprites() {
   const S = OBJ_SPRITES;
-  for (const t of ['tree', 'oak', 'willow', 'teak', 'maple', 'mahogany', 'yew', 'magic_tree', 'heartwood', 'pine', 'palm', 'jungle_tree', 'dead_tree', 'swamp_tree']) S[t] = [makeTree(t, 0), makeTree(t, 1)];
+  for (const t of ['tree', 'oak', 'willow', 'teak', 'maple', 'mahogany', 'yew', 'magic_tree', 'heartwood', 'pine', 'palm', 'jungle_tree', 'dead_tree', 'swamp_tree']) {
+    S[t] = [makeTree(t, 0), makeTree(t, 1)];
+    S[t].sway = S[t].map((img) => swayFrames(img, t === 'willow' || t === 'palm' ? 2 : 1));
+  }
   S.stump = [build((p) => { p.ellipse(8, 11, 5, 3.5, '#6a4a26'); p.rect(3, 8, 10, 4, '#6a4a26'); p.ellipse(8, 8, 5, 2.5, '#c8a060'); p.ellipse(8, 8, 2.5, 1.2, '#a8804a'); }, 16, 16)];
   const ores = { copper_rock: '#c8743a', tin_rock: '#c8c3b8', iron_rock: '#8a4a2a', coal_rock: '#1a1816', gold_rock: '#f0c83a', mithril_rock: '#5a6ec8', adamant_rock: '#4a9a5a', rune_rock: '#4ac8d8', silver_rock: '#eef0f4' };
   for (const [k, c] of Object.entries(ores)) S[k] = [rockSprite(c, 0), rockSprite(c, 1)];

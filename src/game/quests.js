@@ -425,7 +425,7 @@ export function questMine(o) {
   if (p.hasAnywhere('tablet_1') || p.hasAnywhere('scarab_tablet')) { msg('You\'ve already found what was hidden here.'); return; }
   if (p.lvl('mining') < 30) { msg('You need a Mining level of 30 to crack this sandstone.'); return; }
   if (![...p.inv, p.equip.weapon].some((s) => s && ITEMS[s.id].tool?.type === 'pick')) { msg('You need a pickaxe.'); return; }
-  p.playAnim('attack', 3);
+  p.playAnim('attack', 3, 'work');
   msg('You chip carefully at the sandstone...');
   after(3, () => { p.give('tablet_1'); msg('You find a sandstone fragment carved with a sun!', '#ef1020'); sfx('rare'); });
 }
@@ -580,7 +580,7 @@ async function clueTalk(d, npcId) {
 }
 export function dig() {
   const p = G.player;
-  p.playAnim('attack', 2);
+  p.playAnim('attack', 2, 'work');
   sfx('bury');
   after(1, () => {
     if (p.has('clue_scroll')) {

@@ -87,7 +87,7 @@ export function usePatchItem(o, itemId) {
   if (!p.has(itemId, n)) { msg(`You need ${n} ${ITEMS[itemId].name.toLowerCase()}s to plant an allotment.`); return true; }
   p.remove(itemId, n);
   Object.assign(st, { crop: c.id, planted: Date.now() });
-  p.addXp('farming', c.plant); p.playAnim('attack', 2); sfx('bury');
+  p.addXp('farming', c.plant); p.playAnim('attack', 2, 'dig'); sfx('bury');
   msg(`You plant ${n > 1 ? n + ' ' + ITEMS[itemId].name.toLowerCase() + 's' : aOrAn(ITEMS[itemId].name.toLowerCase())}. It will take about ${c.minutes} minutes to grow.`);
   return true;
 }
@@ -112,7 +112,7 @@ export function layTrap(slot) {
   if (G.world.obj(p.x, p.y)) { msg('You can\'t lay a trap here.'); return; }
   p.removeSlot(slot, 1);
   const o = G.world.addObject(type === 'snare' ? 'snare_set' : 'box_set', p.x, p.y, { trap: { type, prey: choices[choices.length - 1], at: G.tick, caught: false } });
-  p.playAnim('attack', 2); sfx('click');
+  p.playAnim('attack', 2, 'dig'); sfx('click');
   msg('You lay the trap. Give it time.');
   // step off the trap
   for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (!G.world.blocked(p.x + dx, p.y + dy)) { G.game.walkTo(p.x + dx, p.y + dy); break; }
@@ -152,7 +152,7 @@ export function catchButterfly(n) {
   const p = G.player, prey = PREY[n.defId];
   if (!p.hasEquipped('butterfly_net') && !p.has('butterfly_net')) { msg('You need a butterfly net to catch that.'); return; }
   if (p.lvl('hunter') < prey.lvl) { msg(`You need a Hunter level of ${prey.lvl} to catch that.`); return; }
-  p.playAnim('attack', 2);
+  p.playAnim('attack', 2, 'dig');
   const ok = Math.random() < clamp(0.45 + (p.lvl('hunter') - prey.lvl) * 0.02, 0.45, 0.9);
   if (!ok) { msg('The butterfly flutters out of reach.'); return; }
   n.dead = true; n.respawnAt = G.tick + 25;

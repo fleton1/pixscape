@@ -64,7 +64,7 @@ function teleportTo(x, y, map, text) {
   p.path = []; p.target = null; p.action = null;
   sfx('teleport');
   G.effects.push({ kind: 'sparkle', follow: p, t: performance.now() });
-  p.playAnim('attack', 2);
+  p.playAnim('attack', 2, 'cast');
   after(2, () => { G.game.teleport(x, y, text, true, map); after(1, () => G.effects.push({ kind: 'sparkle', follow: p, t: performance.now() })); });
 }
 
@@ -83,7 +83,7 @@ export function castOnItem(slot) {
     p.removeSlot(slot, 1);
     p.add('coins', coins);
     p.addXp('magic', s.xp);
-    sfx('coins'); p.playAnim('attack', 2);
+    sfx('coins'); p.playAnim('attack', 2, 'cast');
     G.effects.push({ kind: 'sparkle', follow: p, t: performance.now() });
     msg(`You turn the ${item.name.toLowerCase()} into ${commas(coins)} coins.`);
     G.ui.setTab('magic');
@@ -101,7 +101,7 @@ export function castOnItem(slot) {
     for (const [o, n] of Object.entries(bar.ores)) p.remove(o, n);
     p.add(bar.bar);
     p.addXp('magic', s.xp); p.addXp('smithing', bar.xp);
-    sfx('fire'); p.playAnim('attack', 2);
+    sfx('fire'); p.playAnim('attack', 2, 'cast');
     msg(`You superheat the ore into ${aOrAn(ITEMS[bar.bar].name.toLowerCase())}.`);
     G.ui.setTab('magic');
     return;
@@ -114,7 +114,7 @@ export function castOnItem(slot) {
     p.add(pair[1]);
     if (pair[1] === 'ring_of_recoil') p.flags.recoil = 40;
     p.addXp('magic', s.xp);
-    sfx('teleport'); p.playAnim('attack', 2);
+    sfx('teleport'); p.playAnim('attack', 2, 'cast');
     msg(`You enchant the ${item.name.toLowerCase()}.`);
     G.ui.setTab('magic');
     return;
@@ -162,7 +162,7 @@ export function magicAttack(n, spellId) {
   if (!canCast(s)) { p.target = null; return false; }
   takeRunes(p, s);
   p.attackCd = 5;
-  p.playAnim('attack', 2);
+  p.playAnim('attack', 2, 'cast');
   p.faceTile(n.x + (n.size - 1) / 2, n.y + (n.size - 1) / 2);
   const dist = Math.max(Math.abs(n.x - p.x), Math.abs(n.y - p.y));
   const flight = 1 + Math.floor(dist / 4);
@@ -248,7 +248,7 @@ export function craftRunes(o) {
   if (!n) { msg('You don\'t have any rune essence.'); return; }
   const mult = r.step ? 1 + Math.floor(p.lvl('runecraft') / r.step) : 1;
   p.faceTile(o.x, o.y);
-  p.playAnim('attack', 2);
+  p.playAnim('attack', 2, 'cast');
   sfx('teleport');
   G.effects.push({ kind: 'sparkle', follow: p, t: performance.now() });
   after(1, () => {

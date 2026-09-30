@@ -15,6 +15,25 @@ import { patchSprite } from '../sprites/objects.js';
 import { patchState, growth } from '../game/farming.js';
 import { CROPS } from '../data/farming.js';
 
+// Weapon look kinds to the pose they swing with.
+const STYLE_OF = {
+  scimitar: 'slash', longsword: 'slash', twohand: 'slash', battleaxe: 'slash', axe: 'slash', lash: 'slash', frostblade: 'slash', fang: 'slash', cleaver: 'slash',
+  dagger: 'stab', sword: 'stab', mace: 'crush', warhammer: 'crush', maul: 'crush', club: 'crush', pickaxe: 'crush', staff: 'crush',
+  shortbow: 'bow', longbow: 'bow', crossbow: 'bow', dart: 'throw',
+};
+const FACE_VEC = { down: [0, 1], up: [0, -1], left: [-1, 0], right: [1, 0] };
+// A white copy of a sprite frame, for the flash when something is hit.
+const silhouettes = new WeakMap();
+function silhouette(img) {
+  let c = silhouettes.get(img);
+  if (c) return c;
+  c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+  const x = c.getContext('2d');
+  x.drawImage(img, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#fff8e8'; x.fillRect(0, 0, c.width, c.height);
+  silhouettes.set(img, c);
+  return c;
+}
+
 const FLAT = new Set(['allotment_patch', 'herb_patch', 'snare_set', 'snare_caught', 'log_segment', 'stone_segment', 'rope_segment', 'snape_grass_plant', 'torch', 'banner_blue', 'banner_red', 'skulls', 'spinning_web', 'trapdoor', 'manhole', 'sand_pit', 'wheat', 'moonpetal', 'chair', 'stool', 'potato_plant', 'flax_plant']);
 const LIGHTS = { stone_ring: [3, '#a0e0ff'], rune_altar: [4, '#c8a0ff'], altar_portal: [3, '#a080ff'], mysterious_ruins: [2, '#c8b8f0'], heartwood: [3, '#ff7040'], lava_cave_entrance: [3.5, '#ff7030'], pottery_oven: [2.5, '#ff9040'], torch: [3.5, '#ffb050'], fire: [4, '#ffa040'], campfire: [4.5, '#ffa040'], fireplace: [3.5, '#ffa040'], candles: [2.5, '#ffd080'], crystal: [3, '#80d0ff'], obelisk: [3, '#c060ff'], lamp_post: [3.5, '#ffe0a0'], furnace: [3.5, '#ff9040'], portal: [3, '#c090ff'], moonpetal: [2, '#d0e8ff'], cauldron: [2, '#80ff80'], range: [2.5, '#ff9040'] };
 
@@ -72,7 +91,7 @@ export class Renderer {
   entitySprite(e) {
     if (e === G.player) {
       const look = e.appearance();
-      if (e.action && e.toolLook) look.weapon = e.toolLook, look.shield = null;
+      if (e.action && e.toolLook) look.weapon = e.toolLook, look.shield = null, look.tool = true;
       const key = 'pl_' + JSON.stringify(look);
       return buildSprite(look, key);
     }
@@ -83,13 +102,45 @@ export class Renderer {
     }
     return buildSprite(e.def.look, 'npc_' + e.defId);
   }
+  // Which pose a humanoid strikes with: what it asked for, else what it is holding.
+  animStyle(e) {
+    if (e.animStyle) return e.animStyle;
+    let kind = null;
+    if (e === G.player) {
+      if (e.castingSpell && e.castingSpell()) return 'cast';
+      const r = e.rangedWeapon && e.rangedWeapon();
+      if (r) return r.type === 'thrown' ? 'throw' : 'bow';
+      const w = e.equip.weapon && ITEMS[e.equip.weapon.id];
+      kind = w && w.equip && w.equip.look && w.equip.look.kind;
+    } else if (e.def) {
+      if (e.def.style === 'magic') return 'cast';
+      kind = e.def.look && e.def.look.weapon && e.def.look.weapon.kind;
+      if (e.def.style === 'range') return kind === 'dart' ? 'throw' : 'bow';
+    }
+    return STYLE_OF[kind] || (kind ? 'slash' : 'punch');
+  }
   frameOf(e, set, now) {
-    let anim = 'idle', f = 0;
-    if (now < e.animUntil && e.anim === 'attack') { anim = 'attack'; f = Math.max(0, Math.min(1, Math.floor((now - e.animStart) / (TICK_MS * 0.5)))); }
-    else if (e.isMoving(now)) { anim = 'walk'; f = Math.floor(now / 140) % 4; }
-    else { f = Math.floor((now + (e.id || 0) * 137) / 650) % 2; }
     const facing = set.humanoid ? e.facing : e.hface;
-    return set.frames[facing][anim][f];
+    e._atkPhase = -1;
+    if (now < e.animUntil && e.anim === 'attack') {
+      // wind-up, swing, impact, recover; then back to standing until the next swing
+      const t = now - e.animStart;
+      const ph = t < 110 ? 0 : t < 200 ? 1 : t < 430 ? 2 : t < 570 ? 3 : -1;
+      if (ph >= 0) {
+        e._atkPhase = ph;
+        if (set.humanoid) return set.get(facing, 'atk:' + this.animStyle(e), ph);
+        return set.frames[facing].attack[ph === 1 || ph === 2 ? 1 : 0];
+      }
+    }
+    if (e.isMoving(now)) {
+      // stride matched to distance covered, so running cycles faster and feet don't slide
+      const f = Math.floor((e._walkDist || 0) * 2.8) % 4;
+      return set.frames[facing].walk[f];
+    }
+    const idle = set.frames[facing].idle;
+    const seed = (e.id || 0) * 977;
+    if (idle.length > 2 && (now + seed) % 4300 < 130) return idle[2]; // blink
+    return idle[Math.floor((now + (e.id || 0) * 137) / 800) % 2];
   }
 
   // ------------------------------------------------------------- main
@@ -208,7 +259,12 @@ export class Renderer {
     if (!set) return;
     let spr;
     if (set.anim) spr = set[Math.floor(now / 160 + o.id) % set.length];
-    else spr = set[Math.floor(hash2(o.x, o.y, 9) * set.length)];
+    else {
+      const vi = Math.floor(hash2(o.x, o.y, 9) * set.length);
+      spr = set[vi];
+      // trees sway in the breeze, each on its own beat
+      if (set.sway && !depleted) spr = set.sway[vi][Math.floor(now / 520 + hash2(o.x, o.y, 4) * 4) % set.sway[vi].length];
+    }
     const bx = o.x * TS + (o.w * TS - spr.width) / 2;
     let by = (o.y + o.h) * TS - spr.height;
     if (key.startsWith('banner') || key === 'torch') by = o.y * TS + 2;
@@ -260,8 +316,9 @@ export class Renderer {
     }
     for (const list of byTile.values()) {
       list.slice(-3).forEach((g, i) => {
+        // drops land with a little bounce
         const age = now - g.t;
-        const drop = age < 200 ? (1 - age / 200) * 4 : 0;
+        const drop = age < 450 ? Math.abs(Math.cos(age / 450 * Math.PI * 1.5)) * 6 * (1 - age / 450) : 0;
         ctx.drawImage(iconFor(g.id, g.qty), g.x * TS + i * 2 - 1, g.y * TS - drop - i * 2);
       });
     }
@@ -270,23 +327,40 @@ export class Renderer {
   drawEntity(e, now) {
     const ctx = this.ctx;
     const set = this.entitySprite(e);
-    const spr = this.frameOf(e, set, now);
     const [rx, ry] = e.renderPos(now);
+    // distance walked drives the stride
+    if (e._lastRX !== undefined) { const d = Math.hypot(rx - e._lastRX, ry - e._lastRY); if (d < 3) e._walkDist = (e._walkDist || 0) + d; }
+    e._lastRX = rx; e._lastRY = ry;
+    const spr = this.frameOf(e, set, now);
     const size = e.size || 1;
-    const fx = (rx + size / 2) * TS, fy = (ry + size) * TS - 2;
+    let fx = (rx + size / 2) * TS, fy = (ry + size) * TS - 2;
+    let ox = 0, oy = 0;
+    const [dx, dy] = FACE_VEC[set.humanoid ? e.facing : e.hface] || [0, 0];
+    // lunge into the swing
+    if (e._atkPhase === 1 || e._atkPhase === 2) { const l = (set.humanoid ? 1 : 2.5) * (e._atkPhase === 2 ? 1 : 0.5) * (size > 2 ? 1.5 : 1); ox += dx * l; oy += dy * l; }
+    if (e._atkPhase === 0 && !set.humanoid) { ox -= dx; oy -= dy; }
+    // creatures hop as they go
+    if (!set.humanoid && e.isMoving(now)) oy -= Math.abs(Math.sin((e._walkDist || 0) * Math.PI)) * (size > 1 ? 1 : 1.5);
+    // flinch away from a hit
+    const last = e.hitsplats.length ? e.hitsplats[e.hitsplats.length - 1] : null;
+    const hitAge = last ? now - last.t : 1e9;
+    const hurt = last && last.dmg > 0 && last.kind !== 'poison' && hitAge < 160;
+    if (hurt) { const src = e === G.player ? e.lastHitBy : G.player; const s = src ? Math.sign(e.x - src.x) || (dx ? -dx : 1) : 1; ox += s * (hitAge < 80 ? 1 : 0.5); }
     ctx.fillStyle = 'rgba(0,0,0,0.25)';
-    ctx.beginPath(); ctx.ellipse(fx, fy - 1, Math.max(5, set.w * 0.28), 2.5 + size * 0.5, 0, 0, Math.PI * 2); ctx.fill();
+    const lift = Math.max(0, -oy);
+    ctx.beginPath(); ctx.ellipse(fx + ox * 0.5, fy - 1, Math.max(5, set.w * 0.28) - lift * 0.6, 2.5 + size * 0.5 - lift * 0.2, 0, 0, Math.PI * 2); ctx.fill();
     let alpha = 1;
     if (e === G.player && e.dead) alpha = 0.4;
     if (e.def && e.def.look.kind === 'ghost') alpha = 0.85;
+    if (e.spawnT) { const k = (now - e.spawnT) / 450; if (k < 1) alpha *= Math.max(0, k); }
     if (alpha < 1) ctx.globalAlpha = alpha;
-    const x = Math.round(fx - set.ax), y = Math.round(fy - set.ay);
+    const x = Math.round(fx - set.ax + ox), y = Math.round(fy - set.ay + oy);
     ctx.drawImage(spr, x, y);
-    if (e === G.player && e.hitFlash && now - e.hitFlash < 120) { /* reserved */ }
+    if (hurt) { ctx.globalAlpha = alpha * (hitAge < 70 ? 0.75 : 0.35); ctx.drawImage(silhouette(spr), x, y); }
     ctx.globalAlpha = 1;
     e._top = y; e._sx = x; e._sw = spr.width; e._sh = spr.height; e._fx = fx;
-    // glowing weapon bits (staves / fang)
-    if (set.glow) for (const [gx, gy] of set.glow) {
+    // glowing bits for this frame (staff tips, enchanted blades, casting hands)
+    if (spr._glow) for (const [gx, gy] of spr._glow) {
       ctx.fillStyle = `rgba(255,200,120,${0.4 + 0.3 * Math.sin(now / 150)})`;
       ctx.fillRect(x + gx - 1, y + gy - 1, 3, 3);
     }
@@ -312,13 +386,17 @@ export class Renderer {
       e.hitsplats = e.hitsplats.filter((h) => now - h.t < 1200);
       e.hitsplats.forEach((h, i) => {
         const hx = cx + [0, -7, 7, 0][i % 4], hy = (e._top + e._sh * 0.45) + [0, 4, 4, -6][i % 4];
-        const rise = Math.min(1, (now - h.t) / 150);
-        ctx.globalAlpha = now - h.t > 1000 ? 1 - (now - h.t - 1000) / 200 : 1;
+        const age = now - h.t;
+        const rise = Math.min(1, age / 150) + age / 1200 * 3;
+        const pop = age < 140 ? 1 + 0.45 * (1 - age / 140) ** 2 : 1; // pops in, then settles
+        ctx.globalAlpha = age > 1000 ? 1 - (age - 1000) / 200 : 1;
+        ctx.save(); ctx.translate(hx, hy - rise); ctx.scale(pop, pop);
         ctx.fillStyle = h.kind === 'block' ? '#2a5ad8' : h.kind === 'fire' ? '#e07010' : h.kind === 'poison' ? '#2a9a2a' : '#b01010';
-        ctx.beginPath(); ctx.arc(hx, hy - rise, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI * 2); ctx.fill();
         ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 0.7; ctx.stroke();
         ctx.fillStyle = '#fff'; ctx.font = 'bold 7px "Pixelify Sans", monospace';
-        ctx.fillText(String(h.dmg), hx, hy - rise + 2.5);
+        ctx.fillText(String(h.dmg), 0, 2.5);
+        ctx.restore();
         ctx.globalAlpha = 1;
       });
       if (e.overhead && G.tick < e.overhead.until) {
@@ -387,6 +465,10 @@ export class Renderer {
 
   drawProjectiles(now) {
     const ctx = this.ctx;
+    for (const pr of G.projectiles) if (now - pr.t0 >= pr.dur && pr.kind !== 'arrow' && pr.kind !== 'dart' && pr.kind !== 'swarm') {
+      const [tx, ty] = pr.target.renderPos(now), ts = ((pr.target.size || 1) - 1) / 2;
+      G.effects.push({ kind: 'impact', x: tx + ts, y: ty + ts, color: pr.kind === 'fire' ? '#f08a24' : pr.color, big: pr.kind === 'fire', t: now });
+    }
     G.projectiles = G.projectiles.filter((pr) => now - pr.t0 < pr.dur);
     for (const pr of G.projectiles) {
       const k = (now - pr.t0) / pr.dur;
@@ -413,7 +495,17 @@ export class Renderer {
       } else if (pr.kind === 'swarm') {
         for (let i = 0; i < 6; i++) { ctx.fillStyle = '#1e3a4a'; ctx.fillRect(x + Math.sin(now / 50 + i) * 4, y + Math.cos(now / 60 + i * 2) * 3, 2, 2); }
       } else {
-        ctx.fillStyle = pr.color;
+        // a glowing bolt with a fading tail
+        for (let i = 5; i >= 1; i--) {
+          const bk = Math.max(0, k - i * 0.035);
+          const bx = ((pr.fx + 0.5) + (tx + ts - (pr.fx + 0.5)) * bk) * TS, byy = ((pr.fy + 0.5) + (ty + ts - (pr.fy + 0.5)) * bk) * TS - 8 - Math.sin(bk * Math.PI) * 8;
+          ctx.globalAlpha = 0.5 - i * 0.08;
+          ctx.fillStyle = pr.color;
+          ctx.beginPath(); ctx.arc(bx, byy, 2.5 - i * 0.3, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.globalAlpha = 0.35; ctx.fillStyle = pr.color;
+        ctx.beginPath(); ctx.arc(x, y, 4.5, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 1;
         ctx.beginPath(); ctx.arc(x, y, 2.5, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#fff'; ctx.fillRect(x - 0.5, y - 0.5, 1, 1);
       }
@@ -422,7 +514,7 @@ export class Renderer {
 
   drawEffects(now) {
     const ctx = this.ctx;
-    G.effects = G.effects.filter((ef) => now - ef.t < (ef.kind === 'fireworks' ? 1600 : ef.kind === 'death' ? 700 : ef.kind === 'playerdeath' ? 2400 : 900));
+    G.effects = G.effects.filter((ef) => now - ef.t < (ef.kind === 'fireworks' ? 1600 : ef.kind === 'death' ? 1100 : ef.kind === 'impact' ? 380 : ef.kind === 'playerdeath' ? 2400 : 900));
     for (const ef of G.effects) {
       const k = (now - ef.t);
       let ex = ef.x, ey = ef.y;
@@ -441,12 +533,44 @@ export class Renderer {
           break;
         }
         case 'death': {
+          // keel over away from the killer, settle, then fade into the ground with a puff of dust
           const n = ef.npc;
           const set = this.entitySprite(n);
           const spr = set.frames[set.humanoid ? n.facing : n.hface].idle[0];
-          ctx.globalAlpha = 1 - k / 700;
           const fx = (n.x + n.size / 2) * TS, fy = (n.y + n.size) * TS - 2;
-          ctx.drawImage(spr, Math.round(fx - set.ax), Math.round(fy - set.ay + (k / 700) * 4));
+          const fall = Math.min(1, k / 320), ease = fall * fall;
+          const side = Math.sign(n.x - G.player.x) || (n.hface === 'left' ? -1 : 1);
+          const bounce = k > 320 && k < 460 ? Math.sin((k - 320) / 140 * Math.PI) * 1.5 : 0;
+          ctx.globalAlpha = k < 550 ? 1 : Math.max(0, 1 - (k - 550) / 550);
+          ctx.save();
+          ctx.translate(Math.round(fx), Math.round(fy - bounce + Math.max(0, k - 550) / 550 * 3));
+          ctx.rotate(side * ease * Math.PI / 2 * (n.size > 2 ? 0.5 : 1));
+          ctx.drawImage(spr, -set.ax, -set.ay);
+          ctx.restore();
+          if (k > 280 && k < 900) {
+            const d = (k - 280) / 620;
+            for (let i = 0; i < 7; i++) {
+              const a = Math.PI + (i / 6) * Math.PI;
+              ctx.fillStyle = `rgba(200,190,170,${0.55 * (1 - d)})`;
+              ctx.fillRect(fx + side * set.h * 0.4 + Math.cos(a) * (3 + d * 10), fy - 2 + Math.sin(a) * (1 + d * 4), 2, 2);
+            }
+          }
+          ctx.globalAlpha = 1;
+          break;
+        }
+        case 'impact': {
+          // a projectile arriving: a burst in the spell's colour
+          const d = k / 380;
+          for (let i = 0; i < 10; i++) {
+            const a = (i / 10) * Math.PI * 2 + ef.t % 7;
+            const r = 2 + d * (ef.big ? 12 : 8);
+            ctx.fillStyle = i % 3 ? ef.color : '#ffffff';
+            ctx.globalAlpha = Math.max(0, 1 - d);
+            ctx.fillRect(px + Math.cos(a) * r - 1, py - 6 + Math.sin(a) * r * 0.7 - 1, 2, 2);
+          }
+          ctx.globalAlpha = Math.max(0, 0.5 - d);
+          ctx.fillStyle = ef.color;
+          ctx.beginPath(); ctx.arc(px, py - 6, 4 + d * 3, 0, 7); ctx.fill();
           ctx.globalAlpha = 1;
           break;
         }

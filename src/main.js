@@ -6,6 +6,7 @@ import { buildSprite } from './sprites/chars.js';
 import { game } from './game/game.js';
 import { Renderer } from './render/renderer.js';
 import { Minimap, WorldMap } from './render/minimap.js';
+import { bakeAtlasSoon } from './render/atlas.js';
 import { UI, escapeHtml } from './ui/ui.js';
 import { AudioEngine } from './audio.js';
 import { worldMenu } from './game/actions.js';
@@ -135,6 +136,7 @@ function run() {
   } else msg(`Welcome back, ${escapeHtml(p.name)}.`);
   G.audio.setTrack('town');
   game.checkArea();
+  setTimeout(() => bakeAtlasSoon(G.overworld), 5000); // the world map's painted atlas, in idle moments
   setupInput();
   requestAnimationFrame(frame);
 }
