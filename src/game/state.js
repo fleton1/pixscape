@@ -18,6 +18,8 @@ export const G = {
   paused: false,
   hoverTile: null,
   timers: [],
+  // true on phones/tablets: tap = left-click, press-and-hold = right-click, pinch = zoom
+  touch: typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches,
 };
 
 // Schedule fn to run after n ticks.

@@ -2,11 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#000000">
   <title>PixScape</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="preload" href="fonts/PixelifySans.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="stylesheet" href="style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%233b342a'/><path d='M3 13 12 4M4 13 13 4' stroke='%23c8c8c8'/><path d='M2 10l4 4' stroke='%23e8c13a'/></svg>">
 </head>
@@ -44,13 +43,13 @@
     <div id="chatbox">
       <div id="chat-log"></div>
       <div id="dialogue"></div>
-      <div id="chat-line"><span id="chat-name">Adventurer:</span> <span id="chat-input"></span><span class="caret">*</span><span class="chat-hint">Press Enter to chat</span></div>
+      <div id="chat-line"><span id="chat-name">Adventurer:</span> <span id="chat-input"></span><span class="caret">*</span><input id="chat-field" maxlength="80" autocomplete="off" autocapitalize="sentences" enterkeyhint="send" aria-label="Chat message"><span class="chat-hint"><span class="no-touch">Press Enter to chat</span><span class="only-touch">Tap here to chat</span></span></div>
       <div id="chat-tabs"><span class="ct on">All</span><span class="ct">Game<br><i>On</i></span><span class="ct">Public<br><i>On</i></span><span class="ct">Private<br><i>On</i></span><span class="ct">Clan<br><i>On</i></span><span class="ct">Trade<br><i>On</i></span><span class="ct report">Report</span></div>
     </div>
 
     <div id="ctx-menu"></div>
     <div id="window" class="win"></div>
-    <div id="worldmap"><canvas></canvas></div>
+    <div id="worldmap"><canvas></canvas><button id="wm-close" title="Close map">✕</button></div>
     <div id="fade"></div>
 
     <div id="title">
@@ -68,7 +67,7 @@
           <button id="btn-continue">Continue</button>
           <button id="btn-new">Begin adventure</button>
         </div>
-        <div class="title-foot">Left-click to walk &amp; interact · Right-click for options · Scroll to zoom · M for map</div>
+        <div class="title-foot"><span class="no-touch">Left-click to walk &amp; interact · Right-click for options · Scroll to zoom · M for map</span><span class="only-touch">Tap to walk &amp; interact · Hold for options · Pinch to zoom</span></div>
       </div>
     </div>
 

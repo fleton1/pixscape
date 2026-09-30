@@ -116,7 +116,38 @@ export class WorldMap {
       this.draw();
     });
     canvas.addEventListener('wheel', (e) => { e.preventDefault(); this.zoom = Math.max(0.25, Math.min(2, this.zoom * (e.deltaY > 0 ? 0.85 : 1.18))); this.draw(); }, { passive: false });
+    // touch: one finger pans, two fingers pinch-zoom around their midpoint
+    let g = null;
+    const grab = (e) => {
+      const r = canvas.getBoundingClientRect();
+      const pts = [...e.touches].map((t) => [t.clientX - r.left, t.clientY - r.top]);
+      const cx = pts.reduce((a, p) => a + p[0], 0) / pts.length, cy = pts.reduce((a, p) => a + p[1], 0) / pts.length;
+      const d = pts.length > 1 ? Math.hypot(pts[0][0] - pts[1][0], pts[0][1] - pts[1][1]) : 0;
+      return { n: pts.length, cx, cy, d };
+    };
+    const start = (e) => {
+      e.preventDefault();
+      if (!e.touches.length) { g = null; return; }
+      const s = this.zoom * MAP_SCALE;
+      const f = grab(e);
+      // the world point under the fingers stays under the fingers
+      g = { ...f, zoom: this.zoom, wx: this.ox + (f.cx - this.cv.width / 2) / s, wy: this.oy + (f.cy - this.cv.height / 2) / s };
+    };
+    canvas.addEventListener('touchstart', start, { passive: false });
+    canvas.addEventListener('touchend', start, { passive: false });
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (!g) return;
+      const f = grab(e);
+      if (f.n !== g.n) return;
+      if (f.n > 1 && g.d) this.zoom = Math.max(0.25, Math.min(2, g.zoom * f.d / g.d));
+      const s = this.zoom * MAP_SCALE;
+      this.ox = g.wx - (f.cx - this.cv.width / 2) / s;
+      this.oy = g.wy - (f.cy - this.cv.height / 2) / s;
+      this.draw();
+    }, { passive: false });
   }
+  resize() { this.cv.width = this.cv.clientWidth; this.cv.height = this.cv.clientHeight; this.draw(); }
   open() {
     const p = G.player;
     this.cv.width = this.cv.clientWidth; this.cv.height = this.cv.clientHeight;
@@ -157,7 +188,7 @@ export class WorldMap {
     }
     ctx.restore();
     ctx.font = '14px "Pixelify Sans", monospace'; ctx.textAlign = 'left'; ctx.fillStyle = '#ffdd88';
-    ctx.fillText('Drag to pan - Scroll to zoom - M or Esc to close', 12, ch - 12);
+    ctx.fillText(G.touch ? 'Drag to pan - Pinch to zoom' : 'Drag to pan - Scroll to zoom - M or Esc to close', 12, ch - 12);
     if (!this.anim) { this.anim = true; requestAnimationFrame(() => { this.anim = false; if (this.cv.offsetParent) this.draw(); }); }
   }
 }

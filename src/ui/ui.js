@@ -15,6 +15,7 @@ import { wildLevel, placeName } from '../game/world_info.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const h = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html !== undefined) e.innerHTML = html; return e; };
+const compactLayout = () => document.documentElement.dataset.layout !== 'desk';
 const TABS = ['combat', 'skills', 'quests', 'inventory', 'equipment', 'prayer', 'magic', 'settings'];
 
 export class UI {
@@ -37,7 +38,8 @@ export class UI {
       b.dataset.tab = t;
       b.title = t[0].toUpperCase() + t.slice(1);
       b.innerHTML = `<img src="${tabIcon(t)}">`;
-      b.onclick = () => { this.setTab(t); sfx('click'); };
+      // On phones the panel can be tucked away: tapping the open tab again hides it.
+      b.onclick = () => { if (t === this.tab && compactLayout()) this.toggleSide(); else this.setTab(t); sfx('click'); };
       (i < 4 ? top : bot).appendChild(b);
     });
     side.prepend(top);
@@ -57,12 +59,24 @@ export class UI {
   }
   setTab(t) {
     this.tab = t;
+    this.toggleSide(false);
     document.querySelectorAll('.tab').forEach((b) => b.classList.toggle('active', b.dataset.tab === t));
     document.querySelectorAll('.panel').forEach((p) => p.classList.toggle('show', p.id === 'p-' + t));
     this.dirty(t === 'inventory' ? 'inv' : t === 'equipment' ? 'equip' : t);
   }
-  sideWidth() { const s = $('#sidebar'); return s && innerWidth > 700 ? s.offsetWidth : 0; }
-  chatHeight() { const c = $('#chatbox'); return c && innerWidth > 700 ? c.offsetHeight : 0; }
+  toggleSide(collapse = !document.documentElement.classList.contains('side-collapsed')) {
+    const root = document.documentElement;
+    if (root.classList.contains('side-collapsed') === collapse) return;
+    root.classList.toggle('side-collapsed', collapse);
+    document.querySelectorAll('.tab').forEach((b) => b.classList.toggle('active', !collapse && b.dataset.tab === this.tab));
+  }
+  // How much of the screen edges the interface covers, so the camera centres on what's left.
+  viewInsets() {
+    const layout = document.documentElement.dataset.layout;
+    const side = $('#sidebar'), chat = $('#chatbox');
+    if (layout === 'port') return { right: 0, bottom: innerHeight - chat.getBoundingClientRect().top };
+    return { right: side.offsetWidth, bottom: chat.offsetHeight * 2 / 3 };
+  }
   dirty(k) { this.dirtySet.add(k); }
 
   update(now) {
@@ -187,7 +201,7 @@ export class UI {
   closeMenu() { $('#ctx-menu').style.display = 'none'; this.menuOpen = false; }
   hoverText(entries) {
     const el = $('#hover-text');
-    if (!entries || !entries.length || this.menuOpen) { el.innerHTML = ''; return; }
+    if (!entries || !entries.length || this.menuOpen || G.touch) { el.innerHTML = ''; return; }
     const n = entries.length - 1;
     el.innerHTML = entries[0].text + (n > 1 ? ` <span class="more">/ ${n - 1} more option${n - 1 === 1 ? '' : 's'}</span>` : '');
   }
@@ -412,7 +426,9 @@ export class UI {
       <div class="set chk"><label><input type="checkbox" id="set-part" ${s.particles ? 'checked' : ''}> Weather &amp; particles</label></div>
       <div class="set chk"><label><input type="checkbox" id="set-xpd" ${s.xpDrops ? 'checked' : ''}> XP drops</label></div>
       <div class="set btns"><button id="set-save">Save game</button><button id="set-reset" class="danger">Reset</button></div>
-      <div class="keys"><b>Keys</b><br>Enter: chat &middot; M: world map<br>Space / 1-5: dialogue<br>Shift+click: drop item<br>F1-F8: side tabs &middot; Esc: close</div>`;
+      ${G.touch
+    ? '<div class="keys"><b>Touch</b><br>Tap: walk / first option<br>Press &amp; hold: all options<br>Pinch: zoom &middot; Chat bar: talk<br>Tap the open tab to hide the panel<br>Back: close windows</div>'
+    : '<div class="keys"><b>Keys</b><br>Enter: chat &middot; M: world map<br>Space / 1-5: dialogue<br>Shift+click: drop item<br>F1-F8: side tabs &middot; Esc: close</div>'}`;
     $('#set-music').oninput = (e) => { s.music = +e.target.value; G.audio && G.audio.setVolume(); };
     $('#set-sfx').oninput = (e) => { s.sfx = +e.target.value; G.audio && G.audio.setVolume(); };
     $('#set-zoom').oninput = (e) => { s.zoom = +e.target.value; panel.querySelector('label .y').textContent = s.zoom + 'x'; };
@@ -554,7 +570,7 @@ export class UI {
     const body = $('#window .wbody');
     if (!body) return;
     const st = this.shopStock[this.shopId];
-    body.innerHTML = `<div class="shopgrid">${st.map((s, i) => `<div class="bslot ${s.qty ? '' : 'empty'}" data-i="${i}"><img src="${iconURL(s.id, 1)}"><span class="qty">${s.qty}</span></div>`).join('')}</div><div class="shophint">Right-click items to buy. Right-click your inventory to sell.</div>`;
+    body.innerHTML = `<div class="shopgrid">${st.map((s, i) => `<div class="bslot ${s.qty ? '' : 'empty'}" data-i="${i}"><img src="${iconURL(s.id, 1)}"><span class="qty">${s.qty}</span></div>`).join('')}</div><div class="shophint">${G.touch ? 'Press and hold items to buy. Hold your inventory items to sell.' : 'Right-click items to buy. Right-click your inventory to sell.'}</div>`;
     body.querySelectorAll('.bslot').forEach((el) => {
       const i = +el.dataset.i;
       el.oncontextmenu = (e) => e.preventDefault();
@@ -639,7 +655,7 @@ export class UI {
       const ok = p.lvl('smithing') >= it.smith.lvl, has = p.count(it.smith.bar) >= s.bars;
       html += `<div class="mk ${ok ? '' : 'lock'} ${has ? 'has' : ''}" data-id="${id}"><img src="${iconURL(id)}"><span>${it.name}</span><small>${s.bars} bar${s.bars > 1 ? 's' : ''} &middot; Lvl ${it.smith.lvl}</small></div>`;
     }
-    html += '</div><div class="mkhint">Left-click: make 1 &middot; Right-click: more options</div>';
+    html += `</div><div class="mkhint">${G.touch ? 'Tap: make 1 &middot; Hold: more options' : 'Left-click: make 1 &middot; Right-click: more options'}</div>`;
     this.openWindow('make', html, `What would you like to smith?`);
     document.querySelectorAll('.ftabs button').forEach((b) => (b.onclick = () => this.openAnvil(b.dataset.m)));
     document.querySelectorAll('.mk').forEach((el) => {
@@ -679,11 +695,13 @@ export class UI {
     if (this.dlg === token) this.dlg = null;
     $('#dialogue').style.display = 'none';
     $('#chat-log').style.display = '';
+    $('#chatbox').classList.remove('dlg');
     token.onEnd && token.onEnd();
   }
   renderDlg(o, token, res) {
     const el = $('#dialogue');
     $('#chat-log').style.display = 'none';
+    $('#chatbox').classList.add('dlg');
     el.style.display = 'flex';
     let head = '';
     if (o.who) {
@@ -691,15 +709,19 @@ export class UI {
       head = `<div class="chathead ${o.right ? 'right' : ''}"><img src="${chatheadURL(set, o.who === G.player ? 'pl' + G.player.appearanceKey() : o.who.defId)}"></div>`;
     } else if (o.item) head = `<div class="chathead item"><img src="${iconURL(o.item)}"></div>`;
     el.className = o.right ? 'right' : '';
-    el.innerHTML = `${head}<div class="dtext">${o.name ? `<div class="dname">${o.name}</div>` : ''}<div class="dbody">${o.text}</div><div class="dcont">Click here to continue</div></div>`;
-    const next = () => { if (token.done) return; sfx('click'); this.dlgNext = null; res(); };
+    el.innerHTML = `${head}<div class="dtext">${o.name ? `<div class="dname">${o.name}</div>` : ''}<div class="dbody">${o.text}</div><div class="dcont">${G.touch ? 'Tap to continue' : 'Click here to continue'}</div></div>`;
+    let used = false;
+    const next = () => { if (used || token.done) return; used = true; sfx('click'); this.dlgNext = null; el.onclick = null; res(); };
     el.querySelector('.dcont').onclick = next;
+    el.onclick = G.touch ? next : null;
     this.dlgNext = next;
   }
   renderOptions(list, token, res) {
     const el = $('#dialogue');
     $('#chat-log').style.display = 'none';
+    $('#chatbox').classList.add('dlg');
     el.style.display = 'flex';
+    el.onclick = null;
     el.className = 'opts';
     el.innerHTML = `<div class="dtext"><div class="dname">Select an Option</div>${list.map((o, i) => `<div class="dopt" data-i="${i}">${o}</div>`).join('')}</div>`;
     const choose = (i) => { if (token.done) return; sfx('click'); this.dlgChoose = null; this.dlgNext = null; res(i); };

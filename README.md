@@ -2,6 +2,7 @@
 
 A chill, old-school pixel MMO-style adventure in the browser, inspired by Old School RuneScape.
 No build step and no dependencies. Every sprite, tile, icon and music track is generated in code.
+It also ships as an **Android app** that plays in portrait and landscape (see [Android](#android)).
 
 ## Run it
 
@@ -26,6 +27,51 @@ opened via `file://`, so a server is needed.
 | R | Toggle run |
 | Shift+click item | Drop it |
 | Esc | Close windows |
+
+On a phone or tablet:
+
+| Touch | Action |
+| --- | --- |
+| Tap | Walk / do the default action |
+| Press and hold | Options menu (same as right-click), with a short buzz |
+| Pinch | Zoom (world view and world map) |
+| Drag | Pan the world map |
+| Tap the chat bar | Type a chat message |
+| Tap the open side tab | Hide the side panel to see more of the world |
+| Tap the dialogue box | Continue |
+| Back button | Close the top-most menu, window, map or panel |
+
+## Layouts
+
+`main.js` picks one of three layouts from the window size and sets `<html data-layout>`:
+
+- **desk**: the classic client (floating chatbox and side panel).
+- **land** (phone landscape, or any window under 900×600): the side panel runs the full height of the
+  right edge and the minimap sits beside it.
+- **port** (portrait under 820px wide): the tabs are one row along the bottom, with the panel above them
+  (inventory is 7×4 here) and the chat above that. Windows such as the bank sit above the dock.
+
+Rotating the device switches layouts live, without reloading.
+
+## Android
+
+`android/` is a small Kotlin app: a full-screen WebView around the game. At build time Gradle copies
+`index.html`, `style.css`, `src/` and `fonts/` into the APK's `assets/game/`, so the game at the repo
+root is the only copy. Assets are served from `https://appassets.androidplatform.net/` (via
+`WebViewAssetLoader`) so ES modules work and the save in `localStorage` stays with one origin.
+
+The app runs immersive (system bars hidden, swipe to reveal), keeps the screen on, stays clear of
+camera cutouts and the keyboard, rotates freely, saves and pauses audio when it goes to the background,
+and maps the back button to the game (`window.pixBack`). Nothing is recreated on rotation.
+
+```sh
+cd android
+./gradlew assembleRelease   # app/build/outputs/apk/release/app-release.apk (~300 KB)
+adb install -r app/build/outputs/apk/release/app-release.apk
+```
+
+Package `dev.pixscape.game`, minSdk 26. Release builds are signed with `~/.android/debug.keystore`,
+like the other sideloaded apps. APKs are attached to the [GitHub releases](https://github.com/fleton1/pixscape/releases).
 
 ## What's in it
 
@@ -55,7 +101,8 @@ items and the rest stay where you fell. The XP rate defaults to 4x ("chill") and
 
 ```
 src/
-  main.js            boot, title screen, input, main loop
+  main.js            boot, title screen, layout choice, input, main loop, Android hooks
+  touch.js           press-and-hold = right-click, pinch zoom
   audio.js           procedural music + sfx (WebAudio)
   util.js painter.js RNG/noise/colour helpers, pixel painter
   data/              items, npcs + drop tables, objects, skills/prayers/shops
@@ -64,4 +111,6 @@ src/
   sprites/           procedural terrain, characters/monsters, objects, item & UI icons
   render/            world renderer, minimap + world map
   ui/                DOM interface (sidebar tabs, chat, dialogue, bank, shops...)
+fonts/               Pixelify Sans (SIL OFL), bundled so the game works offline
+android/             the Android app (see above)
 ```

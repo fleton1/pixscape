@@ -9,10 +9,25 @@ import { Minimap, WorldMap } from './render/minimap.js';
 import { UI, escapeHtml } from './ui/ui.js';
 import { AudioEngine } from './audio.js';
 import { worldMenu } from './game/actions.js';
+import { setupTouch } from './touch.js';
 
 const $ = (s) => document.querySelector(s);
 const status = (t) => { $('#load-status').textContent = t; };
 const nextFrame = () => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0)));
+
+// Three layouts: 'desk' (the classic client), 'land' (phone landscape: full-height side panel)
+// and 'port' (phone portrait: panel and chat docked along the bottom). See style.css.
+function applyLayout() {
+  const w = innerWidth, h = innerHeight;
+  const root = document.documentElement;
+  root.dataset.layout = h > w && w < 820 ? 'port' : w < 900 || h < 600 ? 'land' : 'desk';
+  root.classList.toggle('touch', G.touch);
+}
+applyLayout();
+addEventListener('resize', () => {
+  applyLayout();
+  if (G.worldmap && $('#worldmap').style.display === 'block') G.worldmap.resize();
+});
 
 async function boot() {
   status('Loading fonts...');
@@ -27,6 +42,7 @@ async function boot() {
   status('Waking the townsfolk...');
   await nextFrame();
   G.settings.xpRate = 4;
+  if (Math.min(innerWidth, innerHeight) < 600) G.settings.zoom = 2; // phones see more of the world
   game.init(world);
   G.audio = new AudioEngine();
   G.renderer = new Renderer($('#view'));
@@ -91,6 +107,7 @@ function titleScreen() {
       pl.fresh = true;
     }
     t.style.display = 'none';
+    started = true;
     run();
   };
   $('#btn-continue').onclick = () => start(false);
@@ -98,8 +115,10 @@ function titleScreen() {
     if (hasSave && $('#creator').style.display === 'none') { $('#creator').style.display = ''; $('#btn-continue').style.display = 'none'; $('#btn-new').textContent = 'Begin adventure (overwrites save)'; return; }
     start(true);
   };
-  $('#name-input').onkeydown = (e) => { e.stopPropagation(); if (e.key === 'Enter') $('#btn-new').click(); };
+  $('#name-input').onkeydown = (e) => { e.stopPropagation(); if (e.key === 'Enter') { e.target.blur(); $('#btn-new').click(); } };
+  $('#name-input').setAttribute('enterkeyhint', 'go');
 }
+let started = false;
 
 // ------------------------------------------------------------------ main loop
 function run() {
@@ -109,7 +128,7 @@ function run() {
   msg('Welcome to PixScape.');
   if (p.fresh) {
     msg('Talk to the <span style="color:#0000ff">Brindlewood Guide</span> by the fountain if you need help getting started.');
-    msg('Tip: right-click anything for more options. Press M for the world map.', '#7f0000');
+    msg(G.touch ? 'Tip: press and hold anything for more options. Tap MAP for the world map.' : 'Tip: right-click anything for more options. Press M for the world map.', '#7f0000');
     game.save();
   } else msg(`Welcome back, ${escapeHtml(p.name)}.`);
   G.audio.setTrack('town');
@@ -161,13 +180,22 @@ function setupInput() {
     G.settings.zoom = Math.max(2, Math.min(5, G.settings.zoom + (e.deltaY > 0 ? -1 : 1)));
     G.ui.dirty('settings');
   }, { passive: false });
-  // touch: long-press opens the menu
-  let lp = null;
-  cv.addEventListener('touchstart', (e) => {
-    const t = e.touches[0];
-    lp = setTimeout(() => { lp = null; const hit = G.renderer.pick(t.clientX, t.clientY); G.ui.openMenu(t.clientX, t.clientY, worldMenu(hit)); }, 500);
-  }, { passive: true });
-  cv.addEventListener('touchend', () => { if (lp) clearTimeout(lp); }, { passive: true });
+  setupTouch();
+  // Tapping the chat bar opens a real text field, so phones get their keyboard.
+  const field = $('#chat-field');
+  $('#chat-line').addEventListener('click', () => {
+    if (typing) return;
+    $('#chatbox').classList.add('typing', 'field');
+    field.value = '';
+    field.focus();
+  });
+  field.addEventListener('keydown', (e) => {
+    e.stopPropagation();
+    if (e.key === 'Enter') { G.ui.chatInput = field.value.slice(0, 80); G.ui.typeKey({ key: 'Enter' }); field.blur(); }
+    else if (e.key === 'Escape') field.blur();
+  });
+  field.addEventListener('blur', () => { $('#chatbox').classList.remove('typing', 'field'); });
+  $('#wm-close').onclick = () => toggleMap();
   // minimap
   $('#minimap').addEventListener('mousedown', (e) => {
     const r = e.target.getBoundingClientRect();
@@ -197,6 +225,25 @@ function setupInput() {
   window.addEventListener('beforeunload', () => game.save());
   document.addEventListener('visibilitychange', () => { if (document.hidden) game.save(); });
 }
+
+// Android back button: close the top-most thing that's open. Returns false when there was nothing.
+window.pixBack = () => {
+  if (!started) return false;
+  const ui = G.ui;
+  if (document.activeElement === $('#chat-field')) { $('#chat-field').blur(); return true; }
+  if (ui.menuOpen) { ui.closeMenu(); return true; }
+  if ($('#worldmap').style.display === 'block') { toggleMap(); return true; }
+  if (ui.window || ui.dlg) { ui.closeInterfaces(); return true; }
+  if (G.useItem) { G.useItem = null; ui.dirty('inv'); return true; }
+  if (document.documentElement.dataset.layout !== 'desk' && !document.documentElement.classList.contains('side-collapsed')) { ui.toggleSide(true); return true; }
+  return false;
+};
+// The Android shell calls this when the app goes to the background and comes back.
+window.pixPause = (paused) => {
+  if (paused && started) game.save();
+  const ctx = G.audio && G.audio.ctx;
+  if (ctx) paused ? ctx.suspend() : ctx.resume();
+};
 
 function toggleMap() {
   const m = $('#worldmap');

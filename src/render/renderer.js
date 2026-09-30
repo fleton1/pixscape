@@ -53,8 +53,9 @@ export class Renderer {
     const [rx, ry] = p.renderPos(now);
     const Z = this.Z;
     const vw = this.cv.width / Z, vh = this.cv.height / Z;
-    let cx = rx * TS + TS / 2 - vw / 2 - (G.ui ? G.ui.sideWidth() / 2 / Z : 0);
-    let cy = ry * TS + TS / 2 - vh / 2 - (G.ui ? G.ui.chatHeight() / 3 / Z : 0);
+    const inset = G.ui ? G.ui.viewInsets() : { right: 0, bottom: 0 };
+    let cx = rx * TS + TS / 2 - vw / 2 - inset.right / 2 / Z;
+    let cy = ry * TS + TS / 2 - vh / 2 - inset.bottom / 2 / Z;
     if (now < this.shakeUntil) { cx += (Math.random() - 0.5) * 4; cy += (Math.random() - 0.5) * 4; }
     this.camX = Math.round(cx * Z) / Z; this.camY = Math.round(cy * Z) / Z;
     this.vw = vw; this.vh = vh;

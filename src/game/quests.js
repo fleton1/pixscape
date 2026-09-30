@@ -140,12 +140,17 @@ export const DIALOGUE = {
       } else if (c === 1) {
         await d.npc('North is the great city of Highcrest - smiths, shops and a proper bank. Beyond it lies the Wilderness. Only the brave go there.');
         await d.npc('West is Port Selby, where ships sail to Elderglen and Palmera. South is Mortmire swamp - spooky. East across the river is Crestfall Mine and then the Sundral Desert.');
-        await d.npc('Press M to open your world map!');
+        await d.npc(G.touch ? 'Tap the MAP button by your minimap to open your world map!' : 'Press M to open your world map!');
       } else if (c === 2) {
         await d.npc('Quests are stories where you help folk out, and they come with rewards. Check your quest list - the blue icon in your side panel. Red means not started, yellow in progress, green complete.');
       } else if (c === 3) {
-        await d.npc('Left-click to walk or do the first option. Right-click anything for more options. Use your inventory items by clicking them, or pick "Use" to use them on something.');
-        await d.npc('Scroll to zoom, hold the middle mouse button or arrow keys to rotate the view... just kidding, we don\'t rotate here. Press Enter to chat, M for the map, and use the side tabs for everything else.');
+        if (G.touch) {
+          await d.npc('Tap to walk or do the first option. Press and hold anything for more options. Use your inventory items by tapping them, or pick "Use" to use them on something.');
+          await d.npc('Pinch to zoom, twist to rotate the view... just kidding, we don\'t rotate here. Tap the chat bar to talk, MAP for the map, and use the side tabs for everything else. Tap the open tab again to tuck the panel away.');
+        } else {
+          await d.npc('Left-click to walk or do the first option. Right-click anything for more options. Use your inventory items by clicking them, or pick "Use" to use them on something.');
+          await d.npc('Scroll to zoom, hold the middle mouse button or arrow keys to rotate the view... just kidding, we don\'t rotate here. Press Enter to chat, M for the map, and use the side tabs for everything else.');
+        }
       } else break;
     }
   },
