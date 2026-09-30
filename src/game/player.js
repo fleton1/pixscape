@@ -144,6 +144,8 @@ export class Player extends Mover {
     G.ui && G.ui.dirty('inv');
     return { id: s.id, qty: take };
   }
+  // tally for achievement diaries: stats.made / caught / mined
+  tally(kind, id, n = 1) { const t = (this.stats[kind] ||= {}); t[id] = (t[id] || 0) + n; }
   logCollection(id) {
     const first = !this.collection[id];
     this.collection[id] = (this.collection[id] || 0) + 1;
@@ -169,7 +171,7 @@ export class Player extends Mover {
   // Does the equipped ammo work with the equipped bow or crossbow?
   ammoFits() {
     const r = this.rangedWeapon(), a = this.equip.ammo && ITEMS[this.equip.ammo.id].equip.ammo;
-    if (!r || r.type === 'thrown') return true;
+    if (!r || r.type === 'thrown' || r.infinite) return true;
     return !!a && a.type === (r.type === 'bow' ? 'arrow' : 'bolt') && a.tier <= r.tier;
   }
   // The spell being autocast, if the wielded weapon can cast it and the player is high enough level.

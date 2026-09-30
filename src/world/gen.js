@@ -196,7 +196,7 @@ export function generateWorld() {
   place('throne', 216, 94); place('throne', 217, 94);
   w.addObject('banner_blue', 212, 93); w.addObject('banner_blue', 221, 93); w.addObject('torch', 208, 97); w.addObject('torch', 224, 97);
   place('statue', 210, 95); place('statue', 223, 95); place('candles', 214, 94); place('candles', 219, 94); place('weapon_rack', 209, 101); place('armour_stand', 223, 101);
-  npc('king', 217, 96, { wander: 1 }); npc('knight', 214, 99, { wander: 2 }); npc('knight', 220, 99, { wander: 2 });
+  npc('king', 217, 96, { wander: 1 }); npc('sir_aldren', 211, 100, { wander: 1 }); npc('knight', 214, 99, { wander: 2 }); npc('knight', 220, 99, { wander: 2 });
   // bank
   building(233, 94, 10, 7, { floor: T.TILES, doors: [[4, 6], [5, 6]] });
   for (let x = 235; x <= 240; x++) place('bank_booth', x, 96);

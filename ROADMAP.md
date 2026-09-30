@@ -94,7 +94,7 @@ Dungeons (separate maps):
 New creature sprites: bats, slimes, crabs, snakes, treants, trolls, golems, wyrms; variants of ghosts,
 skeletons, giants and dragons. Rock and sand crabs on beaches give low-effort 1x combat training.
 
-## Phase 4 — Overworld growth [later]
+## Phase 4 — Overworld growth [next]
 
 The overworld grows east and south (existing coordinates stay valid, so saves keep working):
 - **Eastern kingdom** past the desert river: a trade city, a barbarian stronghold, a coast.
@@ -102,7 +102,7 @@ The overworld grows east and south (existing coordinates stay valid, so saves ke
 - The old underground strip in the north-west becomes ocean and islands.
 - Travel network: spells, jewellery teleports, agility shortcuts, standing-stone rings.
 
-## Phase 5 — Quests and diaries [next]
+## Phase 5 — Quests and diaries [done in 1.6]
 
 - From 5 quests to about 20, in story chains: the royal knights of Aldermoor, the desert, the
   elves of Elderglen, the witches of Mortmire, and the dwarves of Crestfall.
@@ -127,5 +127,5 @@ economy.
 | 1.3 [done] | Magic + Runecraft |
 | 1.4 [done] | Herblore + Agility |
 | 1.5 [done] | Slayer, more monsters, Wilderness dungeons, save export/import, sprite gallery |
-| 1.6 | Quest wave + achievement diaries |
+| 1.6 [done] | Quest wave (18 quests) + achievement diaries (7 regions) |
 | 1.7 | Overworld growth, Farming + Hunter |

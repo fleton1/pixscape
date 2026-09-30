@@ -32,6 +32,7 @@ export const PRAYERS = [
   { id: 'redemption', name: 'Redemption', lvl: 49, drain: 1 / 12, overhead: true, desc: 'Heals you when nearly dead' },
   { id: 'preserve', name: 'Preserve', lvl: 55, drain: 1 / 18, desc: 'Stat boosts last 50% longer' },
   { id: 'chivalry', name: 'Chivalry', lvl: 60, drain: 1 / 1.5, att: 0.15, str: 0.18, def: 0.2, desc: '+15% Att, +18% Str, +20% Def', quest: 'dragons_bane' },
+  { id: 'oathkeeper', name: 'Oathkeeper', lvl: 70, drain: 1 / 1.3, att: 0.2, str: 0.23, def: 0.25, desc: '+20% Att, +23% Str, +25% Def', quest: 'knights_oath' },
 ];
 
 export const SHOPS = {

@@ -66,6 +66,26 @@ for (const r of magic.RUNES) addSource(r.item, 'runecraft');
 for (const s of magic.SPELLS) if (s.orb) addSource(s.orb, 'charge orb');
 const { HERBS, GRACEFUL } = await import(src('data/items.js'));
 for (const id of Object.keys(GRACEFUL)) addSource(id, 'grace');
+const { STORYLINES } = await import(src('data/storylines.js'));
+for (const [id, q] of Object.entries(STORYLINES)) {
+  const npcOk = (n, where) => { for (const x of [].concat(n)) if (!NPCS[x]) err(`quest ${id} ${where}: unknown npc '${x}'`); };
+  npcOk(q.start.npc, 'start');
+  for (const [it] of q.start.give || []) addSource(it, `quest ${id}`);
+  for (const qid of q.start.reqs?.quests || []) if (!STORYLINES[qid] && !['feast', 'goblin_trouble', 'lost_grove', 'sands', 'dragons_bane'].includes(qid)) err(`quest ${id}: unknown quest requirement ${qid}`);
+  q.steps.forEach((st, i) => {
+    if (st.npc) npcOk(st.npc, `step ${i + 1}`);
+    if (st.from) npcOk(st.from, `step ${i + 1}`);
+    for (const it of Object.keys(st.items || {})) itemOk(it, `quest ${id}`);
+    if (st.item) addSource(st.item, `quest ${id} drop`);
+  });
+  for (const [it] of q.rewards.items || []) addSource(it, `quest ${id} reward`);
+}
+const { DIARIES, TIERS, diaryItem } = await import(src('data/diaries.js'));
+for (const [r, dy] of Object.entries(DIARIES)) for (const t of TIERS) {
+  if (dy[t].length !== 3) warn(`diary ${r} ${t} has ${dy[t].length} tasks`);
+  addSource(diaryItem(r, t), 'diary reward');
+  for (const k of dy[t]) if (k.need && !NPCS[k.need[0]]) err(`diary ${r} ${t}: unknown npc ${k.need[0]}`);
+}
 const slayer = await import(src('data/slayer.js'));
 for (const r of slayer.SLAYER_REWARDS) { if (r.item) addSource(r.item, 'slayer reward'); for (const [id] of r.bundle || []) itemOk(id, 'slayer reward'); }
 for (const [cat, c] of Object.entries(slayer.CATEGORIES)) for (const id of c.npcs) if (!NPCS[id]) err(`slayer category ${cat}: unknown npc ${id}`);

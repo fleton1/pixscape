@@ -103,6 +103,7 @@ export function mine(o) {
         msg(`You just mined ${aOrAn(ITEMS[g.id].name.replace('Uncut ', '').toLowerCase())}!`);
       } else {
         p.add(m.ore);
+        p.tally('mined', m.ore);
         msg(`You manage to mine some ${ITEMS[m.ore].name.toLowerCase().replace(' ore', '')}.`);
       }
       p.addXp('mining', m.xp);
@@ -163,6 +164,7 @@ export function fish(o, option) {
       if (Math.random() < chance) {
         if (bait) p.remove(bait, 1);
         p.add(f.fish);
+        p.tally('caught', f.fish);
         p.addXp('fishing', f.xp);
         msg(`You catch ${f.fish.includes('shrimp') || f.fish.includes('anchov') ? 'some' : 'a'} ${ITEMS[f.fish].name.replace('Raw ', '')}.`);
         sfx('splash');
@@ -252,6 +254,7 @@ export function cook(o, itemId) {
       msg(`You accidentally burn the ${ITEMS[c.out].name.toLowerCase()}.`);
     } else {
       p.add(c.out);
+      p.tally('made', c.out);
       p.addXp('cooking', c.xp);
       msg(`You successfully cook ${aOrAn(ITEMS[c.out].name.toLowerCase())}.`);
     }
@@ -289,6 +292,7 @@ export function smith(itemId, amount) {
     if (made >= amount || p.count(s.bar) < s.bars) { if (made === 0) msg(`You don't have enough bars to make ${aOrAn(it.name.toLowerCase())}.`); return false; }
     p.remove(s.bar, s.bars);
     p.add(itemId, s.qty || 1);
+    p.tally('made', itemId, s.qty || 1);
     p.addXp('smithing', xpPer * s.bars);
     sfx('anvil');
     msg(`You hammer the ${ITEMS[s.bar].name.replace(' bar', '').toLowerCase()} and make ${s.qty > 1 ? s.qty + ' ' + it.name.toLowerCase() : aOrAn(it.name.toLowerCase())}.`);

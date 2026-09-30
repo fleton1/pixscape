@@ -85,6 +85,7 @@ export function make(r, qty = 1, o = null) {
       sfx('error');
     } else {
       p.add(outId, outQty * units);
+      p.tally('made', outId, outQty * units);
       if (r.skill && r.xp) p.addXp(r.skill, r.xp * units);
       sfx(r.verb === 'cook' ? 'cook' : r.verb === 'fill' ? 'splash' : 'click');
       if (units > 1) msg(`You make ${units} ${ITEMS[outId].name.toLowerCase()}${units > 1 && !ITEMS[outId].name.endsWith('s') ? 's' : ''}.`);

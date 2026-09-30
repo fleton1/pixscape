@@ -8,6 +8,7 @@ import { startAction } from './skilling.js';
 import { wildLevel } from './world_info.js';
 import { npcDefRoll, hitChance, killNpc, projectile } from './combat.js';
 import { helmBonus } from './slayer.js';
+import { questEvent } from './questengine.js';
 import { randInt, commas, aOrAn } from '../util.js';
 
 // ------------------------------------------------------------------ runes
@@ -254,6 +255,8 @@ export function craftRunes(o) {
     const have = p.remove('rune_essence', n);
     p.add(r.item, have * mult);
     p.addXp('runecraft', have * r.xp);
+    p.stats.runes = (p.stats.runes || 0) + have * mult;
+    questEvent('runecraft', r.id, have * mult);
     msg(`You bind the temple's power into ${commas(have * mult)} ${r.name.toLowerCase()} runes.`);
   });
 }

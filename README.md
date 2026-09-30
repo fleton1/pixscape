@@ -141,7 +141,13 @@ like the other sideloaded apps. APKs are attached to the [GitHub releases](https
   - Emberwing: dragonfire, plus fire rain you have to dodge.
   - Bone Tyrant: telegraphed slams.
 - **Loot.** Drop tables, a rare drop table, boss uniques, loot beams, boss pets and skilling pets, and a collection log.
-- **5 quests:** A Feast for the Duke, Goblin Trouble, The Lost Grove, Sands of the Scarab and Dragon's Bane.
+- **18 quests** in story chains: the Knights of Aldermoor (up to The Knight's Oath and the Oathkeeper
+  prayer), Secrets of the Sands, the Sylvan Pact (ending in a bow that never needs arrows), the
+  Mortmire Coven and the Crestfall Dwarves, plus First Steps quests for Ranged, Fletching, Magic,
+  Runecraft, Agility, Herblore and Slayer. New quests are data (`data/storylines.js`) run by a small
+  engine (`game/questengine.js`).
+- **Achievement diaries** for seven regions, four tiers each, with region rewards and XP lamps
+  (Quests tab, Achievement Diaries).
 - **Treasure trails.** Clue scrolls drop from monsters. Dig or talk your way to reward caskets (partyhats exist...).
 - **Towns and travel.** Banks, shops, furnaces and anvils, ships between islands, and a home teleport.
 - **Procedural soundtrack.** A different theme per region, plus synthesized sound effects.

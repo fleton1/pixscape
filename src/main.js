@@ -10,6 +10,7 @@ import { UI, escapeHtml } from './ui/ui.js';
 import { AudioEngine } from './audio.js';
 import { worldMenu } from './game/actions.js';
 import { setupTouch } from './touch.js';
+import { registerStorylines } from './game/questengine.js';
 
 const $ = (s) => document.querySelector(s);
 const status = (t) => { $('#load-status').textContent = t; };
@@ -43,6 +44,7 @@ async function boot() {
   await nextFrame();
   G.settings.xpRate = 1; // OSRS pace by default; Settings offers 2x-8x
   if (Math.min(innerWidth, innerHeight) < 600) G.settings.zoom = 2; // phones see more of the world
+  registerStorylines();
   game.init(worlds);
   G.audio = new AudioEngine();
   G.renderer = new Renderer($('#view'));

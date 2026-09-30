@@ -15,6 +15,7 @@ import { selectSpell, clearSpell, canCast, runeText, missingRune } from '../game
 import { SPELLS, SPELL } from '../data/magic.js';
 import { RECIPES, recipeOut } from '../data/recipes.js';
 import { skillGuide } from '../data/guide.js';
+import { DIARIES, TIERS, TIER_LAMPS, diaryItem } from '../data/diaries.js';
 import { xpForLevel, commas, fmtNum, clamp } from '../util.js';
 import { wildLevel, placeName } from '../game/world_info.js';
 
@@ -357,10 +358,11 @@ export class UI {
       const s = p.stage(id);
       html += `<div class="quest ${s >= 100 ? 'done' : s > 0 ? 'started' : ''}" data-q="${id}">${q.name}</div>`;
     }
-    html += '</div><div class="qbtns"><button id="btn-clog">Collection Log</button><button id="btn-stats">Adventure Stats</button></div>';
+    html += '</div><div class="qbtns"><button id="btn-diary">Achievement Diaries</button><button id="btn-clog">Collection Log</button><button id="btn-stats">Adventure Stats</button></div>';
     panel.innerHTML = html;
     panel.querySelectorAll('.quest').forEach((el) => (el.onclick = () => this.openJournal(el.dataset.q)));
     $('#btn-clog').onclick = () => this.openCollection();
+    $('#btn-diary').onclick = () => this.openDiaries();
     $('#btn-stats').onclick = () => this.openStats();
   }
   openJournal(id) {
@@ -373,6 +375,38 @@ export class UI {
     this.dirty('quests');
     this.openWindow('qc', `<div class="scroll qc"><h2>Congratulations!</h2><p>You have completed <b>${q.name}</b>!</p><div class="qcbody"><div class="qcart"></div><div><b>You are awarded:</b><br>${q.rewards.join('<br>')}</div></div><p class="qp">Quest Points: <b>${p.questPoints}</b></p></div>`, 'Quest Complete');
     G.effects.push({ kind: 'fireworks', follow: p, t: performance.now() });
+  }
+  openDiaries(open = null) {
+    const p = G.player;
+    p.flags.diary ||= {};
+    let html = '<div class="diaries">';
+    for (const [region, dy] of Object.entries(DIARIES)) {
+      const tiers = TIERS.map((t) => ({ t, done: dy[t].filter((k) => k.check(p)).length, claimed: p.flags.diary[region + ':' + t] }));
+      const summary = tiers.map((x) => `<span class="dt ${x.claimed ? 'got' : x.done === 3 ? 'ready' : ''}">${x.t[0].toUpperCase()}</span>`).join('');
+      html += `<div class="dreg"><div class="dhead" data-r="${region}"><b>${dy.name}</b> ${summary}</div>`;
+      if (open === region) {
+        for (const x of tiers) {
+          html += `<div class="dtier"><div class="dtname">${x.t[0].toUpperCase() + x.t.slice(1)} <small>${x.done}/3</small></div>`;
+          for (const k of dy[x.t]) html += `<div class="dtask ${k.check(p) ? 'ok' : ''}">${k.check(p) ? '&#10003;' : '&middot;'} ${k.text}</div>`;
+          const it = diaryItem(region, x.t);
+          html += x.claimed ? '<div class="dtask ok">Reward claimed.</div>' : x.done === 3 ? `<button class="dclaim" data-r="${region}" data-t="${x.t}">Claim ${ITEMS[it].name} + ${TIER_LAMPS[x.t]} lamp${TIER_LAMPS[x.t] > 1 ? 's' : ''}</button>` : `<div class="dtask dim">Reward: ${ITEMS[it].name} and ${TIER_LAMPS[x.t]} XP lamp${TIER_LAMPS[x.t] > 1 ? 's' : ''}</div>`;
+          html += '</div>';
+        }
+      }
+      html += '</div>';
+    }
+    html += `</div><div class="mkhint">${G.touch ? 'Tap' : 'Click'} a region to see its tasks.</div>`;
+    this.openWindow('diary', html, 'Achievement Diaries');
+    document.querySelectorAll('.dhead').forEach((el) => (el.onclick = () => this.openDiaries(open === el.dataset.r ? null : el.dataset.r)));
+    document.querySelectorAll('.dclaim').forEach((el) => (el.onclick = () => {
+      const { r, t } = el.dataset;
+      if (p.flags.diary[r + ':' + t]) return;
+      p.flags.diary[r + ':' + t] = true;
+      p.give(diaryItem(r, t)); p.give('lamp', TIER_LAMPS[t]);
+      msg(`Well done! You have completed the ${t} ${DIARIES[r].name} diary.`, '#ef1020');
+      sfx('quest'); G.effects.push({ kind: 'fireworks', follow: p, t: performance.now() });
+      this.openDiaries(r);
+    }));
   }
   openCollection() {
     const p = G.player;
@@ -418,7 +452,7 @@ export class UI {
     const pr = PRAYERS.find((x) => x.id === id);
     if (p.prayers.has(id)) { p.prayers.delete(id); sfx('prayoff'); this.dirty('prayer'); return; }
     if (p.lvl('prayer') < pr.lvl) { msg(`You need a Prayer level of ${pr.lvl} to use ${pr.name}.`); return; }
-    if (pr.quest && p.stage(pr.quest) < 100) { msg('You need to complete Dragon\'s Bane to use this prayer.'); return; }
+    if (pr.quest && p.stage(pr.quest) < 100) { msg(`You need to complete ${QUESTS[pr.quest].name} to use this prayer.`); return; }
     if (p.skills.prayer.cur <= 0) { msg('You need to recharge your Prayer at an altar.'); return; }
     // exclusive groups
     for (const other of PRAYERS) {

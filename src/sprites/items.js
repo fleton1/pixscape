@@ -92,6 +92,7 @@ function draw(icon, p) {
     case 'grass': for (let i = 0; i < 5; i++) p.line(4 + i * 2, 14, 3 + i * 2 + (i % 2) * 2, 3, c); break;
     case 'fungus': p.ellipse(8, 7, 6, 3.5, c); p.rect(6, 8, 4, 6, '#e8d8b8'); p.set(6, 6, '#e8d8b8'); p.set(10, 5, '#e8d8b8'); break;
     case 'scale': p.poly([[3, 4], [13, 4], [11, 12], [8, 15], [5, 12]], c); p.line(8, 5, 8, 13, shade(c, 0.35)); break;
+    case 'bell': p.poly([[5, 4], [11, 4], [13, 12], [3, 12]], c); p.rect(2, 12, 12, 2, shade(c, -0.2)); p.ball(8, 14, 1.5, 1.5, '#5a4a2a'); p.rect(7, 2, 2, 2, '#5a4a2a'); p.line(6, 5, 5, 11, shade(c, 0.35)); break;
     case 'mark': p.ball(8, 8, 6, 6, '#3a8a8a'); p.ball(8, 8, 4.5, 4.5, '#6ad0d0'); p.line(8, 4, 8, 12, '#ffffff'); p.line(5, 8, 11, 8, '#ffffff'); break;
     case 'knife': p.line(3, 13, 7, 9, '#6a4a2a'); p.line(4, 14, 8, 10, '#5a3a1a'); p.line(8, 8, 13, 3, '#d0d0d0'); p.line(9, 9, 14, 4, '#9a9a9a'); break;
     case 'shaft': for (let i = 0; i < 3; i++) p.line(2 + i * 2, 14, 12 + i * 2, 2, '#b08850'); break;

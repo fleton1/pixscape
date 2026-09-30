@@ -6,6 +6,7 @@ import { Mover, touchingCardinal, rectDist } from './entity.js';
 import { playerAttack, tickTelegraphs, canHitFrom, tickPoison } from './combat.js';
 import { gracefulPieces } from './agility.js';
 import { slayerCheck } from './slayer.js';
+import { questVisit } from './questengine.js';
 import { magicAttack } from './magic.js';
 import { tickAction } from './skilling.js';
 import { findPath } from '../world/path.js';
@@ -173,6 +174,9 @@ export const game = {
       if (this.lastArea === undefined) this.lastArea = null;
       this.lastArea = name;
       G.audio && G.audio.setTrack(musicAt(p.x, p.y));
+      questVisit(G.world.id, name);
+      (p.flags.visited ||= {})[G.world.id] = true;
+      (p.flags.areas ||= {})[name] = true;
     }
     const wl = wildLevel(p.x, p.y);
     if (wl && !this.lastWild) {

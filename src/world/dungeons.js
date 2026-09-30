@@ -143,7 +143,7 @@ function deeps() {
   place('furnace', 20, 4); place('anvil', 22, 7); place('anvil', 24, 7); B.icon('furnace', 20, 4); B.icon('anvil', 23, 7);
   place('counter', 5, 13); place('counter', 6, 13); place('counter', 7, 13); place('shelves', 4, 15); place('barrel', 8, 16);
   B.npc('dwarf_trader', 6, 14, { shop: 'dwarf', wander: 0 }); B.icon('shop', 6, 14);
-  B.npc('dwarf', 18, 12, { wander: 3 }); B.npc('dwarf', 22, 15, { wander: 3, name: 'Dwarf miner' });
+  B.npc('dwarf', 18, 12, { wander: 3 }); B.npc('foreman_brunn', 20, 9, { wander: 1 }); B.npc('dwarf', 22, 15, { wander: 3, name: 'Dwarf miner' });
   place('range', 25, 16); place('long_table', 14, 12); place('stool', 14, 11); place('stool', 15, 11);
   for (const [x, y] of [[4, 8], [25, 4], [16, 17], [4, 17]]) w.addObject('torch', x, y);
   // galleries

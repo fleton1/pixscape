@@ -235,6 +235,10 @@ export const NPCS = {
     drops: { always: [['demon_ashes', 3]], extra: [['blood_rune', 50, 120, 0.4], ['death_rune', 50, 120, 0.4], ['dragon_arrowtips', 20, 50, 0.2]], main: [d('coins', 40, 15000, 45000), d('rune_platebody', 5), d('rune_bar', 8, 5, 10), d('runite_ore', 6, 5, 10), d('uncut_dragonstone', 4, 1, 2)], uniques: [{ item: 'void_lash', chance: 1 / 40 }, { item: 'rift_cape', chance: 1 / 30 }, { item: 'shadowbow', chance: 1 / 60 }], pet: { id: 'riftling', chance: 1 / 300 }, clue: 1 / 8 },
     examine: 'Lord of the tear between worlds.',
   },
+
+  // ================= 1.6: quest givers =================
+  sir_aldren: { name: 'Sir Aldren', actions: ['Talk-to'], talk: 'knight', wander: 1, look: human({ helm: { kind: 'fullhelm', color: '#a9aeb5' }, body: { kind: 'platebody', color: '#a9aeb5' }, legs: { kind: 'platelegs', color: '#a9aeb5' }, cape: { color: '#2a4ab0', trim: '#e8c13a' }, weapon: { kind: 'longsword', color: '#a9aeb5' }, shield: { kind: 'kiteshield', color: '#2a4ab0' } }), examine: 'Commander of the Knights of Aldermoor.' },
+  foreman_brunn: { name: 'Foreman Brunn', actions: ['Talk-to'], talk: 'dwarf', wander: 1, look: human({ short: true, beard: '#e8e8e8', hair: '#e8e8e8', shirt: '#6a2a2a', pants: '#3a3a4a', helm: { kind: 'medhelm', color: '#c8a040' }, weapon: { kind: 'warhammer', color: '#6f6c6a' } }), examine: 'He runs the mine. Loudly.' },
 };
 
 // Pets: small followers. `from` is informational for the collection log.

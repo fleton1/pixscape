@@ -3,6 +3,7 @@ import { G } from '../game/state.js';
 import { TS } from '../world/map.js';
 import { bakeMap, MAP_SCALE } from '../sprites/terrain.js';
 import { Painter, OUTLINE } from '../painter.js';
+import { storyStarters } from '../game/questengine.js';
 
 // Each map's minimap image is baked once, the first time the player is there.
 function mapImage(w) { return w.mapImage || (w.mapImage = bakeMap(w)); }
@@ -38,9 +39,9 @@ export class Minimap {
   get map() { return mapImage(G.world); }
   mapChanged() { this.refreshQuestIcons(); }
   refreshQuestIcons() {
-    const starts = { cook: 'feast', hilda: 'goblin_trouble', sylwen: 'lost_grove', petra: 'sands', king: 'dragons_bane' };
+    const starts = [['cook', 'feast'], ['hilda', 'goblin_trouble'], ['sylwen', 'lost_grove'], ['petra', 'sands'], ['king', 'dragons_bane'], ...storyStarters()];
     this.questIcons = [];
-    for (const n of G.npcs) if (starts[n.defId]) this.questIcons.push({ x: n.sx, y: n.sy, q: starts[n.defId] });
+    for (const n of G.npcs) for (const [npc, q] of starts) if (n.defId === npc) this.questIcons.push({ x: n.sx, y: n.sy, q });
   }
   draw(now) {
     const ctx = this.ctx, S = this.S;

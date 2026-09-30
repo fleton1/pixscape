@@ -10,6 +10,7 @@ import { castOnItem, castOnNpc, castOnObject, clearSpell, rubJewellery, enterRui
 import { SPELL } from '../data/magic.js';
 import { crossObstacle } from './agility.js';
 import { masterTalk, taskText } from './slayer.js';
+import { questTalk } from './questengine.js';
 import { HERBS } from '../data/items.js';
 import { DIALOGUE, searchObject, pickObject, combineTablets, tombDoor, openChest, dig, readClue, openCasket, rubLamp } from './quests.js';
 import { npcLevelColor } from './combat.js';
@@ -82,6 +83,8 @@ export function performNpc(n, option) {
   switch (option) {
     case 'Talk-to': {
       const d = NPCS[n.defId];
+      const story = questTalk(n);
+      if (story) { n.busyUntil = G.tick + 200; G.ui.dialogue(n, story, () => { n.busyUntil = G.tick + 2; }); break; }
       const script = DIALOGUE[d.talk] || DIALOGUE.townsfolk;
       n.busyUntil = G.tick + 200;
       G.ui.dialogue(n, script, () => { n.busyUntil = G.tick + 2; });

@@ -5,6 +5,7 @@ import { COURSES, OBSTACLE_VERBS } from '../data/agility.js';
 import { startAction } from './skilling.js';
 import { damagePlayer } from './combat.js';
 import { clamp, randInt } from '../util.js';
+import { questEvent } from './questengine.js';
 
 const COURSE = Object.fromEntries(COURSES.map((c) => [c.id, c]));
 
@@ -72,6 +73,7 @@ function finish(o) {
     p.stats.laps = p.stats.laps || {};
     p.stats.laps[c.id] = (p.stats.laps[c.id] || 0) + 1;
     msg(`You complete a lap of the ${c.name}! Lap count: ${p.stats.laps[c.id]}.`, '#0000aa');
+    questEvent('lap', c.id);
     p.flags.agi = null;
     if (c.lvl >= 15 && Math.random() < 0.35) {
       G.game.dropGround('mark_of_grace', 1, p.x, p.y, { life: 600, loot: true });

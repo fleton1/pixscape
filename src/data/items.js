@@ -1,3 +1,4 @@
+import { DIARIES, TIERS, diaryItem } from './diaries.js';
 import { RUNES } from './magic.js';
 // Item registry. `icon` drives the procedural icon painter; `look` drives how it appears when worn.
 
@@ -611,6 +612,31 @@ wear('void_lash', 'Void lash', 'weapon', { att: 82, str: 82, speed: 4, req: { at
 wear('rift_cape', 'Rift cape', 'cape', { att: 5, str: 5, def: 8, rng: 5, mag: 5, prayer: 2 }, { kind: 'cape', color: '#3a1a5a' }, { color: '#3a1a5a', trim: '#b060ff' }, 800000, { rare: true, examine: 'The fabric shows a different sky.' });
 add('shadowbow', { name: 'Shadowbow', value: 2500000, rare: true, icon: { kind: 'longbow', color: '#2a2a34' }, examine: 'It fires two arrows at once, into the dark.',
   equip: { slot: 'weapon', att: 0, str: 0, def: 0, rng: 95, speed: 7, twoHanded: true, req: { ranged: 70 }, ranged: { type: 'bow', range: 9, tier: 6, double: true }, look: { kind: 'longbow', color: '#2a2a34' } } });
+
+// =====================================================================================
+// 1.6 quest rewards and quest items
+// =====================================================================================
+quest('ancient_scroll', 'Ancient scroll', 'scroll', '#d8c090', 'A map of lands east of the desert river.');
+quest('dragon_heartstring', 'Dragon heartstring', 'string', '#6a8ae8', 'A shimmering sinew from a blue dragon.');
+quest('abbey_bell', 'Abbey bell', 'bell', '#c8a040', 'It still rings, very faintly, on its own.');
+quest('ancient_hammer', 'Ancient forge-hammer', 'hammer', '#6a6a70', 'The lost hammer of the Crestfall forge.');
+wear('knight_cape', "Knight's cape", 'cape', { att: 3, str: 3, def: 9, prayer: 3 }, { kind: 'cape', color: '#2a4ab0' }, { color: '#2a4ab0', trim: '#e8c13a' }, 50000, { examine: 'Worn by the Knights of Aldermoor.' });
+wear('scarab_charm', 'Scarab charm', 'neck', { att: 6, str: 6, def: 6, prayer: 3 }, { kind: 'amulet', color: '#2ab0d8' }, { color: '#2ab0d8' }, 40000, { examine: 'The sun beetle, small and watchful.' });
+wear('sylvan_boots', 'Sylvan boots', 'feet', { def: 4, rng: 4, mag: 2 }, { kind: 'boots', color: '#4aa06a' }, { color: '#4aa06a' }, 30000, { examine: 'They make no sound on leaves.' });
+wear('blessed_symbol', 'Blessed symbol', 'neck', { prayer: 12, def: 2 }, { kind: 'amulet', color: '#f0e8a0' }, { color: '#f0e8a0' }, 40000, { examine: 'The abbey\'s symbol, blessed anew.' });
+wear('dwarven_helm', 'Dwarven helm', 'head', { def: 26, str: 3, req: { defence: 50 } }, { kind: 'fullhelm', color: '#8a7a4a', gilded: true }, { kind: 'fullhelm', color: '#8a7a4a', trim: '#c8a040' }, 60000, { examine: 'The first dwarven helm in a hundred years.' });
+add('sylvan_bow', { name: 'Sylvan bow', value: 900000, icon: { kind: 'longbow', color: '#6ae08a' }, examine: 'Arrows grow from its string.',
+  equip: { slot: 'weapon', att: 0, str: 0, def: 0, rng: 90, rstr: 55, speed: 5, twoHanded: true, req: { ranged: 70 }, ranged: { type: 'bow', range: 10, tier: 6, infinite: true }, look: { kind: 'longbow', color: '#6ae08a' } } });
+
+// achievement diary rewards: one item per region, better at each tier
+for (const [region, dy] of Object.entries(DIARIES)) {
+  const [slot, name, color] = dy.reward;
+  TIERS.forEach((tier, i) => {
+    const t = i + 1, look = slot === 'head' ? { kind: 'hood', color } : slot === 'shield' ? { kind: 'sqshield', color } : { color };
+    const kind = { cape: 'cape', feet: 'boots', neck: 'amulet', hands: 'gloves', ring: 'ring', head: 'coif', shield: 'sqshield' }[slot];
+    wear(diaryItem(region, tier), `${name} ${t}`, slot, { att: t, str: t, def: t * 2 + (slot === 'shield' ? 8 : 0), prayer: Math.ceil(t / 2), rng: t, mag: t }, { kind, color }, look, 500 * t * t, { examine: `A reward for the ${dy.name} ${tier} diary.` });
+  });
+}
 
 export function item(id) {
   const it = ITEMS[id];

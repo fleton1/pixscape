@@ -9,6 +9,7 @@ import { wildLevel } from './world_info.js';
 import { touchingCardinal, withinRange } from './entity.js';
 import { magicAttack, jewelleryOnHit } from './magic.js';
 import { preventKill, onKill, helmBonus, gaze } from './slayer.js';
+import { questKill, storyDrops } from './questengine.js';
 
 const STYLE_XP = { accurate: 'attack', aggressive: 'strength', defensive: 'defence' };
 
@@ -46,11 +47,11 @@ function playerRangedRoll(p) {
 function playerRangedAttack(n) {
   const p = G.player, r = p.rangedWeapon();
   const slot = r.type === 'thrown' ? 'weapon' : 'ammo';
-  const ammo = p.equip[slot];
+  const ammo = r.infinite ? { id: 'bronze_arrow', qty: Infinity } : p.equip[slot];
   if (!ammo) { msg(r.type === 'crossbow' ? 'There are no bolts left in your quiver.' : 'There is no ammo left in your quiver.'); p.target = null; return; }
   if (!p.ammoFits()) { msg(r.type === 'crossbow' ? 'You can\'t use that ammo with your crossbow.' : 'You can\'t use that ammo with your bow.'); p.target = null; return; }
   const ammoId = ammo.id;
-  if (--ammo.qty <= 0) { p.equip[slot] = null; p.lookDirty = true; }
+  if (!r.infinite && --ammo.qty <= 0) { p.equip[slot] = null; p.lookDirty = true; }
   G.ui && (G.ui.dirty('equip'), G.ui.dirty('combat'));
   p.attackCd = p.attackSpeed();
   p.playAnim('attack', 2);
@@ -70,7 +71,7 @@ function playerRangedAttack(n) {
   }
   if (!n.target) { n.target = p; n.returning = false; if (n.attackCd <= 0) n.attackCd = 1 + flight; }
   after(flight, () => {
-    if (Math.random() < 0.75) dropAmmo(ammoId, n.x + Math.floor(n.size / 2), n.y + Math.floor(n.size / 2));
+    if (!r.infinite && Math.random() < 0.75) dropAmmo(ammoId, n.x + Math.floor(n.size / 2), n.y + Math.floor(n.size / 2));
     if (n.dead) return;
     const real = Math.min(dmg, n.hp);
     n.hp -= real;
@@ -358,6 +359,7 @@ export function killNpc(n) {
   after(1, () => dropLoot(n, cx, cy));
   if (n.temp) after(2, () => { const i = G.npcs.indexOf(n); if (i >= 0) G.npcs.splice(i, 1); G.npcById.delete(n.id); });
   onKill(n);
+  questKill(n);
   G.game.onNpcKilled && G.game.onNpcKilled(n);
 }
 
@@ -388,6 +390,7 @@ function dropLoot(n, x, y) {
   if (d.clue && Math.random() < d.clue && !p.hasAnywhere('clue_scroll') && !G.groundItems.some((g) => g.id === 'clue_scroll')) drop('clue_scroll', 1);
   if (d.pet && Math.random() < d.pet.chance) givePet(d.pet.id);
   G.game.questDrops && G.game.questDrops(n, drop);
+  storyDrops(n, drop);
 }
 
 export function givePet(id) {

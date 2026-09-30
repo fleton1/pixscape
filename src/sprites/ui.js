@@ -50,7 +50,7 @@ const TAB_DRAW = {
 };
 export function tabIcon(t) { return mk('tab_' + t, 17, 17, TAB_DRAW[t]); }
 
-const PRAYER_COLORS = { thick_skin: '#b09070', burst_str: '#c04040', clarity: '#c0a040', rock_skin: '#8a8070', superhuman: '#e04040', reflexes: '#e0c040', rapid_heal: '#e04080', steel_skin: '#a0a8b0', ultimate_str: '#ff5050', incredible: '#ffe050', protect_magic: '#6a8aff', protect_range: '#6ad06a', protect_melee: '#e0e0e0', chivalry: '#e8c13a', protect_item: '#e8c878', mystic_will: '#8a8ae8', mystic_lore: '#9a9af0', mystic_might: '#b0b0ff', sharp_eye: '#8ac84a', hawk_eye: '#a0e05a', eagle_eye: '#c8f070', redemption: '#f0f0f0', preserve: '#8ae0c8' };
+const PRAYER_COLORS = { thick_skin: '#b09070', burst_str: '#c04040', clarity: '#c0a040', rock_skin: '#8a8070', superhuman: '#e04040', reflexes: '#e0c040', rapid_heal: '#e04080', steel_skin: '#a0a8b0', ultimate_str: '#ff5050', incredible: '#ffe050', protect_magic: '#6a8aff', protect_range: '#6ad06a', protect_melee: '#e0e0e0', chivalry: '#e8c13a', protect_item: '#e8c878', oathkeeper: '#f0f0ff', mystic_will: '#8a8ae8', mystic_lore: '#9a9af0', mystic_might: '#b0b0ff', sharp_eye: '#8ac84a', hawk_eye: '#a0e05a', eagle_eye: '#c8f070', redemption: '#f0f0f0', preserve: '#8ae0c8' };
 export function prayerIcon(id, on) {
   return mk('pr_' + id + on, 18, 18, (p) => {
     const c = PRAYER_COLORS[id] || '#fff';
@@ -65,6 +65,7 @@ export function prayerIcon(id, on) {
     else if (id === 'redemption') { p.ball(9, 9, 6, 6, '#e04080'); p.rect(8, 5, 2, 8, c); p.rect(5, 8, 8, 2, c); }
     else if (id === 'preserve') { p.poly([[4, 3], [14, 3], [9, 9]], c); p.poly([[4, 15], [14, 15], [9, 9]], c); p.hline(4, 14, 2, '#8a6a2a'); p.hline(4, 14, 16, '#8a6a2a'); }
     else if (id === 'rapid_heal') { p.ball(6, 7, 3, 3, c); p.ball(12, 7, 3, 3, c); p.poly([[3, 8], [15, 8], [9, 15]], c); }
+    else if (id === 'oathkeeper') { p.poly([[3, 3], [15, 3], [15, 9], [9, 16], [3, 9]], '#2a4ab0'); p.line(9, 4, 9, 13, '#e8c13a'); p.line(5, 7, 13, 7, '#e8c13a'); }
     else if (id === 'chivalry') { p.poly([[3, 3], [15, 3], [15, 9], [9, 16], [3, 9]], c); p.line(9, 4, 9, 13, '#fff'); p.line(5, 7, 13, 7, '#fff'); }
     else { p.ball(9, 9, 6, 4, c); p.ball(9, 9, 2.2, 2.2, '#1a1a1a'); p.set(8, 8, '#fff'); }
   });
