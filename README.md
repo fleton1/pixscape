@@ -91,19 +91,27 @@ like the other sideloaded apps. APKs are attached to the [GitHub releases](https
 
 ## What's in it
 
-- **Big world.** 420×320 tiles:
+- **Big world.** 560×440 tiles:
   - The kingdom of Aldermoor: Brindlewood, Highcrest, Port Selby, Hilda's farm and the goblin camp.
   - The Wilderness (aggressive monsters, level counter, lose-items-on-death), Frostpeak, and the Sundral Desert with Sandhaven and the Great Pyramid.
   - Mortmire Swamp, the elven continent of Elderglen, Palmera Isle and the volcanic Cinderhold.
+  - East over the desert river, the Vesperan Steppe: Vesperhold (a trade city), the barbarian
+    stronghold of Stonewatch and the fishing hamlet of Saltmere. South, the Tanglewood jungle with
+    Mossmere and the Ruins of Xal, and the volcanic Ashen Reach.
+  - Rings of standing stones link every region once you've visited them.
 - **Two Wilderness dungeons** below the Wilderness: the Bloodhollow (level 35) and the Abyssal Rift
   (level 50), multi-combat, with gargoyles, nechryaels, voidstalkers, shadow hounds and the Riftlord.
 - **Eight dungeons**, each its own map with its own lighting and music: Brindlewood Sewers, the
   Highcrest Catacombs, Crestfall Deeps (a dwarven mining town with a pitch-black lower seam; bring a
   light), Mortmire Crypt, Hollowroot Caverns, Frostpeak Ice Caves, the Tomb of the Scarab and the
   Cinderhold Depths.
-- **20 skills** on the OSRS XP curve (levels 1-99) at 1x by default: Attack, Strength, Defence,
-  Ranged, Magic, Hitpoints, Prayer, Agility, Herblore, Slayer, Woodcutting, Fletching, Firemaking,
-  Fishing, Cooking, Mining, Smithing, Crafting, Runecraft and Thieving.
+- **22 skills** on the OSRS XP curve (levels 1-99) at 1x by default: Attack, Strength, Defence,
+  Ranged, Magic, Hitpoints, Prayer, Agility, Herblore, Slayer, Farming, Hunter, Woodcutting,
+  Fletching, Firemaking, Fishing, Cooking, Mining, Smithing, Crafting, Runecraft and Thieving.
+  - Farming: allotments, herb and tree patches that grow in real time (even with the game closed).
+    Rake, plant with a dibber, compost, harvest. Seeds from shops, master farmers and monsters.
+  - Hunter: bird snares and box traps in hunting grounds around the world, butterfly nets, and
+    chinchompas you can throw (they hit everything next to the target).
   - Slayer: tasks from Brannoc (Brindlewood), Vessa (Highcrest) and Morvain (Frosthold); XP per kill
     on task, points and streak bonuses, a reward shop (slayer helmet, mirror shield, rock hammer).
     Eight slayer-only monsters from grave crawlers (5) to shadow hounds (90), with their own rules. Every skill has unlocks all the way up. Tap a skill for its guide.

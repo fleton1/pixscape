@@ -7,6 +7,7 @@ import { playerAttack, tickTelegraphs, canHitFrom, tickPoison } from './combat.j
 import { gracefulPieces } from './agility.js';
 import { slayerCheck } from './slayer.js';
 import { questVisit } from './questengine.js';
+import { tickTraps } from './farming.js';
 import { magicAttack } from './magic.js';
 import { tickAction } from './skilling.js';
 import { findPath } from '../world/path.js';
@@ -149,6 +150,7 @@ export const game = {
 
   tickWorld() {
     const w = G.world;
+    tickTraps();
     // fires burn out
     for (const o of w.objects) {
       if (o.type === 'fire' && !o.removed && o.expires && G.tick >= o.expires) {

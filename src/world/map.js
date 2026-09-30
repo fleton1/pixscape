@@ -2,7 +2,7 @@
 import { OBJECTS } from '../data/objects.js';
 
 // The overworld's size. Dungeons and other areas are separate World instances with their own size.
-export const OW_W = 420, OW_H = 320;
+export const OW_W = 560, OW_H = 440;   // grew from 420x320 in 1.7; old coordinates are unchanged
 export const TS = 16; // pixels per tile
 
 export const T = {

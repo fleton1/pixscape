@@ -11,9 +11,12 @@ import { PETS } from '../data/npcs.js';
 import { hash2, clamp } from '../util.js';
 import { BIOME } from '../world/gen.js';
 import { biomeAt, wildLevel } from '../game/world_info.js';
+import { patchSprite } from '../sprites/objects.js';
+import { patchState, growth } from '../game/farming.js';
+import { CROPS } from '../data/farming.js';
 
-const FLAT = new Set(['log_segment', 'stone_segment', 'rope_segment', 'snape_grass_plant', 'torch', 'banner_blue', 'banner_red', 'skulls', 'spinning_web', 'trapdoor', 'manhole', 'sand_pit', 'wheat', 'moonpetal', 'chair', 'stool', 'potato_plant', 'flax_plant']);
-const LIGHTS = { rune_altar: [4, '#c8a0ff'], altar_portal: [3, '#a080ff'], mysterious_ruins: [2, '#c8b8f0'], heartwood: [3, '#ff7040'], lava_cave_entrance: [3.5, '#ff7030'], pottery_oven: [2.5, '#ff9040'], torch: [3.5, '#ffb050'], fire: [4, '#ffa040'], campfire: [4.5, '#ffa040'], fireplace: [3.5, '#ffa040'], candles: [2.5, '#ffd080'], crystal: [3, '#80d0ff'], obelisk: [3, '#c060ff'], lamp_post: [3.5, '#ffe0a0'], furnace: [3.5, '#ff9040'], portal: [3, '#c090ff'], moonpetal: [2, '#d0e8ff'], cauldron: [2, '#80ff80'], range: [2.5, '#ff9040'] };
+const FLAT = new Set(['allotment_patch', 'herb_patch', 'snare_set', 'snare_caught', 'log_segment', 'stone_segment', 'rope_segment', 'snape_grass_plant', 'torch', 'banner_blue', 'banner_red', 'skulls', 'spinning_web', 'trapdoor', 'manhole', 'sand_pit', 'wheat', 'moonpetal', 'chair', 'stool', 'potato_plant', 'flax_plant']);
+const LIGHTS = { stone_ring: [3, '#a0e0ff'], rune_altar: [4, '#c8a0ff'], altar_portal: [3, '#a080ff'], mysterious_ruins: [2, '#c8b8f0'], heartwood: [3, '#ff7040'], lava_cave_entrance: [3.5, '#ff7030'], pottery_oven: [2.5, '#ff9040'], torch: [3.5, '#ffb050'], fire: [4, '#ffa040'], campfire: [4.5, '#ffa040'], fireplace: [3.5, '#ffa040'], candles: [2.5, '#ffd080'], crystal: [3, '#80d0ff'], obelisk: [3, '#c060ff'], lamp_post: [3.5, '#ffe0a0'], furnace: [3.5, '#ff9040'], portal: [3, '#c090ff'], moonpetal: [2, '#d0e8ff'], cauldron: [2, '#80ff80'], range: [2.5, '#ff9040'] };
 
 export class Renderer {
   constructor(canvas) {
@@ -196,7 +199,11 @@ export class Renderer {
     else if (depleted && o.type === 'wheat') return;
     else if (d.fence) key = 'fence_' + this.fenceMask(o);
     else if (d.door) key = `${d.gate ? 'gate' : 'door'}_${o.open ? 1 : 0}_${o.vert ? 1 : 0}`;
-    const set = OBJ_SPRITES[key];
+    let set = OBJ_SPRITES[key];
+    if (d.patch) {
+      const st = patchState(o);
+      set = patchSprite(d.patch, st.weeds ? 'weeds' : st.crop ? String(growth(st)) : 'empty', st.crop && CROPS[st.crop].color);
+    }
     if (!set) return;
     let spr;
     if (set.anim) spr = set[Math.floor(now / 160 + o.id) % set.length];
@@ -476,7 +483,7 @@ export class Renderer {
     const p = G.player;
     const b = biomeAt(p.x, p.y);
     const kind = { [BIOME.FROST]: 'snow', [BIOME.DESERT]: 'sand', [BIOME.WILD]: 'ember', [BIOME.VOLCANIC]: 'ember', [BIOME.SWAMP]: 'firefly', [BIOME.ELVEN]: 'firefly', [BIOME.CAVE]: 'dust', [BIOME.TOMB]: 'dust', [BIOME.TROPIC]: 'pollen', [BIOME.KINGDOM]: 'pollen',
-      [BIOME.SEWER]: 'dust', [BIOME.CRYPT]: 'dust', [BIOME.ICECAVE]: 'snow', [BIOME.LAVACAVE]: 'ember', [BIOME.HOLLOW]: 'firefly' }[b];
+      [BIOME.STEPPE]: 'pollen', [BIOME.JUNGLE]: 'firefly', [BIOME.ASHEN]: 'ember', [BIOME.SEWER]: 'dust', [BIOME.CRYPT]: 'dust', [BIOME.ICECAVE]: 'snow', [BIOME.LAVACAVE]: 'ember', [BIOME.HOLLOW]: 'firefly' }[b];
     const target = { snow: 140, sand: 60, ember: 50, firefly: 30, dust: 40, pollen: 14 }[kind] || 0;
     const dt = Math.min(50, now - (this.lastPT || now)); this.lastPT = now;
     while (this.particles.length < target) this.particles.push(this.newParticle(kind, true));

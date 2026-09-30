@@ -6,8 +6,9 @@ import { OBJECTS } from '../data/objects.js';
 import { makeBuilder } from './build.js';
 import { ALTAR_SITES, RUNE } from '../data/magic.js';
 import { COURSES, SHORTCUTS, DIRS } from '../data/agility.js';
+import { PREY } from '../data/farming.js';
 
-export const BIOME = { OCEAN: 0, KINGDOM: 1, WILD: 2, FROST: 3, DESERT: 4, SWAMP: 5, ELVEN: 6, TROPIC: 7, VOLCANIC: 8, CAVE: 9, TOMB: 10, SEWER: 11, CRYPT: 12, ICECAVE: 13, LAVACAVE: 14, HOLLOW: 15 };
+export const BIOME = { OCEAN: 0, KINGDOM: 1, WILD: 2, FROST: 3, DESERT: 4, SWAMP: 5, ELVEN: 6, TROPIC: 7, VOLCANIC: 8, CAVE: 9, TOMB: 10, SEWER: 11, CRYPT: 12, ICECAVE: 13, LAVACAVE: 14, HOLLOW: 15, STEPPE: 16, JUNGLE: 17, ASHEN: 18 };
 export const BIOME_INFO = {
   [BIOME.OCEAN]: { name: 'The Endless Sea', music: 'sea' },
   [BIOME.KINGDOM]: { name: 'Aldermoor', music: 'kingdom' },
@@ -25,6 +26,9 @@ export const BIOME_INFO = {
   [BIOME.ICECAVE]: { name: 'Ice caves', music: 'frost' },
   [BIOME.LAVACAVE]: { name: 'Depths', music: 'volcano' },
   [BIOME.HOLLOW]: { name: 'Caverns', music: 'cave' },
+  [BIOME.STEPPE]: { name: 'The Vesperan Steppe', music: 'steppe' },
+  [BIOME.JUNGLE]: { name: 'Tanglewood', music: 'jungle' },
+  [BIOME.ASHEN]: { name: 'The Ashen Reach', music: 'volcano' },
 };
 
 // The overworld. Dungeons live in dungeons.js as their own maps.
@@ -38,6 +42,9 @@ export function generateWorld() {
 
   // ------------------------------------------------------------ landmasses
   const MAIN = [[116, 12], [180, 8], [260, 10], [330, 14], [372, 26], [380, 60], [372, 100], [386, 130], [414, 150], [419, 319], [262, 319], [250, 262], [232, 258], [210, 262], [186, 252], [160, 236], [142, 212], [126, 198], [118, 176], [124, 150], [112, 130], [114, 100], [108, 60], [110, 30]];
+  // 1.7: the eastern steppe beyond the desert river, and the southern jungle and ash lands
+  const EAST = [[396, 118], [470, 106], [540, 126], [550, 200], [542, 282], [520, 332], [468, 364], [418, 352], [398, 300], [404, 200]];
+  const SOUTH = [[238, 298], [332, 298], [432, 318], [444, 380], [424, 430], [340, 434], [262, 424], [228, 384], [234, 332]];
   const WEST = [[14, 80], [50, 70], [84, 78], [92, 110], [88, 150], [94, 190], [88, 232], [70, 262], [40, 270], [16, 252], [8, 200], [12, 140]];
   const inPoly = (pts, x, y) => {
     let c = false;
@@ -55,6 +62,8 @@ export function generateWorld() {
       let land = 0;
       if (inPoly(MAIN, nx, ny)) land = 1;
       else if (inPoly(WEST, nx, ny)) land = 2;
+      else if (inPoly(EAST, nx, ny)) land = 6;
+      else if (inPoly(SOUTH, nx, ny)) land = 7;
       else if (inEll(nx, ny, 160, 290, 26, 18)) land = 3;
       else if (inEll(nx, ny, 96, 300, 16, 12)) land = 4;
       else if (fbm(x / 7, y / 7, 3, 3) > 0.785 && !(x < 108 && y < 70)) land = 5; // islets
@@ -70,6 +79,8 @@ export function generateWorld() {
       else if (land === 3) b = BIOME.TROPIC;
       else if (land === 4) b = BIOME.VOLCANIC;
       else if (land === 5) b = BIOME.KINGDOM;
+      else if (land === 6) b = x + (fbm(x / 20, y / 20, 4, 3) - 0.5) * 30 > 430 ? BIOME.STEPPE : BIOME.DESERT;
+      else if (land === 7) { const dn = (fbm(x / 20, y / 20, 4, 3) - 0.5) * 24; b = y + dn < 326 ? BIOME.DESERT : x + dn > 348 ? BIOME.ASHEN : BIOME.JUNGLE; }
       w.biome[idx(x, y)] = b;
       let t = T.OCEAN;
       switch (b) {
@@ -81,6 +92,9 @@ export function generateWorld() {
         case BIOME.ELVEN: t = fbm(x / 16, y / 16, 8, 3) > 0.5 ? T.DARKGRASS : T.GRASS; break;
         case BIOME.TROPIC: t = fbm(x / 10, y / 10, 9, 3) > 0.55 ? T.DARKGRASS : T.GRASS; break;
         case BIOME.VOLCANIC: t = T.ASH; break;
+        case BIOME.STEPPE: t = fbm(x / 14, y / 14, 12, 3) > 0.64 ? T.DIRT : T.GRASS; break;
+        case BIOME.JUNGLE: t = fbm(x / 12, y / 12, 13, 3) > 0.42 ? T.DARKGRASS : T.GRASS; break;
+        case BIOME.ASHEN: t = T.ASH; break;
       }
       w.ground[idx(x, y)] = t;
     }
@@ -94,6 +108,10 @@ export function generateWorld() {
   blob(300, 262, 4, T.WATER);
   blob(318, 58, 8, T.ICE, 0.25);
   blob(300, 28, 7, T.LAVA); blob(318, 44, 5, T.LAVA); blob(262, 20, 4, T.LAVA);
+  // 1.7: the Vesper river through the steppe, a jungle river, and the Ashen Reach's lava
+  carve([[500, 112], [490, 160], [500, 210], [486, 260], [500, 320], [506, 362]], 1.5);
+  carve([[300, 330], [284, 360], [296, 392], [276, 430]], 1.3);
+  blob(392, 392, 5, T.LAVA); blob(410, 372, 3, T.LAVA); carve([[392, 392], [404, 412], [398, 428]], 1, T.LAVA);
   // cinderhold lava rivers
   carve([[96, 300], [86, 290], [80, 286]], 1, T.LAVA);
   carve([[96, 300], [108, 308]], 0.9, T.LAVA);
@@ -485,6 +503,74 @@ export function generateWorld() {
   }
   spawnIn('cultist', 5, 285, 62, 6); spawnIn('cultist', 3, 268, 68, 5);
 
+  // ================================================================ 1.7: THE EAST AND THE SOUTH
+  // Vesperhold, a trade city on the steppe
+  area('Vesperhold', 436, 184, 474, 226, 'city');
+  fill(438, 186, 472, 224, T.GRASS); fill(438, 203, 472, 206, T.COBBLE); fill(453, 186, 456, 224, T.COBBLE);
+  building(439, 187, 9, 6, { floor: T.TILES, doors: [[4, 5]] });
+  for (const x of [441, 442, 443]) place('bank_booth', x, 188); icon('bank', 442, 188); npc('banker', 442, 189, { wander: 0 });
+  building(459, 187, 11, 7, { floor: T.CARPET_RED, doors: [[5, 6]] }); place('counter', 463, 190); place('counter', 464, 190); place('counter', 465, 190);
+  npc('broker', 464, 189, { shop: 'vesper', wander: 0 }); icon('shop', 464, 189);
+  building(439, 209, 8, 6, { doors: [[3, 0]] }); npc('farmer_odo', 442, 211, { shop: 'farming', wander: 1 }); icon('shop', 442, 211);
+  building(460, 209, 8, 6, { doors: [[3, 0]] }); npc('huntress_kaya', 463, 211, { shop: 'hunter', wander: 1 }); icon('shop', 463, 211);
+  building(439, 217, 7, 6, { floor: T.STONEFLOOR, doors: [[3, 0]] }); place('furnace', 440, 218); place('anvil', 443, 220); icon('furnace', 440, 218);
+  building(460, 217, 9, 6, { doors: [[4, 0]] }); place('range', 467, 218); place('counter', 462, 219); npc('bartender', 462, 218, { shop: 'tavern', name: 'Barkeep Vasha', wander: 1 }); icon('cook', 467, 218);
+  placeNear('stall_spice', 447, 198); placeNear('stall_silver', 460, 199); placeNear('fountain', 453, 200);
+  spawnIn('master_farmer', 2, 454, 205, 6); spawnIn('man', 2, 454, 205, 8); spawnIn('woman', 2, 454, 205, 8);
+  w.labels.push({ name: 'Vesperhold', x: 455, y: 196, size: 2 });
+  // Stonewatch, the barbarian stronghold
+  area('Stonewatch', 458, 126, 486, 152, 'goblin');
+  fill(459, 127, 485, 151, T.DIRT);
+  fenceRect(458, 126, 486, 152, [[472, 152]]);
+  building(464, 131, 15, 8, { wall: T.WALL_WOOD, floor: T.WOOD, doors: [[7, 7]] }); place('fireplace', 471, 132); place('long_table', 467, 135); place('long_table', 474, 135);
+  place('campfire', 470, 145); spawnIn('barbarian', 7, 471, 142, 9);
+  w.labels.push({ name: 'Stonewatch', x: 472, y: 128, size: 1 });
+  // Saltmere, a fishing hamlet on the east coast
+  area('Saltmere', 514, 240, 538, 262, 'port');
+  building(518, 244, 6, 5, { wall: T.WALL_WOOD, doors: [[2, 4]] }); place('range', 522, 245); icon('cook', 522, 245);
+  building(526, 244, 6, 5, { wall: T.WALL_WOOD, doors: [[2, 4]] }); npc('fisher', 528, 246, { shop: 'fishing', name: 'Fisher Ottilie', wander: 1 }); icon('shop', 528, 246);
+  w.fishHints.push([540, 250, 'spot_monk'], [540, 256, 'spot_cage'], [538, 244, 'spot_bignet'], [498, 180, 'spot_lure'], [494, 150, 'spot_lure']);
+  w.labels.push({ name: 'Saltmere', x: 526, y: 240, size: 1 });
+  // Mossmere, a village in Tanglewood
+  area('Mossmere', 254, 344, 282, 366, 'tropic');
+  fill(256, 346, 280, 364, T.GRASS);
+  building(258, 348, 7, 5, { wall: T.WALL_WOOD, doors: [[3, 4]] }); place('bank_booth', 260, 349); place('bank_booth', 261, 349); npc('banker', 260, 350, { wander: 0 }); icon('bank', 260, 349);
+  building(268, 348, 7, 5, { wall: T.WALL_WOOD, doors: [[3, 4]] }); place('range', 273, 349); icon('cook', 273, 349);
+  npc('shopkeeper', 271, 350, { shop: 'palmera', name: 'Trader Juna', wander: 1 }); icon('shop', 271, 350);
+  spawnIn('man', 2, 268, 358, 5, { look: 'desert' });
+  w.labels.push({ name: 'Mossmere', x: 268, y: 344, size: 1 });
+  // the Ruins of Xal
+  area('Ruins of Xal', 288, 384, 318, 408, 'tomb');
+  blob(303, 396, 9, T.SANDFLOOR, 0.2);
+  for (let i = 0; i < 26; i++) { const x = 292 + Math.round(R() * 22), y = 388 + Math.round(R() * 16); if (hash2(x, y, 5) < 0.6) setT(x, y, T.WALL_DARK); }
+  for (const [x, y] of [[296, 390], [310, 390], [296, 402], [310, 402]]) placeNear('pillar', x, y);
+  placeNear('chest_tomb', 303, 396); placeNear('gem_rock', 300, 398); placeNear('gem_rock', 306, 393);
+  spawnIn('xal_guardian', 5, 303, 396, 8); spawnIn('jungle_horror', 6, 280, 380, 14);
+  w.labels.push({ name: 'Ruins of Xal', x: 303, y: 384, size: 1 });
+  // the Ashen Reach
+  area('Ashen Camp', 372, 362, 390, 376, 'volcano');
+  placeNear('tent', 376, 366); placeNear('tent', 384, 366); placeNear('campfire', 380, 372);
+  spawnIn('magma_elemental', 6, 395, 395, 10); spawnIn('ash_wyrm', 4, 404, 410, 10);
+  w.mines.push({ cx: 382, cy: 402, r: 4, rocks: { rune_rock: 2, adamant_rock: 3, coal_rock: 3 } });
+  w.labels.push({ name: 'The Ashen Reach', x: 392, y: 384, size: 2, faint: true }, { name: 'Tanglewood', x: 280, y: 400, size: 2, faint: true }, { name: 'Vesperan Steppe', x: 490, y: 290, size: 3, faint: true });
+  spawnIn('steppe_wolf', 6, 480, 280, 20); spawnIn('steppe_wolf', 4, 440, 250, 12); spawnIn('crocodile', 3, 290, 380, 10);
+
+  // farming patches: [x, y, type]
+  for (const [x, y, t] of [[164, 153, 'allotment_patch'], [168, 153, 'herb_patch'], [58, 176, 'allotment_patch'], [63, 176, 'herb_patch'], [66, 170, 'tree_patch'],
+    [442, 228, 'allotment_patch'], [447, 228, 'allotment_patch'], [452, 229, 'herb_patch'], [458, 228, 'tree_patch'], [262, 368, 'herb_patch'], [268, 368, 'tree_patch'], [212, 190, 'tree_patch']]) {
+    const o = placeNear(t, x, y); if (o) icon('farm', o.x, o.y);
+  }
+  // standing stones: a ring near every region, linked to each other
+  for (const [name, x, y] of [['Brindlewood', 190, 190], ['Elderglen', 46, 178], ['Frosthold', 326, 110], ['Sandhaven', 300, 222], ['Vesperhold', 478, 212], ['Mossmere', 250, 358], ['Palmera', 168, 284], ['The Wilderness', 180, 70]]) {
+    const o = placeNear('stone_ring', x, y, {}, 10);
+    if (!o) throw new Error('no room for stones at ' + name);
+    o.ring = name;
+    w.points['ring_' + name] = B.besideOf(o);
+    icon('stones', o.x + 1, o.y + 1);
+  }
+  // butterflies for hunters
+  for (const [id, n, x, y, r] of [['ruby_harvest', 4, 176, 150, 8], ['ruby_harvest', 3, 50, 190, 8], ['sapphire_glacialis', 4, 340, 90, 10], ['snowy_knight', 4, 356, 50, 10], ['black_warlock', 5, 280, 400, 12]]) spawnIn(id, n, x, y, r);
+
   // ================================================================ 1.5: SLAYER & MONSTERS
   entrance('cave_entrance', 200, 24, 'bloodhollow', 'You enter the Bloodhollow. The air tastes of iron.');
   npc('brannoc', 216, 160, { wander: 1 }); icon('slayer', 216, 160);
@@ -626,6 +712,13 @@ export function generateWorld() {
   road(40, 158, 66, 158);
   road(314, 212, 290, 242);
   road(100, 296, 97, 305);
+  road(330, 212, 438, 204);
+  road(455, 186, 472, 152);
+  road(472, 205, 521, 252);
+  road(372, 292, 268, 346);
+  road(206, 232, 262, 346);
+  road(270, 364, 300, 388);
+  road(372, 292, 380, 362);
 
   // ================================================================ FISHING SPOTS
   const usedSpot = new Set();
@@ -655,7 +748,7 @@ export function generateWorld() {
       let k = n, tries = 0;
       while (k > 0 && tries++ < 300) {
         const x = Math.round(m.cx + (R() * 2 - 1) * m.r), y = Math.round(m.cy + (R() * 2 - 1) * m.r);
-        if (!walkable(x, y) || w.obj(x, y)) continue;
+        if (!walkable(x, y) || w.obj(x, y) || reserved[idx(x, y)]) continue;
         const t = getT(x, y);
         if (t === T.BRIDGE || t === T.DOCK || TINFO[t].crisp && t !== T.CAVE) continue;
         w.addObject(type, x, y); reserve(x, y); k--;
@@ -720,6 +813,9 @@ export function generateWorld() {
         case BIOME.SWAMP: if (h < 0.12) tree = h2 < 0.4 ? 'swamp_tree' : 'dead_tree'; break;
         case BIOME.TROPIC: if (h < (t === T.DARKGRASS ? 0.4 : t === T.SAND ? 0.05 : 0.12)) tree = t === T.SAND || h2 < 0.4 ? 'palm' : h2 < 0.6 ? 'teak' : h2 < 0.75 ? 'mahogany' : 'jungle_tree'; break;
         case BIOME.VOLCANIC: if (h < 0.03) tree = h2 < 0.5 ? 'dead_tree' : 'lava_rock'; break;
+        case BIOME.STEPPE: if (h < (t === T.DIRT ? 0.004 : 0.02)) tree = nearWater(x, y, 2) && h2 < 0.6 ? 'willow' : h2 < 0.3 ? 'oak' : h2 < 0.5 ? 'maple' : 'tree'; break;
+        case BIOME.JUNGLE: if (h < (t === T.DARKGRASS ? 0.36 : 0.12)) tree = h2 < 0.35 ? 'jungle_tree' : h2 < 0.6 ? 'teak' : h2 < 0.8 ? 'mahogany' : 'palm'; break;
+        case BIOME.ASHEN: if (h < 0.035) tree = h2 < 0.5 ? 'dead_tree' : 'lava_rock'; break;
       }
       if (tree && !nearRoad) { w.addObject(tree, x, y); continue; }
       if (!nearRoad && !inTown && h0 > 0.994 && b !== BIOME.DESERT) { w.addObject(b === BIOME.KINGDOM || b === BIOME.ELVEN ? (h2 < 0.3 ? 'berry_bush' : 'bush') : 'boulder', x, y); continue; }

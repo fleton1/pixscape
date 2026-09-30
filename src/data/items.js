@@ -632,11 +632,35 @@ add('sylvan_bow', { name: 'Sylvan bow', value: 900000, icon: { kind: 'longbow', 
 for (const [region, dy] of Object.entries(DIARIES)) {
   const [slot, name, color] = dy.reward;
   TIERS.forEach((tier, i) => {
-    const t = i + 1, look = slot === 'head' ? { kind: 'hood', color } : slot === 'shield' ? { kind: 'sqshield', color } : { color };
-    const kind = { cape: 'cape', feet: 'boots', neck: 'amulet', hands: 'gloves', ring: 'ring', head: 'coif', shield: 'sqshield' }[slot];
+    const t = i + 1, look = slot === 'head' ? { kind: 'hood', color } : slot === 'shield' ? { kind: 'sqshield', color } : slot === 'legs' ? { kind: 'pants', color } : { color };
+    const kind = { cape: 'cape', feet: 'boots', neck: 'amulet', hands: 'gloves', ring: 'ring', head: 'coif', shield: 'sqshield', legs: 'chaps' }[slot];
     wear(diaryItem(region, tier), `${name} ${t}`, slot, { att: t, str: t, def: t * 2 + (slot === 'shield' ? 8 : 0), prayer: Math.ceil(t / 2), rng: t, mag: t }, { kind, color }, look, 500 * t * t, { examine: `A reward for the ${dy.name} ${tier} diary.` });
   });
 }
+
+// =====================================================================================
+// 1.7 Farming & Hunter (crop and prey data in data/farming.js)
+// =====================================================================================
+add('weeds', { name: 'Weeds', value: 1, icon: { kind: 'grass', color: '#6a7a3a' }, examine: 'A handful of weeds.' });
+add('rake', { name: 'Rake', value: 6, icon: { kind: 'rake' }, examine: 'Use this to clear weeds.' });
+add('seed_dibber', { name: 'Seed dibber', value: 6, icon: { kind: 'dibber' }, examine: 'Use this to plant seeds with.' });
+add('compost', { name: 'Compost', value: 30, icon: { kind: 'bucket', color: '#5a3a1a' }, examine: 'Makes crops grow better. Use it on a patch.' });
+for (const [id, name, color, heal, val] of [['onion', 'Onion', '#e8d8a8', 1, 3], ['cabbage', 'Cabbage', '#6ab04a', 2, 3], ['sweetcorn', 'Sweetcorn', '#f0d040', 3, 8], ['strawberry', 'Strawberry', '#e83a4a', 4, 20], ['watermelon', 'Watermelon', '#3a8a3a', 6, 40]])
+  add(id, { name, value: val, icon: { kind: 'produce', color }, food: { heal }, examine: `A fresh ${name.toLowerCase()}.` });
+for (const [id, name, color] of [['potato', 'Potato', '#b8905a'], ['onion', 'Onion', '#e8d8a8'], ['cabbage', 'Cabbage', '#6ab04a'], ['tomato', 'Tomato', '#d8302a'], ['sweetcorn', 'Sweetcorn', '#f0d040'], ['strawberry', 'Strawberry', '#e83a4a'], ['watermelon', 'Watermelon', '#3a8a3a']])
+  add(id + '_seed', { name: `${name} seed`, stack: true, value: 2, icon: { kind: 'seed', color }, examine: 'Plant it in an allotment with a seed dibber.' });
+for (const h of HERBS) add(h.id + '_seed', { name: `${h.name} seed`, stack: true, value: 10 + h.lvl * 6, icon: { kind: 'seed', color: h.color }, examine: `Plant it in a herb patch to grow ${h.name.toLowerCase()}.` });
+for (const [id, name] of [['oak', 'Acorn'], ['willow', 'Willow seed'], ['maple', 'Maple seed'], ['yew', 'Yew seed'], ['magic', 'Magic seed']])
+  add(id + '_seed', { name, stack: true, value: { oak: 80, willow: 400, maple: 1500, yew: 8000, magic: 30000 }[id], icon: { kind: 'seed', color: '#8a5a2b', big: true }, examine: 'Plant it in a tree patch.' });
+add('bird_snare', { name: 'Bird snare', value: 6, icon: { kind: 'snare' }, examine: 'Lay it where birds live.' });
+add('box_trap', { name: 'Box trap', value: 38, icon: { kind: 'boxtrap' }, examine: 'Lay it where small creatures live.' });
+wear('butterfly_net', 'Butterfly net', 'weapon', { att: 0, str: 0, speed: 5 }, { kind: 'bnet' }, { kind: 'staff', color: '#c8b890' }, 24, { examine: 'For catching butterflies.' });
+add('raw_bird_meat', { name: 'Raw bird meat', value: 5, icon: { kind: 'drumstick', color: '#e8a0a0', raw: true }, examine: 'I need to cook this first.' });
+add('roast_bird_meat', { name: 'Roast bird meat', value: 12, icon: { kind: 'drumstick', color: '#a0602a' }, food: { heal: 6 }, examine: 'Mmm, roast bird.' });
+COOKING.raw_bird_meat = { lvl: 11, xp: 62, out: 'roast_bird_meat', burnt: 'burnt_meat', stop: 44 };
+for (const [id, name, color, rstr, req] of [['grey_chinchompa', 'Grey chinchompa', '#9a9aa0', 45, 45], ['red_chinchompa', 'Red chinchompa', '#c83a2a', 70, 55], ['black_chinchompa', 'Black chinchompa', '#2a2a30', 90, 65]])
+  add(id, { name, stack: true, value: { grey: 500, red: 1200, black: 2500 }[id.split('_')[0]], icon: { kind: 'chin', color }, examine: 'It explodes on impact. Hits everything next to the target, too.',
+    equip: { slot: 'weapon', att: 0, str: 0, def: 0, rng: 20 + (req - 45), rstr, speed: 4, req: { ranged: req }, ranged: { type: 'thrown', range: 7, aoe: true }, look: { kind: 'dart', color } } });
 
 export function item(id) {
   const it = ITEMS[id];

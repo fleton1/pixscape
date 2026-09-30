@@ -540,6 +540,13 @@ function creature(look, anim, frame) {
       if (b > 1) { p.line(S(4), S(12), S(6), S(9), look.vein || '#4ab7c8'); p.line(S(8), S(12), S(10), S(9), look.vein2 || '#c8743a'); }
       break;
     }
+    case 'butterfly': {
+      p = new Painter(12, 10);
+      const up = frame % 2 === 0;
+      p.poly(up ? [[6, 5], [1, 1], [2, 6]] : [[6, 5], [1, 4], [2, 8]], col); p.poly(up ? [[6, 5], [11, 1], [10, 6]] : [[6, 5], [11, 4], [10, 8]], col);
+      p.vline(6, 3, 7, '#2a2a2a'); p.set(4, 3, shade(col, 0.4)); p.set(8, 3, shade(col, 0.4));
+      return { p, noOutline: false };
+    }
     case 'hand': {
       p = new Painter(16, 12);
       const w2 = walk ? f2 : 0;

@@ -69,7 +69,7 @@ In dependency order, one release each:
    plus antifire and antipoison (poison added to combat).
 4. **Agility** [done in 1.4] — a course per town, shortcuts around the map, marks of grace → graceful outfit.
 5. **Slayer** [done in 1.5] — three slayer masters, tasks, slayer-only monsters with unique drops.
-6. **Farming + Hunter** — patches that grow in real time (works while the game is closed); traps and
+6. **Farming + Hunter** [done in 1.7] — patches that grow in real time (works while the game is closed); traps and
    creatures.
 
 ## Phase 3 — Monsters and dungeons
@@ -94,7 +94,7 @@ Dungeons (separate maps):
 New creature sprites: bats, slimes, crabs, snakes, treants, trolls, golems, wyrms; variants of ghosts,
 skeletons, giants and dragons. Rock and sand crabs on beaches give low-effort 1x combat training.
 
-## Phase 4 — Overworld growth [next]
+## Phase 4 — Overworld growth [done in 1.7]
 
 The overworld grows east and south (existing coordinates stay valid, so saves keep working):
 - **Eastern kingdom** past the desert river: a trade city, a barbarian stronghold, a coast.
@@ -111,7 +111,7 @@ The overworld grows east and south (existing coordinates stay valid, so saves ke
   prayers, gear) plus XP lamps.
 - **Achievement diaries** per region (easy / medium / hard / elite) with region reward items.
 
-## Phase 6 — Systems and quality of life [later]
+## Phase 6 — Systems and quality of life [next]
 
 Bank tabs and placeholders, collection log growth, a skill-milestone log, run-energy tuning,
 world events, a Wintertodt-style group activity (Frostpeak braziers), and a single-player trader
@@ -128,4 +128,4 @@ economy.
 | 1.4 [done] | Herblore + Agility |
 | 1.5 [done] | Slayer, more monsters, Wilderness dungeons, save export/import, sprite gallery |
 | 1.6 [done] | Quest wave (18 quests) + achievement diaries (7 regions) |
-| 1.7 | Overworld growth, Farming + Hunter |
+| 1.7 [done] | Overworld growth (560x440: the Vesperan Steppe, Tanglewood, the Ashen Reach), standing stones, Farming + Hunter |

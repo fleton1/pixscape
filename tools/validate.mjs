@@ -65,6 +65,9 @@ for (const it of Object.values(ITEMS)) if (it.charges !== undefined) addSource(i
 for (const r of magic.RUNES) addSource(r.item, 'runecraft');
 for (const s of magic.SPELLS) if (s.orb) addSource(s.orb, 'charge orb');
 const { HERBS, GRACEFUL } = await import(src('data/items.js'));
+const farm = await import(src('data/farming.js'));
+for (const c of Object.values(farm.CROPS)) { itemOk(c.seed, `crop ${c.id}`); addSource(c.produce, `crop ${c.id}`); addSource(c.seed, 'seed drops'); }
+for (const pr of Object.values(farm.PREY)) for (const [it] of pr.loot || []) addSource(it, 'hunter');
 for (const id of Object.keys(GRACEFUL)) addSource(id, 'grace');
 const { STORYLINES } = await import(src('data/storylines.js'));
 for (const [id, q] of Object.entries(STORYLINES)) {

@@ -58,6 +58,13 @@ export const DIARIES = {
     hard: [kill('hrimfang', 1, 'Hrimfang'), lap('ice', 1, 'Frostpeak Ice Run'), lvl('agility', 80, 'Agility')],
     elite: [kill('hrimfang', 25, 'Hrimfang 25 times'), lap('ice', 25, 'Frostpeak Ice Run'), mined('runite_ore', 20, 'runite ore')],
   },
+  frontier: {
+    name: 'The Frontier', reward: ['legs', 'Frontier chaps', '#8a6a3a'],
+    easy: [area('Vesperhold'), quest('seeds_of_change', 'Seeds of Change'), quest('hunters_mark', "The Hunter's Mark")],
+    medium: [kill('barbarian', 10, 'barbarians'), { text: 'Harvest 50 crops', check: (p) => Object.values(p.stats.farmed || {}).reduce((a, b) => a + b, 0) >= 50 }, area('Ruins of Xal')],
+    hard: [kill('xal_guardian', 10, 'Xal guardians'), { text: 'Catch 25 red chinchompas', check: (p) => n(p.stats.hunted, 'red_chinchompa') >= 25 }, lvl('farming', 70, 'Farming')],
+    elite: [kill('ash_wyrm', 20, 'ash wyrms'), lvl('hunter', 85, 'Hunter'), { text: 'Travel by every ring of standing stones', check: (p) => Object.keys(p.flags.rings || {}).length >= 8 }],
+  },
   wilderness: {
     name: 'The Wilderness', reward: ['shield', 'Wildwalker ward', '#8a1a1a'],
     easy: [kill('dark_wizard', 10, 'dark wizards'), kill('cultist', 5, 'chaos cultists'), area('The Wilderness')],

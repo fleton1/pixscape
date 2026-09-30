@@ -131,6 +131,7 @@ export function makeBuilder(w, R) {
     const o = placeNear(type, x, y, { toMap: map, msg }, 8, inside);
     if (!o) throw new Error(`no room for the ${map} entrance near ${x},${y}`);
     w.points['exit_' + map] = besideOf(o);
+    reserve(...w.points['exit_' + map]);
     return o;
   };
 

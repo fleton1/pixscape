@@ -10,6 +10,7 @@ import { SPELLS, RUNES } from './magic.js';
 import { HERBS } from './items.js';
 import { COURSES, SHORTCUTS } from './agility.js';
 import { SLAYER_REQ, MASTERS } from './slayer.js';
+import { CROPS, PREY } from './farming.js';
 
 let cache = null;
 
@@ -44,6 +45,10 @@ export function skillGuide() {
   for (const [id, n] of Object.entries(NPCS)) if (n.pickpocket) add('thieving', n.pickpocket.lvl, `Pickpocket ${n.name.toLowerCase()}`, null, 'Pickpocket');
   for (const [id, s] of Object.entries(STALLS)) add('thieving', s.lvl, `${id[0].toUpperCase() + id.slice(1)} stall`, s.loot[0].id, 'Stalls');
   for (const [id, c] of Object.entries(THIEF_CHESTS)) add('thieving', c.lvl, `Chest (${id === 'tomb' ? 'tomb' : c.loot[0].qty[0] + ' coins'})`, 'casket', 'Chests');
+  // farming & hunter
+  for (const c of Object.values(CROPS)) add('farming', c.lvl, `${c.name} (${c.patch}, ${c.minutes} min)`, c.seed, c.patch);
+  for (const [id, pr] of Object.entries(PREY)) add('hunter', pr.lvl, pr.name, pr.loot?.[pr.loot.length - 1]?.[0] || null, pr.trap === 'snare' ? 'Bird snare' : pr.trap === 'box' ? 'Box trap' : 'Butterfly net');
+  add('hunter', 1, 'One more trap at a time every 20 levels', 'bird_snare', 'Traps');
   // slayer
   for (const [id, lvl] of Object.entries(SLAYER_REQ)) add('slayer', lvl, NPCS[id].name, null, 'Monsters');
   for (const m of Object.values(MASTERS)) add('slayer', m.minSlayer || 1, `${m.name} in ${m.where} (combat ${m.minCombat}+)`, 'slayer_gem', 'Masters');

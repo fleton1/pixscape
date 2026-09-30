@@ -136,6 +136,24 @@ export const STORYLINES = {
     ],
     rewards: { text: ['1 Quest Point', '1,500 Agility XP', '10 Marks of grace', '3 Energy potions'], xp: { agility: 1500 }, items: [['mark_of_grace', 10], ['energy_potion', 3]] },
   },
+  seeds_of_change: {
+    name: 'Seeds of Change', qp: 1, diff: 'Novice', chain: 'First steps',
+    start: { npc: 'farmer_odo', where: 'Vesperhold', give: [['rake', 1], ['seed_dibber', 1], ['spade', 1], ['potato_seed', 6]], say: [['npc', 'Farming is patience. Rake a patch, plant with the dibber, and come back when it\'s grown. The patches south of town are free to use.']] },
+    steps: [
+      { do: 'event', event: 'harvest', key: 'potato', n: 3, hint: 'Rake an <b>allotment</b>, plant <b>potato seeds</b>, wait for them to grow (about 10 minutes) and harvest <b>3 potatoes</b>.' },
+      { do: 'talk', npc: 'farmer_odo', hint: 'Show <b>Farmer Odo</b> your harvest.', say: [['npc', 'Fine potatoes! Here, some better seeds to keep you going.']] },
+    ],
+    rewards: { text: ['1 Quest Point', '1,500 Farming XP', 'Seeds and compost'], xp: { farming: 1500 }, items: [['tomato_seed', 9], ['brightleaf_seed', 3], ['oak_seed', 1], ['compost', 3]] },
+  },
+  hunters_mark: {
+    name: "The Hunter's Mark", qp: 1, diff: 'Novice', chain: 'First steps',
+    start: { npc: 'huntress_kaya', where: 'Vesperhold', give: [['bird_snare', 2]], say: [['npc', 'Birds are the place to start. Lay a snare in the meadow by Hilda\'s farm and wait for a crimson swift to wander in.']] },
+    steps: [
+      { do: 'event', event: 'hunt', key: 'crimson_swift', n: 3, hint: 'Catch <b>3 crimson swifts</b> with bird snares, near <b>Hilda\'s farm</b> or the fields south of Brindlewood.' },
+      { do: 'talk', npc: 'huntress_kaya', hint: 'Report to <b>Huntress Kaya</b> in Vesperhold.', say: [['npc', 'A natural! Take a box trap; chinchompas live on the steppe, if you get good enough.']] },
+    ],
+    rewards: { text: ['1 Quest Point', '1,500 Hunter XP', 'Box trap and butterfly net'], xp: { hunter: 1500 }, items: [['box_trap', 1], ['butterfly_net', 1]] },
+  },
   slayers_start: {
     name: "A Slayer's Start", qp: 1, diff: 'Novice', chain: 'First steps',
     start: { npc: 'brannoc', where: 'Brindlewood', say: [['npc', 'A slayer hunts what others avoid. Start small: the sewers are crawling with rats.']] },

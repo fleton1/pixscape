@@ -11,6 +11,7 @@ import { SPELL } from '../data/magic.js';
 import { crossObstacle } from './agility.js';
 import { masterTalk, taskText } from './slayer.js';
 import { questTalk } from './questengine.js';
+import { usePatch, usePatchItem, patchLabel, layTrap, checkTrap, catchButterfly, stoneTalk } from './farming.js';
 import { HERBS } from '../data/items.js';
 import { DIALOGUE, searchObject, pickObject, combineTablets, tombDoor, openChest, dig, readClue, openCasket, rubLamp } from './quests.js';
 import { npcLevelColor } from './combat.js';
@@ -94,6 +95,7 @@ export function performNpc(n, option) {
     case 'Bank': G.ui.openBank(); break;
     case 'Pickpocket': pickpocket(n); break;
     case 'Shear': shear(n); break;
+    case 'Catch': catchButterfly(n); break;
     case 'Assignment': case 'Rewards':
       n.busyUntil = G.tick + 200;
       G.ui.dialogue(n, (d) => masterTalk(d, n, option), () => { n.busyUntil = G.tick + 2; });
@@ -129,6 +131,9 @@ export function performObj(o, option, useItem) {
     return;
   }
   if (d.obstacle && option === d.actions[0]) { crossObstacle(o); return; }
+  if (d.patch) { if (option === 'Inspect') msg(patchLabel(o)); else usePatch(o); return; }
+  if (o.trap) { checkTrap(o); return; }
+  if (o.type === 'stone_ring') { G.ui.dialogue(G.player, (dd) => stoneTalk(dd, o)); return; }
   switch (option) {
     case 'Chop down': chop(o); break;
     case 'Mine': mine(o); break;
@@ -212,6 +217,7 @@ function useOnObjAction(itemId, o) {
   const d = OBJECTS[o.type];
   if (!p.has(itemId)) return;
   if (d.cook && COOKING[itemId]) return cook(o, itemId);
+  if (d.patch && usePatchItem(o, itemId)) return;
   if (o.type === 'rune_altar' && itemId === 'rune_essence') return craftRunes(o);
   if (o.type === 'mysterious_ruins' && ITEMS[itemId].talisman) return enterRuins(o);
   if ((o.type === 'fire' || o.type === 'campfire') && FIREMAKING[itemId]) return feedFire(o, itemId);
@@ -271,6 +277,7 @@ export function itemOptions(slot) {
   if (s.id === 'bird_nest') E.push({ text: `Search ${nm}`, fn: () => searchNest(slot) });
   if (it.herb) E.push({ text: `Clean ${nm}`, fn: () => cleanHerb(slot) });
   if (s.id === 'slayer_gem') E.push({ text: `Check ${nm}`, fn: () => msg(taskText()) });
+  if (s.id === 'bird_snare' || s.id === 'box_trap') E.push({ text: `Lay ${nm}`, fn: () => layTrap(slot) });
   if (it.jewelTele) E.push({ text: `Rub ${nm}`, fn: () => rubJewellery(slot) });
   E.push({ text: `Use ${nm}`, fn: () => { G.useItem = { slot, id: s.id }; G.ui.dirty('inv'); } });
   E.push({ text: `Drop ${nm}`, fn: () => dropSlot(slot) });

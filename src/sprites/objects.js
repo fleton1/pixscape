@@ -157,6 +157,37 @@ function stall(awning, goods) {
 
 export const OBJ_SPRITES = {};
 
+// Farming patches change as they grow: weeds, bare soil, then four stages in the crop's colour.
+export function patchSprite(kind, stage, color) {
+  const key = `patch_${kind}_${stage}_${color || ''}`;
+  if (OBJ_SPRITES[key]) return OBJ_SPRITES[key];
+  const w = kind === 'allotment' ? 48 : 16, h = kind === 'allotment' ? 32 : kind === 'tree' ? 34 : 16;
+  const img = build((p) => {
+    const soilY = h - (kind === 'allotment' ? 30 : 14);
+    p.rect(0, soilY, w, kind === 'allotment' ? 30 : 14, '#5a3a1e');
+    for (let y = soilY + 2; y < h; y += 4) p.hline(1, w - 2, y, '#6e4a26');
+    p.rect(0, soilY, w, 1, '#3a2410'); p.rect(0, h - 1, w, 1, '#3a2410'); p.rect(0, soilY, 1, h - soilY, '#3a2410'); p.rect(w - 1, soilY, 1, h - soilY, '#3a2410');
+    const spots = kind === 'allotment' ? [[8, soilY + 8], [24, soilY + 8], [40, soilY + 8], [8, soilY + 20], [24, soilY + 20], [40, soilY + 20]] : [[8, soilY + 7]];
+    if (stage === 'weeds') { for (const [x, y] of spots) for (let i = 0; i < 4; i++) p.line(x - 3 + i * 2, y + 4, x - 4 + i * 3, y - 3, '#6a7a3a'); return; }
+    if (stage === 'empty') return;
+    const g = +stage;
+    for (const [x, y] of spots) {
+      if (kind === 'tree') {
+        const th = 4 + g * 6;
+        p.rect(7, h - 3 - th, 2, th, '#6a4a2a');
+        p.ball(8, h - 4 - th, 2 + g * 1.6, 2 + g * 1.4, g >= 4 ? '#3a8a2a' : '#4a9a3a');
+        continue;
+      }
+      const r = 1 + g;
+      p.line(x, y + 3, x, y + 3 - r * 2, '#3a7a2a');
+      p.ball(x - 1, y + 2 - r, r * 0.9, r * 0.7, '#4aa03a'); p.ball(x + 1, y + 1 - r, r * 0.9, r * 0.7, '#5ab04a');
+      if (g >= 4) p.ball(x, y - r + 3, 2, 2, color || '#e8c050');
+    }
+  }, w, h);
+  OBJ_SPRITES[key] = [img];
+  return OBJ_SPRITES[key];
+}
+
 export function buildObjectSprites() {
   const S = OBJ_SPRITES;
   for (const t of ['tree', 'oak', 'willow', 'teak', 'maple', 'mahogany', 'yew', 'magic_tree', 'heartwood', 'pine', 'palm', 'jungle_tree', 'dead_tree', 'swamp_tree']) S[t] = [makeTree(t, 0), makeTree(t, 1)];
@@ -296,6 +327,15 @@ export function buildObjectSprites() {
     }
   }, 400, 368, false)];
   extraStalls(S);
+  S.snare_set = [build((p) => { p.line(4, 12, 8, 4, WOOD_D); p.line(12, 12, 8, 4, WOOD_D); p.ellipse(8, 11, 4, 2, null); p.line(4, 11, 12, 11, '#c8b890'); }, 16, 16)];
+  S.snare_caught = [build((p) => { p.line(4, 12, 8, 4, WOOD_D); p.line(12, 12, 8, 4, WOOD_D); p.ball(8, 10, 3, 2.5, '#c83a2a'); p.set(10, 9, '#e8a020'); p.line(5, 10, 3, 8, '#8a2a1a'); }, 16, 16)];
+  S.box_set = [build((p) => { p.rect(2, 7, 12, 7, WOOD); p.rect(2, 7, 12, 1, WOOD_L); p.poly([[2, 7], [6, 2], [14, 2], [14, 7]], WOOD_D); p.rect(7, 9, 2, 3, '#2a2a2a'); }, 16, 16)];
+  S.box_caught = [build((p) => { p.rect(2, 5, 12, 9, WOOD); p.rect(2, 5, 12, 1, WOOD_L); p.hline(2, 13, 9, WOOD_D); p.set(5, 12, '#c8b890'); p.set(11, 12, '#c8b890'); }, 16, 16)];
+  S.stone_ring = [build((p) => {
+    p.ellipse(24, 30, 22, 13, '#4a7a3a'); p.ellipse(24, 30, 10, 6, '#6a9a4a');
+    for (const [x, y] of [[6, 20], [16, 13], [30, 13], [41, 20], [42, 34], [30, 40], [16, 40], [5, 33]]) { p.rect(x - 2, y - 10, 5, 12, STONE); p.vline(x - 2, y - 10, y + 1, STONE_L); p.rect(x - 2, y, 5, 2, STONE_D); }
+    p.ball(24, 30, 3, 2, '#c8f0ff');
+  }, 48, 44)];
   // agility
   S.log_balance = [build((p) => { p.ellipse(8, 11, 6, 4, '#7a5a34'); p.ellipse(8, 11, 4, 2.5, '#c8a060'); p.ellipse(8, 11, 1.5, 1, '#8a6a3a'); }, 16, 16)];
   S.log_segment = [build((p) => { p.rect(0, 6, 16, 5, '#7a5a34'); p.hline(0, 15, 6, '#a07848'); p.hline(0, 15, 10, '#5a3a1c'); p.set(5, 8, '#5a3a1c'); p.set(12, 8, '#5a3a1c'); }, 16, 16, false)];

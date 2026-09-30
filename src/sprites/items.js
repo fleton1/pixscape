@@ -94,6 +94,14 @@ function draw(icon, p) {
     case 'scale': p.poly([[3, 4], [13, 4], [11, 12], [8, 15], [5, 12]], c); p.line(8, 5, 8, 13, shade(c, 0.35)); break;
     case 'bell': p.poly([[5, 4], [11, 4], [13, 12], [3, 12]], c); p.rect(2, 12, 12, 2, shade(c, -0.2)); p.ball(8, 14, 1.5, 1.5, '#5a4a2a'); p.rect(7, 2, 2, 2, '#5a4a2a'); p.line(6, 5, 5, 11, shade(c, 0.35)); break;
     case 'mark': p.ball(8, 8, 6, 6, '#3a8a8a'); p.ball(8, 8, 4.5, 4.5, '#6ad0d0'); p.line(8, 4, 8, 12, '#ffffff'); p.line(5, 8, 11, 8, '#ffffff'); break;
+    case 'rake': p.line(3, 14, 11, 4, '#8a5a2a'); p.line(8, 2, 15, 7, '#8a8a8a'); for (let i = 0; i < 4; i++) p.line(9 + i * 2, 3 + i, 8 + i * 2, 6 + i, '#8a8a8a'); break;
+    case 'dibber': p.line(4, 13, 12, 5, '#8a5a2a'); p.line(5, 13, 13, 5, '#6a4a2a'); p.rect(11, 3, 3, 2, '#a88a6a'); break;
+    case 'seed': for (const [x, y] of (icon.big ? [[8, 9]] : [[5, 8], [9, 6], [10, 11], [6, 12]])) p.ball(x, y, icon.big ? 4 : 1.8, icon.big ? 3.5 : 1.5, icon.big ? c : shade(c, -0.1)); if (icon.big) p.rect(7, 4, 2, 2, '#5a3a1a'); break;
+    case 'produce': p.ball(8, 9, 5, 4.5, c); p.set(6, 7, shade(c, 0.4)); p.poly([[7, 4], [8, 2], [10, 4]], '#3a8a2a'); break;
+    case 'snare': p.line(3, 14, 8, 3, '#8a5a2a'); p.ellipse(10, 8, 4, 4, null); for (let a = 0; a < 6.28; a += 0.4) p.set(Math.round(10 + Math.cos(a) * 4), Math.round(8 + Math.sin(a) * 4), '#c8b890'); break;
+    case 'boxtrap': p.rect(2, 6, 12, 8, '#8a5a2e'); p.rect(2, 6, 12, 1, '#a8743e'); p.poly([[2, 6], [6, 2], [14, 2], [14, 6]], '#5e3b1c'); break;
+    case 'bnet': p.line(2, 14, 9, 7, '#8a5a2a'); p.ellipse(11, 5, 4, 4, '#e8e0c8'); p.ellipse(11, 5, 3, 3, '#f8f4e8'); break;
+    case 'chin': p.ball(8, 9, 5, 4.5, c); p.ball(5, 5, 1.6, 1.6, c); p.ball(11, 5, 1.6, 1.6, c); p.set(6, 8, '#1a1a1a'); p.set(10, 8, '#1a1a1a'); p.set(8, 10, '#e8a0a0'); break;
     case 'knife': p.line(3, 13, 7, 9, '#6a4a2a'); p.line(4, 14, 8, 10, '#5a3a1a'); p.line(8, 8, 13, 3, '#d0d0d0'); p.line(9, 9, 14, 4, '#9a9a9a'); break;
     case 'shaft': for (let i = 0; i < 3; i++) p.line(2 + i * 2, 14, 12 + i * 2, 2, '#b08850'); break;
     case 'arrow':

@@ -71,7 +71,19 @@ function playerRangedAttack(n) {
   }
   if (!n.target) { n.target = p; n.returning = false; if (n.attackCd <= 0) n.attackCd = 1 + flight; }
   after(flight, () => {
-    if (!r.infinite && Math.random() < 0.75) dropAmmo(ammoId, n.x + Math.floor(n.size / 2), n.y + Math.floor(n.size / 2));
+    if (!r.infinite && !r.aoe && Math.random() < 0.75) dropAmmo(ammoId, n.x + Math.floor(n.size / 2), n.y + Math.floor(n.size / 2));
+    // chinchompas burst: everything next to the target is hit too
+    if (r.aoe) {
+      G.effects.push({ kind: 'explode', tiles: [[n.x, n.y]], t: performance.now() });
+      for (const m of G.npcs) {
+        if (m === n || m.dead || !m.combat || Math.max(Math.abs(m.x - n.x), Math.abs(m.y - n.y)) > 1) continue;
+        const d2 = roll(), real2 = Math.min(d2, m.hp);
+        m.hp -= real2; m.hitsplat(d2, d2 > 0 ? 'hit' : 'block');
+        if (real2 > 0) p.addXp('ranged', real2 * 4);
+        if (!m.target) { m.target = p; m.returning = false; }
+        if (m.hp <= 0) killNpc(m);
+      }
+    }
     if (n.dead) return;
     const real = Math.min(dmg, n.hp);
     n.hp -= real;
@@ -368,6 +380,13 @@ export function herbFor(lvl) {
   const ok = HERBS.filter((h, i) => i < 3 || h.lvl <= lvl + 10);
   return 'grimy_' + pickWeighted(ok.map((h) => ({ w: 100 / (1 + h.lvl / 8), id: h.id }))).id;
 }
+// Seeds: herb seeds up to the monster's level, and now and then a tree seed.
+const TREE_SEEDS = [['oak_seed', 1, 30], ['willow_seed', 20, 16], ['maple_seed', 40, 8], ['yew_seed', 70, 3], ['magic_seed', 100, 1]];
+export function seedFor(lvl) {
+  const herbs = HERBS.filter((h, i) => i < 3 || h.lvl <= lvl + 10).map((h) => ({ w: 60 / (1 + h.lvl / 8), id: h.id + '_seed' }));
+  const trees = TREE_SEEDS.filter(([, min]) => lvl >= min).map(([id, , w]) => ({ w: w / 4, id }));
+  return pickWeighted([...herbs, ...trees]).id;
+}
 function dropLoot(n, x, y) {
   const d = n.def.drops || {};
   if (n.temp && n.defId !== 'goblin_warrior') return;
@@ -386,6 +405,7 @@ function dropLoot(n, x, y) {
   // herbs: most monsters carry them, better herbs from tougher monsters
   const lvl = n.def.lvl || 0;
   if (lvl >= 5 && d.herbs !== 0 && !NO_HERBS.has(n.def.look?.kind) && Math.random() < (d.herbs ?? (n.boss ? 0.5 : 0.06))) drop(herbFor(lvl), 1);
+  if (lvl >= 5 && !NO_HERBS.has(n.def.look?.kind) && Math.random() < (n.boss ? 0.3 : 0.03)) drop(seedFor(lvl), 1);
   const p = G.player;
   if (d.clue && Math.random() < d.clue && !p.hasAnywhere('clue_scroll') && !G.groundItems.some((g) => g.id === 'clue_scroll')) drop('clue_scroll', 1);
   if (d.pet && Math.random() < d.pet.chance) givePet(d.pet.id);

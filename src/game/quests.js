@@ -84,6 +84,8 @@ const pick = (a) => a[Math.floor(Math.random() * a.length)];
 export const DIALOGUE = {
   tanner: (d) => tannerTalk(d),
   slayer: (d, n) => masterTalk(d, n),
+  async farmer_odo(d) { await d.npc(pick(['Weeds first, seeds second, patience third.', 'Compost makes everything grow bigger. Worth every coin.', 'Trees take hours, but a grown yew pays for itself many times over.'])); },
+  async huntress(d) { await d.npc(pick(['Snares for birds, boxes for everything that runs. Chinchompas make a lovely bang.', 'The better you get, the more traps you can keep out at once.', 'Butterflies need a net and a light touch.'])); },
   async grace(d) {
     const p = G.player;
     await d.npc('Marks of grace turn up for those who run the courses well. Bring them to me and I\'ll make you something light to wear.');

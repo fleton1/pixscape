@@ -28,6 +28,8 @@ const TRACKS = {
   tropic: { root: 67, scale: 'mixolydian', bpm: 104, prog: [0, 6, 3, 0], lead: 'marimba', pad: 'drum', dens: 0.65, seed: 18 },
   volcano: { root: 48, scale: 'phrygian', bpm: 100, prog: [0, 1, 0, 5], lead: 'pluck', pad: 'drone', dens: 0.5, seed: 19 },
   cave: { root: 45, scale: 'minor', bpm: 54, prog: [0, 5], lead: 'bell', pad: 'drone', dens: 0.2, seed: 20 },
+  steppe: { root: 57, scale: 'mixolydian', bpm: 86, prog: [0, 6, 3, 4], lead: 'flute', pad: 'drone', dens: 0.45, seed: 21 },
+  jungle: { root: 55, scale: 'dorian', bpm: 98, prog: [0, 3, 0, 6], lead: 'marimba', pad: 'drum', dens: 0.6, seed: 22 },
 };
 
 const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
