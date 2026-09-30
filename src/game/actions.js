@@ -4,7 +4,8 @@ import { ITEMS, COOKING, BONES, FIREMAKING, POTIONS, SMELTING } from '../data/it
 import { OBJECTS } from '../data/objects.js';
 import { NPCS } from '../data/npcs.js';
 import { SKILL_NAMES } from '../data/skills.js';
-import { chop, mine, fish, cook, lightLogs, stealStall, pickpocket, bury, offerBones, prayAt, cutGem } from './skilling.js';
+import { chop, mine, fish, cook, lightLogs, feedFire, stealStall, pickpocket, bury, offerBones, prayAt, cutGem } from './skilling.js';
+import { recipesForPair, recipesForStation, offerRecipes, pickCrop, shear, searchChest } from './crafting.js';
 import { DIALOGUE, searchObject, pickObject, combineTablets, tombDoor, openChest, dig, readClue, openCasket, rubLamp } from './quests.js';
 import { npcLevelColor } from './combat.js';
 import { placeName, areaAt } from './world_info.js';
@@ -75,6 +76,7 @@ export function performNpc(n, option) {
     case 'Trade': if (n.spawn.shop) G.ui.openShop(n.spawn.shop); break;
     case 'Bank': G.ui.openBank(); break;
     case 'Pickpocket': pickpocket(n); break;
+    case 'Shear': shear(n); break;
     case 'Milk':
       if (!p.has('bucket')) { msg('You need a bucket to milk the cow.'); return; }
       p.playAnim('attack', 2);
@@ -108,13 +110,15 @@ export function performObj(o, option, useItem) {
     case 'Cook': cook(o); break;
     case 'Pray-at': prayAt(o); break;
     case 'Read': readSign(o); break;
-    case 'Climb-down': case 'Climb-up':
+    case 'Climb-down': case 'Climb-up': case 'Walk-down': case 'Walk-up': case 'Exit':
+      if (!o.to) { msg('It doesn\'t lead anywhere.'); break; }
       p.playAnim('attack', 1);
       sfx('ladder');
       G.game.teleport(o.to[0], o.to[1], o.msg, true, o.to[2]);
       break;
     case 'Enter':
-      if (o.type === 'tomb_door') tombDoor(o, false);
+      if (o.to) { sfx('ladder'); G.game.teleport(o.to[0], o.to[1], o.msg, true, o.to[2]); }
+      else if (o.type === 'tomb_door') tombDoor(o, false);
       else if (o.type === 'portal') G.game.teleport(...G.game.home(), 'The portal whisks you away.', true, 'main');
       break;
     case 'Search': searchObject(o); break;
@@ -122,9 +126,13 @@ export function performObj(o, option, useItem) {
       if (!p.has('pot')) { msg('You need an empty pot to hold the flour.'); return; }
       p.remove('pot'); p.add('pot_of_flour'); msg('You fill the pot with flour.'); sfx('pickup');
       break;
-    case 'Pick': case 'Pick-from': pickObject(o); break;
+    case 'Pick': case 'Pick-from': if (d.crop) pickCrop(o); else pickObject(o); break;
     case 'Steal-from': stealStall(o); break;
     case 'Open': openChest(o); break;
+    case 'Search-for-traps': searchChest(o); break;
+    case 'Spin': case 'Form': case 'Fire': case 'Churn':
+      if (!offerRecipes(recipesForStation(o), `What would you like to ${option.toLowerCase()}?`, o)) msg('You have nothing to use here.');
+      break;
   }
 }
 
@@ -160,6 +168,7 @@ function useOn(kind, target) {
   if (!use) return;
   if (kind === 'npc') {
     if (target.defId === 'dairy_cow' && use.id === 'bucket') G.game.setTarget('npc', target, 'Milk');
+    else if (use.id === 'shears' && target.def.actions.includes('Shear')) G.game.setTarget('npc', target, 'Shear');
     else msg('Nothing interesting happens.');
     return;
   }
@@ -172,12 +181,13 @@ function useOnObjAction(itemId, o) {
   const d = OBJECTS[o.type];
   if (!p.has(itemId)) return;
   if (d.cook && COOKING[itemId]) return cook(o, itemId);
+  if ((o.type === 'fire' || o.type === 'campfire') && FIREMAKING[itemId]) return feedFire(o, itemId);
+  if (offerRecipes(recipesForStation(o, itemId), null, o)) return;
   if (o.type === 'furnace' && (SMELTING.some((s) => Object.keys(s.ores).includes(itemId)) || itemId === 'gold_bar')) return G.ui.openFurnace(itemId === 'gold_bar' ? 'jewellery' : 'bars');
   if (o.type === 'anvil' && itemId.endsWith('_bar')) return G.ui.openAnvil(itemId.replace('_bar', ''));
   if ((o.type === 'altar' || o.type === 'chaos_altar') && BONES[itemId]) return offerBones(itemId, o);
   if (o.type === 'tomb_door' && itemId === 'scarab_tablet') return tombDoor(o, true);
   if (o.type === 'flour_bin' && itemId === 'pot') return performObj(o, 'Take-flour');
-  if (o.type === 'fire' && FIREMAKING[itemId]) { msg('You could light a new fire with a tinderbox instead.'); return; }
   msg('Nothing interesting happens.');
 }
 
@@ -192,6 +202,7 @@ export function useOnItem(a, b) {
   if (pair('tinderbox', /logs$/)) return lightLogs(slotOf(/logs$/));
   if (pair('chisel', /^uncut_/)) return cutGem(A.id.startsWith('uncut_') ? A.id : B.id);
   if (A.id.startsWith('tablet_') && B.id.startsWith('tablet_')) return combineTablets();
+  if (offerRecipes(recipesForPair(A.id, B.id))) return;
   msg('Nothing interesting happens.');
 }
 
@@ -211,7 +222,7 @@ export function itemOptions(slot) {
   }
   if (it.food) E.push({ text: `Eat ${nm}`, fn: () => eat(slot) });
   if (POTIONS[s.id]) E.push({ text: `Drink ${nm}`, fn: () => drink(slot) });
-  if (BONES[s.id] !== undefined && s.id !== 'ashes') E.push({ text: `Bury ${nm}`, fn: () => bury(slot) });
+  if (BONES[s.id] !== undefined && s.id !== 'ashes') E.push({ text: `${s.id.endsWith('ashes') ? 'Scatter' : 'Bury'} ${nm}`, fn: () => bury(slot) });
   if (it.equip) E.push({ text: `${it.equip.slot === 'weapon' || it.equip.slot === 'shield' ? 'Wield' : 'Wear'} ${nm}`, fn: () => p.equipFromSlot(slot) });
   if (FIREMAKING[s.id]) E.push({ text: `Light ${nm}`, fn: () => lightLogs(slot) });
   if (s.id === 'clue_scroll') E.push({ text: `Read ${nm}`, fn: () => readClue() });

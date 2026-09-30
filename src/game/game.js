@@ -115,7 +115,7 @@ export const game = {
       for (const s of SKILLS) {
         if (s === 'hitpoints' || s === 'prayer') continue;
         const k = p.skills[s];
-        if (k.cur > k.lvl) k.cur--; else if (k.cur < k.lvl) k.cur++;
+        if (k.cur > k.lvl) { if (!p.prayers.has('preserve') || G.tick % 100 === 0) k.cur--; } else if (k.cur < k.lvl) k.cur++;
       }
       if (hpS.cur > hpS.lvl) hpS.cur--;
       G.ui && G.ui.dirty('skills');

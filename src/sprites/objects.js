@@ -40,6 +40,9 @@ function makeTree(type, v) {
     }
     case 'maple': p = new Painter(28, 34); trunk(p, 12, 21, 33, 4, '#5a3a22'); canopy(p, 14, 13, 11.5, v ? '#c8641e' : '#d07a24', seed, { fruit: '#e8b040' }); break;
     case 'yew': p = new Painter(32, 38); trunk(p, 14, 25, 37, 5, '#5a3a22'); canopy(p, 16, 15, 14, '#2e5a24', seed, { blobs: [[0, 0.1, 1, 0.85], [0, -0.55, 0.75, 0.55], [-0.6, 0.35, 0.55, 0.5], [0.6, 0.35, 0.55, 0.5]] }); break;
+    case 'teak': p = new Painter(30, 36); trunk(p, 13, 22, 35, 5, '#7a5a34'); canopy(p, 15, 14, 12.5, v ? '#5a7a2a' : '#628a30', seed, { blobs: [[0, 0, 1, 0.75], [-0.5, -0.3, 0.6, 0.5], [0.5, -0.3, 0.6, 0.5]] }); break;
+    case 'mahogany': p = new Painter(32, 38); trunk(p, 14, 24, 37, 5, '#6a2a18'); p.line(13, 27, 9, 23, '#6a2a18'); p.line(18, 27, 22, 23, '#6a2a18'); canopy(p, 16, 14, 13.5, v ? '#3a6a24' : '#44762a', seed, { fruit: '#8a3a2a' }); break;
+    case 'heartwood': p = new Painter(36, 42); trunk(p, 16, 26, 41, 6, '#4a2a1a'); p.line(18, 30, 18, 38, '#e0501a'); p.set(17, 33, '#ffb040'); canopy(p, 18, 15, 15, v ? '#8a2a1a' : '#9a3a1a', seed, { fruit: '#ffb040' }); break;
     case 'magic_tree': p = new Painter(32, 38); trunk(p, 14, 25, 37, 5, '#4a4a6a'); canopy(p, 16, 15, 13, '#3a9a9a', seed, { fruit: '#c8f8ff' }); break;
     case 'jungle_tree': p = new Painter(32, 36); trunk(p, 14, 23, 35, 5, '#5a4020'); canopy(p, 16, 14, 13, '#2e7a2a', seed); break;
     case 'pine': {
@@ -137,6 +140,11 @@ function doorSprite(open, vertical, gate, sand) {
   return p.canvas();
 }
 
+export function extraStalls(S) {
+  S.stall_fur = [stall('#8a6a3a', (p) => { for (const x of [5, 12, 19, 25]) p.ball(x, 15, 3, 2, '#c8a878'); })];
+  S.stall_silver = [stall('#8a8a9a', (p) => { for (const x of [5, 12, 19, 25]) { p.ellipse(x, 15, 2.5, 1.5, '#e8ecf0'); p.set(x - 1, 14, '#ffffff'); } })];
+  S.stall_spice = [stall('#c8501a', (p) => { for (const [x, c] of [[5, '#c8501a'], [12, '#e8b020'], [19, '#8a3a1a'], [25, '#e0d060']]) p.ball(x, 15, 3, 2, c); })];
+}
 function stall(awning, goods) {
   return build((p) => {
     p.rect(2, 10, 2, 14, WOOD_D); p.rect(28, 10, 2, 14, WOOD_D);
@@ -151,10 +159,39 @@ export const OBJ_SPRITES = {};
 
 export function buildObjectSprites() {
   const S = OBJ_SPRITES;
-  for (const t of ['tree', 'oak', 'willow', 'maple', 'yew', 'magic_tree', 'pine', 'palm', 'jungle_tree', 'dead_tree', 'swamp_tree']) S[t] = [makeTree(t, 0), makeTree(t, 1)];
+  for (const t of ['tree', 'oak', 'willow', 'teak', 'maple', 'mahogany', 'yew', 'magic_tree', 'heartwood', 'pine', 'palm', 'jungle_tree', 'dead_tree', 'swamp_tree']) S[t] = [makeTree(t, 0), makeTree(t, 1)];
   S.stump = [build((p) => { p.ellipse(8, 11, 5, 3.5, '#6a4a26'); p.rect(3, 8, 10, 4, '#6a4a26'); p.ellipse(8, 8, 5, 2.5, '#c8a060'); p.ellipse(8, 8, 2.5, 1.2, '#a8804a'); }, 16, 16)];
-  const ores = { copper_rock: '#c8743a', tin_rock: '#c8c3b8', iron_rock: '#8a4a2a', coal_rock: '#1a1816', gold_rock: '#f0c83a', mithril_rock: '#5a6ec8', adamant_rock: '#4a9a5a', rune_rock: '#4ac8d8' };
+  const ores = { copper_rock: '#c8743a', tin_rock: '#c8c3b8', iron_rock: '#8a4a2a', coal_rock: '#1a1816', gold_rock: '#f0c83a', mithril_rock: '#5a6ec8', adamant_rock: '#4a9a5a', rune_rock: '#4ac8d8', silver_rock: '#eef0f4' };
   for (const [k, c] of Object.entries(ores)) S[k] = [rockSprite(c, 0), rockSprite(c, 1)];
+  S.clay_rock = [build((p) => { p.ball(9, 10, 8, 5.5, '#a08a68'); p.ball(6, 11, 4, 3, '#b8a07a'); p.line(7, 7, 12, 9, '#7a6448'); }, 18, 16)];
+  S.gem_rock = [0, 1].map((v) => { const c = rockSprite('#c040c0', v); return c; });
+  S.gem_rock.forEach((c, v) => { const ctx = c.getContext('2d'); for (const [x, y, col] of [[5, 7, '#40a0ff'], [11, 9, '#40e060'], [8, 11, '#ff4040']]) { ctx.fillStyle = col; ctx.fillRect(x + v, y, 1, 1); } });
+  // stations
+  S.sink = [build((p) => { p.rect(1, 6, 14, 8, WOOD); p.rect(3, 4, 10, 4, STONE_L); p.rect(4, 5, 8, 2, '#4a7ab8'); p.rect(7, 0, 2, 5, '#8a8a8a'); p.rect(7, 0, 4, 1, '#8a8a8a'); }, 16, 16)];
+  S.water_pump = [build((p) => { p.rect(6, 4, 4, 14, '#4a5a6a'); p.rect(9, 6, 5, 2, '#4a5a6a'); p.line(6, 5, 1, 1, '#3a3a3a'); p.ellipse(8, 18, 6, 2, STONE); p.set(13, 9, '#6aa0e8'); }, 16, 20)];
+  S.sand_pit = [build((p) => { p.ellipse(8, 9, 7, 5, '#b89a58'); p.ellipse(8, 8, 6, 4, '#e0c880'); p.set(6, 7, '#f0dca0'); p.set(10, 9, '#c8a868'); }, 16, 16, false)];
+  S.spinning_wheel = [build((p) => { p.ellipse(10, 8, 7, 7, WOOD_D); p.ellipse(10, 8, 5.5, 5.5, null); for (let a = 0; a < 6; a++) p.line(10, 8, Math.round(10 + Math.cos(a) * 6), Math.round(8 + Math.sin(a) * 6), WOOD); p.rect(1, 14, 18, 3, WOOD); p.rect(2, 17, 2, 3, WOOD_D); p.rect(16, 17, 2, 3, WOOD_D); p.ball(3, 12, 2, 2, '#f0ece0'); }, 20, 20)];
+  S.pottery_wheel = [build((p) => { p.rect(3, 10, 12, 8, WOOD_D); p.ellipse(9, 9, 7, 2.5, STONE); p.ball(9, 6, 3, 3, '#b8906a'); p.rect(8, 2, 2, 3, '#b8906a'); }, 18, 18)];
+  S.pottery_oven = [build((p) => { p.ball(10, 12, 9, 9, '#9a5a3a'); p.rect(1, 14, 18, 8, '#9a5a3a'); p.ellipse(10, 15, 4, 3.5, '#2a1a10'); p.ellipse(10, 16, 3, 2, '#ff8a30'); p.rect(14, 0, 3, 6, STONE_D); }, 20, 22)];
+  S.churn = [build((p) => { p.poly([[4, 6], [12, 6], [13, 18], [3, 18]], WOOD); p.hline(3, 13, 9, '#4a4a4a'); p.hline(3, 13, 15, '#4a4a4a'); p.rect(7, 0, 2, 7, WOOD_D); p.rect(5, 0, 6, 1, WOOD_D); }, 16, 20)];
+  S.potato_plant = [build((p) => { for (const [x, y] of [[4, 9], [8, 7], [12, 10]]) { p.ball(x, y, 3, 2.5, '#3a7a2a'); p.set(x, y - 1, '#6aa84a'); } p.set(6, 12, '#b8905a'); }, 16, 14)];
+  S.tomato_plant = [build((p) => { p.rect(7, 2, 1, 14, '#6a4a2a'); p.ball(6, 7, 4, 4, '#3a7a2a'); p.ball(10, 10, 3.5, 3.5, '#3a7a2a'); for (const [x, y] of [[5, 6], [9, 9], [7, 11]]) { p.ball(x, y, 1.3, 1.3, '#e03028'); } }, 16, 18)];
+  S.flax_plant = [build((p) => { for (let i = 0; i < 4; i++) { const x = 3 + i * 3; p.vline(x, 5 + (i % 2), 14, '#6a8a3a'); p.ball(x, 4 + (i % 2), 1.3, 1.3, '#6a8ad8'); } }, 16, 16)];
+  S.grape_vine = [build((p) => { p.rect(1, 2, 2, 20, WOOD_D); p.rect(15, 2, 2, 20, WOOD_D); p.hline(1, 16, 3, WOOD); p.ball(9, 9, 7, 6, '#3a7a2a'); for (const [x, y] of [[5, 10], [11, 8], [8, 13], [13, 12]]) { p.ball(x, y, 1.6, 2, '#7a3a9a'); } }, 18, 22)];
+  S.manhole = [build((p) => { p.ellipse(8, 8, 7, 5, '#4a4a48'); p.ellipse(8, 8, 6, 4, '#6a6a68'); p.hline(4, 12, 7, '#4a4a48'); p.hline(4, 12, 9, '#4a4a48'); }, 16, 16, false)];
+  S.mine_shaft = [build((p) => { p.rect(0, 4, 20, 16, '#1a1410'); p.rect(0, 0, 3, 20, WOOD_D); p.rect(17, 0, 3, 20, WOOD_D); p.rect(0, 0, 20, 3, WOOD); p.rect(6, 6, 2, 14, WOOD); p.rect(12, 6, 2, 14, WOOD); for (let y = 8; y < 20; y += 3) p.hline(6, 13, y, WOOD_L); }, 20, 20)];
+  const caveMouth = (rock, dark, glow) => build((p) => { p.ball(16, 18, 15, 14, rock); p.ball(8, 20, 7, 8, shade(rock, -0.1)); p.ball(25, 21, 6, 7, shade(rock, 0.08)); p.ellipse(16, 24, 8, 8, dark); p.rect(8, 24, 17, 8, dark); if (glow) { p.ellipse(16, 28, 5, 3, glow); } }, 32, 32);
+  S.cave_entrance = [caveMouth('#6e685e', '#0a0806')];
+  S.ice_cave_entrance = [caveMouth('#c8e0f0', '#1a2a3a', '#4a8ab8')];
+  S.lava_cave_entrance = [caveMouth('#3a2a24', '#1a0a06', '#ff6020')];
+  S.cave_exit = [caveMouth('#4a4238', '#e8e0b0')];
+  S.stairs_down = [build((p) => { p.rect(0, 2, 16, 14, STONE_D); for (let i = 0; i < 5; i++) p.rect(1 + i, 3 + i * 2, 14 - i * 2, 2, shade(STONE, -i * 0.12)); }, 16, 16)];
+  S.stairs_up = [build((p) => { p.rect(0, 0, 16, 16, STONE_D); for (let i = 0; i < 5; i++) p.rect(1 + i, 13 - i * 2.5, 14 - i * 2, 3, shade(STONE, 0.1 - i * 0.05)); }, 16, 16)];
+  S.rope_down = [build((p) => { p.ellipse(8, 10, 7, 5, '#0a0806'); p.rect(7, 0, 2, 12, '#b89a58'); p.rect(5, 0, 6, 2, WOOD_D); }, 16, 16)];
+  S.rope_up = [build((p) => { p.rect(7, 0, 2, 22, '#b89a58'); p.ball(8, 22, 2, 1.5, '#b89a58'); }, 16, 24)];
+  S.chest_10 = [build((p) => { p.rect(1, 5, 14, 9, '#8a5a2a'); p.rect(1, 3, 14, 4, '#a06a3a'); p.hline(1, 14, 7, '#4a4a4a'); p.rect(7, 6, 2, 3, '#c8b060'); }, 16, 15)];
+  S.chest_50 = [build((p) => { p.rect(1, 5, 14, 9, '#6a4a2a'); p.rect(1, 3, 14, 4, '#7a5a3a'); p.hline(1, 14, 7, '#8a8a8a'); p.vline(4, 3, 13, '#8a8a8a'); p.vline(11, 3, 13, '#8a8a8a'); p.rect(7, 6, 2, 3, '#c8c8c8'); }, 16, 15)];
+  S.chest_tomb = [build((p) => { p.rect(1, 5, 14, 9, '#b8984a'); p.rect(1, 3, 14, 4, '#d8b860'); p.hline(1, 14, 7, '#6a4a1a'); p.rect(6, 6, 4, 4, '#2a8ab0'); }, 16, 15)];
   S.rocks_empty = [rockSprite(null, 0, true), rockSprite(null, 1, true)];
   S.boulder = [build((p) => { p.ball(10, 10, 9, 7.5, STONE); p.ball(6, 12, 5, 4, shade(STONE, -0.05)); p.line(9, 5, 13, 11, STONE_D); }, 20, 18)];
   S.cracked_sandstone = [build((p) => { p.ball(9, 9, 8, 6.5, '#c9a867'); p.line(5, 6, 9, 10, '#7a5a2a'); p.line(9, 10, 13, 8, '#7a5a2a'); p.set(9, 9, '#fff8c0'); }, 18, 16)];
@@ -258,6 +295,7 @@ export function buildObjectSprites() {
       p.set(x, y, col);
     }
   }, 400, 368, false)];
+  extraStalls(S);
   S.chest = [build((p) => { p.rect(1, 5, 14, 9, '#8a5a2a'); p.rect(1, 3, 14, 4, '#a06a3a'); p.hline(1, 14, 7, '#4a4a4a'); p.rect(7, 6, 2, 3, '#c8b060'); }, 16, 15)];
   S.boss_chest = [build((p) => { p.rect(1, 5, 14, 9, '#6a2a2a'); p.rect(1, 3, 14, 4, '#8a3a3a'); p.hline(1, 14, 7, '#e8c13a'); p.vline(1, 3, 13, '#e8c13a'); p.vline(14, 3, 13, '#e8c13a'); p.rect(7, 6, 2, 3, '#ffe080'); }, 16, 15)];
   S.flour_bin = [build((p) => { p.rect(1, 3, 14, 12, WOOD); p.hline(1, 14, 3, WOOD_L); p.rect(3, 4, 10, 3, '#f4f0e8'); p.vline(1, 3, 14, WOOD_D); }, 16, 16)];

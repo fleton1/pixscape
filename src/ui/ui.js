@@ -10,6 +10,9 @@ import { skillIcon, tabIcon, prayerIcon, orbIcon } from '../sprites/ui.js';
 import { buildSprite } from '../sprites/chars.js';
 import { playerMaxHit } from '../game/combat.js';
 import { smelt, smith, craftJewellery } from '../game/skilling.js';
+import { makeableCount, levelOk, make } from '../game/crafting.js';
+import { RECIPES, recipeOut } from '../data/recipes.js';
+import { skillGuide } from '../data/guide.js';
 import { xpForLevel, commas, fmtNum, clamp } from '../util.js';
 import { wildLevel, placeName } from '../game/world_info.js';
 
@@ -302,11 +305,13 @@ export class UI {
       const next = k.lvl < 99 ? xpForLevel(k.lvl + 1) : null;
       const prog = next ? (k.xp - xpForLevel(k.lvl)) / (next - xpForLevel(k.lvl)) : 1;
       const tip = `${SKILL_NAMES[s]} XP: ${commas(k.xp)}${next ? `&#10;Next level at: ${commas(next)}&#10;Remaining XP: ${commas(next - k.xp)}` : ''}`;
-      html += `<div class="skill" title="${tip}"><img src="${skillIcon(s)}"><div class="lv"><span class="${k.cur > k.lvl ? 'boost' : k.cur < k.lvl ? 'drain' : ''}">${k.cur}</span><span class="sep">/</span><span>${k.lvl}</span></div><div class="bar" style="width:${prog * 100}%"></div></div>`;
+      html += `<div class="skill" data-s="${s}" title="${tip}"><img src="${skillIcon(s)}"><div class="lv"><span class="${k.cur > k.lvl ? 'boost' : k.cur < k.lvl ? 'drain' : ''}">${k.cur}</span><span class="sep">/</span><span>${k.lvl}</span></div><div class="bar" style="width:${prog * 100}%"></div></div>`;
     }
     html += `<div class="skill total"><div>Total level:<br><span class="y">${p.totalLevel()}</span></div></div></div>`;
     html += `<div class="skillinfo">Combat Lvl: <span class="y">${p.combatLevel()}</span> &nbsp; Total XP: <span class="y">${commas(p.totalXp())}</span></div>`;
+    html += `<div class="skillinfo hint">${G.touch ? 'Tap' : 'Click'} a skill for its guide.</div>`;
     panel.innerHTML = html;
+    panel.querySelectorAll('.skill[data-s]').forEach((el) => (el.onclick = () => { this.openSkillGuide(el.dataset.s); sfx('click'); }));
   }
 
   // ================================================================ combat
@@ -399,7 +404,7 @@ export class UI {
     // exclusive groups
     for (const other of PRAYERS) {
       if (!p.prayers.has(other.id)) continue;
-      const clash = (pr.protect && other.protect) || ['att', 'str', 'def'].some((k) => pr[k] && other[k]);
+      const clash = ((pr.protect || pr.overhead) && (other.protect || other.overhead)) || ['att', 'str', 'def'].some((k) => pr[k] && other[k]);
       if (clash) p.prayers.delete(other.id);
     }
     p.prayers.add(id);
@@ -623,10 +628,58 @@ export class UI {
     this.renderShop();
   }
 
+  // ---------------------------------------------------------------- skill guides
+  openSkillGuide(skill) {
+    const p = G.player, lvl = p.lvl(skill);
+    const list = skillGuide()[skill] || [];
+    const k = p.skills[skill];
+    const next = k.lvl < 99 ? xpForLevel(k.lvl + 1) : null;
+    let html = `<div class="guidehead"><img src="${skillIcon(skill)}"><div>Level <span class="y">${k.lvl}</span> &middot; ${commas(Math.floor(k.xp))} XP${next ? `<br><small>${commas(next - Math.floor(k.xp))} XP to level ${k.lvl + 1}</small>` : ''}</div></div>`;
+    if (!list.length) html += '<div class="guide-empty">Train this skill by fighting. Every level makes you stronger.</div>';
+    html += '<div class="guidelist">';
+    for (const e of list) html += `<div class="ge ${lvl >= e.lvl ? 'got' : ''}"><span class="gl">${e.lvl}</span>${e.item && ITEMS[e.item] ? `<img src="${iconURL(e.item)}">` : '<i></i>'}<span class="gt">${e.text}</span><small>${e.group || ''}</small></div>`;
+    html += '</div>';
+    this.openWindow('guide', html, `${SKILL_NAMES[skill]} guide`);
+  }
+
+  // ---------------------------------------------------------------- make menu (recipes)
+  openMakeMenu(title, recipes, onPick) {
+    this.makeQty = this.makeQty || Infinity;
+    const render = () => {
+      let html = `<div class="ftabs qtys">${[1, 5, 10, Infinity].map((q) => `<button class="${this.makeQty === q ? 'on' : ''}" data-q="${q}">${q === Infinity ? 'All' : q}</button>`).join('')}</div><div class="makegrid">`;
+      for (const r of recipes) {
+        const [out, n] = recipeOut(r);
+        const ok = levelOk(r), cnt = makeableCount(r);
+        const needs = Object.entries(r.in).map(([id, q]) => `${q > 1 ? q + ' x ' : ''}${ITEMS[id].name}`).join(', ') + (r.keep.length ? ` (${r.keep.map((t) => ITEMS[t].name).join(', ')})` : '');
+        html += `<div class="mk ${ok ? '' : 'lock'} ${cnt ? 'has' : ''}" data-id="${r.id}" title="${needs}"><img src="${iconURL(out)}"><span>${n > 1 ? n + ' x ' : ''}${ITEMS[out].name}</span><small>${r.skill ? 'Lvl ' + r.lvl : ''}${cnt ? ` &middot; ${cnt}` : ''}</small></div>`;
+      }
+      html += `</div><div class="mkhint">${G.touch ? 'Hold' : 'Hover over'} an item to see what it needs.</div>`;
+      this.openWindow('make', html, title);
+      document.querySelectorAll('.qtys button').forEach((b) => (b.onclick = () => { this.makeQty = +b.dataset.q; render(); }));
+      document.querySelectorAll('.mk').forEach((el) => {
+        const r = recipes.find((x) => x.id === el.dataset.id);
+        el.onclick = () => { this.closeWindow(); onPick(r, this.makeQty); };
+        el.oncontextmenu = (e) => e.preventDefault();
+        el.onmousedown = (e) => { if (e.button === 2) { e.preventDefault(); msg(`${ITEMS[recipeOut(r)[0]].name}: ${el.title}`); } };
+      });
+    };
+    render();
+  }
+
   // ---------------------------------------------------------------- furnace / anvil
   openFurnace(tab = 'bars') {
     const p = G.player;
-    let html = `<div class="ftabs"><button class="${tab === 'bars' ? 'on' : ''}" data-t="bars">Smelt bars</button><button class="${tab === 'jewellery' ? 'on' : ''}" data-t="jewellery">Jewellery</button></div><div class="makegrid">`;
+    if (tab === 'other') {
+      const list = RECIPES.filter((r) => r.station === 'furnace');
+      this.openMakeMenu('What would you like to make?', list, (r, q) => make(r, q));
+      const tabs = document.createElement('div');
+      tabs.className = 'ftabs';
+      tabs.innerHTML = '<button data-t="bars">Smelt bars</button><button data-t="jewellery">Jewellery</button><button class="on" data-t="other">Glass &amp; silver</button>';
+      document.querySelector('#window .wbody').prepend(tabs);
+      tabs.querySelectorAll('button').forEach((b) => (b.onclick = () => this.openFurnace(b.dataset.t)));
+      return;
+    }
+    let html = `<div class="ftabs"><button class="${tab === 'bars' ? 'on' : ''}" data-t="bars">Smelt bars</button><button class="${tab === 'jewellery' ? 'on' : ''}" data-t="jewellery">Jewellery</button><button data-t="other">Glass &amp; silver</button></div><div class="makegrid">`;
     if (tab === 'bars') {
       for (const r of SMELTING) {
         const ok = p.lvl('smithing') >= r.lvl, has = Object.entries(r.ores).every(([o, n]) => p.count(o) >= n);
@@ -650,8 +703,10 @@ export class UI {
     if (!metals.length) { msg('You should select an item from your inventory and use it on the anvil.'); return; }
     metal = metal && metals.includes(metal) ? metal : metals[0];
     let html = `<div class="ftabs">${metals.map((m) => `<button class="${m === metal ? 'on' : ''}" data-m="${m}">${METALS[m].name}</button>`).join('')}</div><div class="makegrid">`;
-    for (const s of SMITHABLES) {
-      const id = `${metal}_${s.kind}`, it = ITEMS[id];
+    const extras = Object.values(ITEMS).filter((it) => it.smith && !it.metal && it.smith.bar === metal + '_bar').map((it) => ({ kind: null, bars: it.smith.bars, id: it.id }));
+    for (const s of [...SMITHABLES, ...extras]) {
+      const id = s.id || `${metal}_${s.kind}`, it = ITEMS[id];
+      if (!it) continue;
       const ok = p.lvl('smithing') >= it.smith.lvl, has = p.count(it.smith.bar) >= s.bars;
       html += `<div class="mk ${ok ? '' : 'lock'} ${has ? 'has' : ''}" data-id="${id}"><img src="${iconURL(id)}"><span>${it.name}</span><small>${s.bars} bar${s.bars > 1 ? 's' : ''} &middot; Lvl ${it.smith.lvl}</small></div>`;
     }

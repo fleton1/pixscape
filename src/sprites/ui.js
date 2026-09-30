@@ -43,7 +43,7 @@ const TAB_DRAW = {
 };
 export function tabIcon(t) { return mk('tab_' + t, 17, 17, TAB_DRAW[t]); }
 
-const PRAYER_COLORS = { thick_skin: '#b09070', burst_str: '#c04040', clarity: '#c0a040', rock_skin: '#8a8070', superhuman: '#e04040', reflexes: '#e0c040', rapid_heal: '#e04080', steel_skin: '#a0a8b0', ultimate_str: '#ff5050', incredible: '#ffe050', protect_magic: '#6a8aff', protect_range: '#6ad06a', protect_melee: '#e0e0e0', chivalry: '#e8c13a' };
+const PRAYER_COLORS = { thick_skin: '#b09070', burst_str: '#c04040', clarity: '#c0a040', rock_skin: '#8a8070', superhuman: '#e04040', reflexes: '#e0c040', rapid_heal: '#e04080', steel_skin: '#a0a8b0', ultimate_str: '#ff5050', incredible: '#ffe050', protect_magic: '#6a8aff', protect_range: '#6ad06a', protect_melee: '#e0e0e0', chivalry: '#e8c13a', protect_item: '#e8c878', redemption: '#f0f0f0', preserve: '#8ae0c8' };
 export function prayerIcon(id, on) {
   return mk('pr_' + id + on, 18, 18, (p) => {
     const c = PRAYER_COLORS[id] || '#fff';
@@ -55,6 +55,8 @@ export function prayerIcon(id, on) {
       if (id === 'protect_range') { p.line(6, 12, 12, 5, '#6a4a2a'); p.set(12, 5, '#c8c8c8'); }
     } else if (id.includes('skin')) { p.ball(9, 9, 5, 6, c); p.hline(5, 13, 8, shade(c, -0.3)); }
     else if (id.includes('str') || id === 'superhuman') { p.ball(9, 10, 5, 4, c); p.rect(12, 3, 3, 5, c); }
+    else if (id === 'redemption') { p.ball(9, 9, 6, 6, '#e04080'); p.rect(8, 5, 2, 8, c); p.rect(5, 8, 8, 2, c); }
+    else if (id === 'preserve') { p.poly([[4, 3], [14, 3], [9, 9]], c); p.poly([[4, 15], [14, 15], [9, 9]], c); p.hline(4, 14, 2, '#8a6a2a'); p.hline(4, 14, 16, '#8a6a2a'); }
     else if (id === 'rapid_heal') { p.ball(6, 7, 3, 3, c); p.ball(12, 7, 3, 3, c); p.poly([[3, 8], [15, 8], [9, 15]], c); }
     else if (id === 'chivalry') { p.poly([[3, 3], [15, 3], [15, 9], [9, 16], [3, 9]], c); p.line(9, 4, 9, 13, '#fff'); p.line(5, 7, 13, 7, '#fff'); }
     else { p.ball(9, 9, 6, 4, c); p.ball(9, 9, 2.2, 2.2, '#1a1a1a'); p.set(8, 8, '#fff'); }

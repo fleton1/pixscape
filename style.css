@@ -92,6 +92,19 @@ button { font-family: var(--font); cursor: pointer; }
 .skill .bar { position: absolute; left: 0; bottom: 0; height: 2px; background: #2ae04a; }
 .skill.total { grid-column: span 2; color: #ffff00; font-size: 12px; justify-content: center; text-align: center; }
 .skillinfo { margin-top: 8px; font-size: 13px; text-align: center; }
+.skillinfo.hint { margin-top: 4px; color: #a89878; font-size: 12px; }
+.skill[data-s] { cursor: pointer; }
+.guidehead { display: flex; gap: 10px; align-items: center; justify-content: center; margin-bottom: 8px; font-size: 15px; }
+.guidehead img { width: 28px; height: 28px; image-rendering: pixelated; }
+.guidehead small { color: #c8b890; }
+.guidelist { background: rgba(0,0,0,.2); border: 2px solid var(--edge); max-height: 60vh; overflow-y: auto; }
+.ge { display: grid; grid-template-columns: 30px 22px 1fr auto; gap: 6px; align-items: center; padding: 3px 6px; font-size: 14px; color: #8a7a5a; border-bottom: 1px solid rgba(0,0,0,.25); }
+.ge.got { color: #ff981f; }
+.ge .gl { color: #ffff00; text-align: right; }
+.ge:not(.got) .gl { color: #8a8a5a; }
+.ge img { width: 20px; height: 20px; image-rendering: pixelated; }
+.ge small { color: #a89878; font-size: 11px; text-transform: capitalize; }
+.guide-empty { text-align: center; color: #c8b890; padding: 10px; }
 .y { color: #ffff00; }
 .y2 { color: #ff981f; font-weight: bold; }
 

@@ -81,24 +81,31 @@ export function mine(o) {
   if (o.type === 'cracked_sandstone') return G.game.questMine(o);
   const m = d.mine;
   if (!m) return;
+  const gems = !!d.gems;
   if (o.depleted > G.tick) { msg('There is currently no ore available in this rock.'); return; }
   if (p.lvl('mining') < m.lvl) { msg(`You need a Mining level of ${m.lvl} to mine this rock.`); return; }
   const pick = bestTool('pick');
   if (!pick) { msg(anyTool('pick') ? 'You do not have a pickaxe which you have the Mining level to use.' : 'You need a pickaxe to mine this rock.'); return; }
-  if (!p.canAdd(m.ore)) { msg('Your inventory is too full to hold any more ore.'); return; }
+  if (p.freeSlots() === 0 && (gems || !p.canAdd(m.ore))) { msg('Your inventory is too full to hold any more ore.'); return; }
   msg('You swing your pick at the rock.');
   p.faceTile(o.x, o.y);
   p.toolLook = ITEMS[pick.id].equip.look;
   const diff = m.lvl >= 85 ? 0.4 : m.lvl >= 70 ? 0.32 : m.lvl >= 55 ? 0.26 : m.lvl >= 40 ? 0.2 : m.lvl >= 30 ? 0.14 : m.lvl >= 15 ? 0.08 : 0;
   startAction(() => {
     if (o.depleted > G.tick) return false;
-    if (!p.canAdd(m.ore)) { msg('Your inventory is too full to hold any more ore.'); return false; }
+    if (p.freeSlots() === 0 && (gems || !p.canAdd(m.ore))) { msg('Your inventory is too full to hold any more ore.'); return false; }
     sfx('mine');
     const chance = clamp(0.3 + (p.lvl('mining') - m.lvl) * 0.013 + pick.power * 0.05 - diff, 0.05, 0.92);
     if (Math.random() < chance) {
-      p.add(m.ore);
+      if (gems) {
+        const g = pickWeighted(GEM_ROCK);
+        p.add(g.id);
+        msg(`You just mined ${aOrAn(ITEMS[g.id].name.replace('Uncut ', '').toLowerCase())}!`);
+      } else {
+        p.add(m.ore);
+        msg(`You manage to mine some ${ITEMS[m.ore].name.toLowerCase().replace(' ore', '')}.`);
+      }
       p.addXp('mining', m.xp);
-      msg(`You manage to mine some ${ITEMS[m.ore].name.toLowerCase().replace(' ore', '')}.`);
       if (Math.random() < 1 / 120) {
         const g = pickWeighted([{ w: 50, id: 'uncut_sapphire' }, { w: 25, id: 'uncut_emerald' }, { w: 15, id: 'uncut_ruby' }, { w: 8, id: 'uncut_diamond' }, { w: 1, id: 'uncut_dragonstone' }]);
         p.give(g.id); msg(`You just found ${aOrAn(ITEMS[g.id].name.replace('Uncut ', ''))}!`, '#ef1020');
@@ -111,9 +118,18 @@ export function mine(o) {
   }, 2);
 }
 
+export const GEM_ROCK = [{ w: 30, id: 'uncut_opal' }, { w: 25, id: 'uncut_jade' }, { w: 18, id: 'uncut_red_topaz' }, { w: 12, id: 'uncut_sapphire' }, { w: 8, id: 'uncut_emerald' }, { w: 5, id: 'uncut_ruby' }, { w: 2, id: 'uncut_diamond' }];
+
 // ------------------------------------------------------------ fishing
 const FISH = {
   Net: [{ fish: 'raw_shrimps', lvl: 1, xp: 10 }, { fish: 'raw_anchovies', lvl: 15, xp: 40 }],
+  'Net@spot_monk': [{ fish: 'raw_monkfish', lvl: 62, xp: 120 }],
+  'Big net': [{ fish: 'raw_mackerel', lvl: 16, xp: 20 }, { fish: 'raw_cod', lvl: 23, xp: 45 }, { fish: 'raw_bass', lvl: 46, xp: 100 }],
+  'Harpoon@spot_bignet': [{ fish: 'raw_shark', lvl: 76, xp: 110 }],
+  'Bait@spot_cave': [{ fish: 'raw_cave_eel', lvl: 38, xp: 80 }],
+  'Bait@spot_angler': [{ fish: 'raw_anglerfish', lvl: 82, xp: 120 }],
+  'Cage@spot_darkcrab': [{ fish: 'raw_dark_crab', lvl: 85, xp: 130 }],
+  'Harpoon@spot_monk': [{ fish: 'raw_tuna', lvl: 35, xp: 80 }, { fish: 'raw_swordfish', lvl: 50, xp: 100 }],
   'Bait@spot_net': [{ fish: 'raw_sardine', lvl: 5, xp: 20 }, { fish: 'raw_herring', lvl: 10, xp: 30 }],
   Lure: [{ fish: 'raw_trout', lvl: 20, xp: 50 }, { fish: 'raw_salmon', lvl: 30, xp: 70 }],
   'Bait@spot_lure': [{ fish: 'raw_pike', lvl: 25, xp: 60 }],
@@ -121,7 +137,7 @@ const FISH = {
   'Harpoon@spot_cage': [{ fish: 'raw_tuna', lvl: 35, xp: 80 }, { fish: 'raw_swordfish', lvl: 50, xp: 100 }],
   'Harpoon@spot_shark': [{ fish: 'raw_shark', lvl: 76, xp: 110 }],
 };
-const FISH_TOOL = { Net: ['small_net'], Bait: ['fishing_rod', 'fishing_bait'], Lure: ['fly_rod', 'feather'], Cage: ['lobster_pot'], Harpoon: ['harpoon'] };
+const FISH_TOOL = { Net: ['small_net'], 'Big net': ['big_net'], Bait: ['fishing_rod', 'fishing_bait'], Lure: ['fly_rod', 'feather'], Cage: ['lobster_pot'], Harpoon: ['harpoon'] };
 
 export function fish(o, option) {
   const p = G.player;
@@ -151,6 +167,7 @@ export function fish(o, option) {
         sfx('splash');
         skillPet(1 / 4000, 'heron');
         if (Math.random() < 1 / 250) { p.give('casket'); msg('You fish up a casket!', '#ef1020'); }
+        if (option === 'Big net' && Math.random() < 0.08) { p.give('seaweed'); msg('You also catch some seaweed.'); }
         return 4;
       }
     }
@@ -159,6 +176,21 @@ export function fish(o, option) {
 }
 
 // ------------------------------------------------------------ firemaking
+// Using logs on an existing fire burns them one after another, no tinderbox needed.
+export function feedFire(o, logId) {
+  const p = G.player, fm = FIREMAKING[logId];
+  if (p.lvl('firemaking') < fm.lvl) { msg(`You need a Firemaking level of ${fm.lvl} to burn these logs.`); return; }
+  p.faceTile(o.x, o.y);
+  msg('You add the logs to the fire.');
+  startAction(() => {
+    if (o.removed || !p.has(logId)) return false;
+    p.remove(logId, 1);
+    p.addXp('firemaking', fm.xp);
+    if (o.expires) o.expires = Math.max(o.expires, G.tick + 30);
+    sfx('tinder');
+    return p.has(logId) ? 4 : false;
+  }, 2);
+}
 export function lightLogs(slot) {
   const p = G.player;
   const s = p.inv[slot];
@@ -299,6 +331,9 @@ export function craftJewellery(out, amount = 28) {
 const STALLS = {
   bakery: { lvl: 5, xp: 16, loot: [{ w: 60, id: 'bread' }, { w: 30, id: 'cake' }, { w: 10, id: 'stew' }], respawn: 4 },
   silk: { lvl: 20, xp: 24, loot: [{ w: 1, id: 'silk' }], respawn: 8 },
+  fur: { lvl: 35, xp: 36, loot: [{ w: 1, id: 'fur' }], respawn: 14 },
+  silver: { lvl: 50, xp: 54, loot: [{ w: 70, id: 'silver_ore' }, { w: 30, id: 'silver_bar' }], respawn: 20 },
+  spice: { lvl: 65, xp: 81, loot: [{ w: 1, id: 'spice' }], respawn: 30 },
   gem: { lvl: 75, xp: 160, loot: [{ w: 60, id: 'uncut_sapphire' }, { w: 25, id: 'uncut_emerald' }, { w: 11, id: 'uncut_ruby' }, { w: 4, id: 'uncut_diamond' }], respawn: 30 },
 };
 export function stealStall(o) {
@@ -338,7 +373,7 @@ export function pickpocket(n) {
   after(1, () => {
     const chance = clamp(0.55 + (p.lvl('thieving') - pp.lvl) * 0.018, 0.5, 0.95);
     if (Math.random() < chance) {
-      for (const [id, a, b] of pp.loot) p.add(id, randInt(a, b));
+      for (const [id, a, b, ch = 1] of pp.loot) if (Math.random() < ch) p.add(id, randInt(a, b));
       p.addXp('thieving', pp.xp);
       msg(`You pick the ${n.name.toLowerCase()}'s pocket.`);
       sfx('coins');

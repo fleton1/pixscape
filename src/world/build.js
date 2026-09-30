@@ -99,5 +99,40 @@ export function makeBuilder(w, R) {
     }
   };
 
-  return { W, H, idx, inb, reserved, reserve, setT, getT, area, applyAreas, place, fill, building, fenceLine, fenceRect, npc, walkable, spawnIn, icon, carve, blob, scatter, hash2 };
+  // Place an object at the free spot nearest (x, y) where every tile it covers is open ground.
+  // `inside`: allow reserved tiles, e.g. inside a building.
+  const placeNear = (type, x, y, extra, maxR = 8, inside = false) => {
+    for (let r = 0; r <= maxR; r++)
+      for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) {
+        if (Math.max(Math.abs(i), Math.abs(j)) !== r) continue;
+        const ox = x + i, oy = y + j;
+        if (!walkable(ox, oy) || (!inside && reserved[idx(ox, oy)])) continue;
+        const o = w.addObject(type, ox, oy, extra);
+        if (!o) continue;
+        let ok = true;
+        for (let b = 0; b < o.h && ok; b++) for (let a = 0; a < o.w; a++) { const t = getT(ox + a, oy + b); if (TINFO[t].block || (!inside && reserved[idx(ox + a, oy + b)])) { ok = false; break; } }
+        if (ok && inside && !besideOf(o, true)) ok = false;
+        if (!ok) { w.removeObject(o); w.objects.pop(); continue; }
+        reserve(ox, oy, o.w, o.h);
+        return o;
+      }
+    return null;
+  };
+  // An open tile next to an object, preferring the south side (where the player steps out).
+  const besideOf = (o, strict = false) => {
+    const cands = [];
+    for (let i = 0; i < o.w; i++) cands.push([o.x + i, o.y + o.h]);
+    for (let j = 0; j < o.h; j++) cands.push([o.x - 1, o.y + j], [o.x + o.w, o.y + j]);
+    for (let i = 0; i < o.w; i++) cands.push([o.x + i, o.y - 1]);
+    return cands.find(([cx, cy]) => walkable(cx, cy)) || (strict ? null : [o.x, o.y + o.h]);
+  };
+  // A way into another map. maps.js links it to that map's arrival point once every map exists.
+  const entrance = (type, x, y, map, msg, inside = false) => {
+    const o = placeNear(type, x, y, { toMap: map, msg }, 8, inside);
+    if (!o) throw new Error(`no room for the ${map} entrance near ${x},${y}`);
+    w.points['exit_' + map] = besideOf(o);
+    return o;
+  };
+
+  return { W, H, idx, inb, reserved, placeNear, besideOf, entrance, reserve, setT, getT, area, applyAreas, place, fill, building, fenceLine, fenceRect, npc, walkable, spawnIn, icon, carve, blob, scatter, hash2 };
 }

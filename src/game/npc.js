@@ -85,7 +85,7 @@ export function tickNpc(n) {
   const p = G.player;
   if (n.dead) {
     if (!n.temp && G.tick >= n.respawnAt) {
-      n.dead = false; n.hp = n.maxHp; n.teleport(n.sx, n.sy); n.target = null; n.attackCount = 0; n.phase = 0;
+      n.dead = false; n.hp = n.maxHp; n.teleport(n.sx, n.sy); n.target = null; n.attackCount = 0; n.phase = 0; n.fired = {}; n.def = NPCS[n.defId];
     }
     return;
   }

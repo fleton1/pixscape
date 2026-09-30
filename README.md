@@ -41,6 +41,12 @@ On a phone or tablet:
 | Tap the dialogue box | Continue |
 | Back button | Close the top-most menu, window, map or panel |
 
+## Checking content
+
+`node tools/validate.mjs` builds every map and checks that every referenced item, NPC and object
+exists, every item can be obtained somewhere, every monster drops something, and every ladder,
+entrance and spawn in every dungeon can be reached on foot. Run it after changing data or maps.
+
 ## Layouts
 
 `main.js` picks one of three layouts from the window size and sets `<html data-layout>`:
@@ -79,10 +85,23 @@ like the other sideloaded apps. APKs are attached to the [GitHub releases](https
   - The kingdom of Aldermoor: Brindlewood, Highcrest, Port Selby, Hilda's farm and the goblin camp.
   - The Wilderness (aggressive monsters, level counter, lose-items-on-death), Frostpeak, and the Sundral Desert with Sandhaven and the Great Pyramid.
   - Mortmire Swamp, the elven continent of Elderglen, Palmera Isle and the volcanic Cinderhold.
-  - Two dungeons: the Highcrest Catacombs and the Tomb of the Scarab, with dynamic lighting.
-- **13 skills** on the OSRS XP curve (levels 1-99): Attack, Strength, Defence, Hitpoints, Prayer, Woodcutting, Firemaking, Fishing, Cooking, Mining, Smithing, Crafting and Thieving.
+- **Eight dungeons**, each its own map with its own lighting and music: Brindlewood Sewers, the
+  Highcrest Catacombs, Crestfall Deeps (a dwarven mining town with a pitch-black lower seam; bring a
+  light), Mortmire Crypt, Hollowroot Caverns, Frostpeak Ice Caves, the Tomb of the Scarab and the
+  Cinderhold Depths.
+- **13 skills** on the OSRS XP curve (levels 1-99) at 1x by default: Attack, Strength, Defence,
+  Hitpoints, Prayer, Woodcutting, Firemaking, Fishing, Cooking, Mining, Smithing, Crafting and
+  Thieving. Every skill has unlocks all the way up. Tap a skill for its guide.
+  - Cooking: water, dough, bread, pies, stew, pizzas, cakes, cheese and wine, from farm ingredients.
+  - Crafting: pottery, glassblowing, spinning, leather to black dragonhide, gems and jewellery.
+  - Smithing: daggers to platebodies (15 pieces per metal), silver, steel studs.
+  - Fishing: 18 fish, including cave eels, monkfish, anglerfish and Wilderness dark crabs.
+  - Mining: clay, silver and gem rocks. Woodcutting: teak, mahogany and heartwood.
+  - Thieving: 9 pickpocket targets, 6 stalls and trapped chests.
+- **73 monsters**, from rats and rock crabs to black dragons, each with a drop that matters to a skill.
 - **Combat.** OSRS-style accuracy and max-hit formulas, combat styles, 14 prayers, potions, food, and a 0.6s game tick.
 - **Bosses** with mechanics:
+  - Rat King and the Drowned Abbot (mini-bosses), and Hrimfang the frost wyrm.
   - Goblin Warlord: summons adds.
   - Scarab King: swarm attacks and summons.
   - Emberwing: dragonfire, plus fire rain you have to dodge.
@@ -100,14 +119,16 @@ items and the rest stay where you fell. The XP rate defaults to 4x ("chill") and
 ## Code layout
 
 ```
+ROADMAP.md           the expansion plan (what's done, what's next)
+tools/validate.mjs   content checker: node tools/validate.mjs
 src/
   main.js            boot, title screen, layout choice, input, main loop, Android hooks
   touch.js           press-and-hold = right-click, pinch zoom
   audio.js           procedural music + sfx (WebAudio)
   util.js painter.js RNG/noise/colour helpers, pixel painter
-  data/              items, npcs + drop tables, objects, skills/prayers/shops
-  world/             map + collision, deterministic world generator, A* pathfinding
-  game/              state, player, npcs, combat, skilling, actions, quests, game loop
+  data/              items, npcs + drop tables, objects, skills/prayers/shops, recipes, skill guides
+  world/             maps + collision, overworld generator, dungeons, map linking, A* pathfinding
+  game/              state, player, npcs, combat, skilling, crafting (recipes), actions, quests, loop
   sprites/           procedural terrain, characters/monsters, objects, item & UI icons
   render/            world renderer, minimap + world map
   ui/                DOM interface (sidebar tabs, chat, dialogue, bank, shops...)

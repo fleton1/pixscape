@@ -12,7 +12,7 @@ Decisions (2026-09-30):
 - **World:** both — dungeons and instanced areas become separate maps, and the overworld grows.
 - **Lore:** PixScape's own names, places and stories; OSRS is the reference for feel, not content.
 
-Status legend: **[done]**, **[now]** (this release), **[next]**, **[later]**.
+Status legend: **[done]**, **[next]**, **[later]**.
 
 ---
 
@@ -20,15 +20,15 @@ Status legend: **[done]**, **[now]** (this release), **[next]**, **[later]**.
 
 | | Item |
 |---|---|
-| [now] | **Separate maps.** Each dungeon is its own map (own size, lighting, music, spawns). Ladders and trapdoors carry `to: [x, y, map]`. The world map always shows the overworld. |
-| [now] | **Versioned saves with migrations.** v1 saves in the old underground strip move into the new dungeon maps. |
-| [now] | **Content validator** (`node tools/validate.mjs`): every referenced item/npc/object exists, every item has a source and a use, every dungeon's entrances, exits and spawns are connected. Runs without a browser. |
-| [now] | **Use-item recipe system** shared by Cooking prep, Crafting, and later Fletching and Herblore. |
-| [now] | **Skill guides:** tap a skill to see every unlock by level, generated from the game data so it can't go stale. |
+| [done] | **Separate maps.** Each dungeon is its own map (own size, lighting, music, spawns). Ladders and trapdoors carry `to: [x, y, map]`. The world map always shows the overworld. |
+| [done] | **Versioned saves with migrations.** v1 saves in the old underground strip move into the new dungeon maps. |
+| [done] | **Content validator** (`node tools/validate.mjs`): every referenced item/npc/object exists, every item has a source and a use, every dungeon's entrances, exits and spawns are connected. Runs without a browser. |
+| [done] | **Use-item recipe system** shared by Cooking prep, Crafting, and later Fletching and Herblore. |
+| [done] | **Skill guides:** tap a skill to see every unlock by level, generated from the game data so it can't go stale. |
 | [next] | Sprite gallery dev page (every generated sprite on one page, for reviewing new art). |
 | [next] | Save export/import (backup the WebView save to a file). |
 
-## Phase 1 — Build out the existing 13 skills [now]
+## Phase 1 — Build out the existing 13 skills [done in 1.1]
 
 Every skill gets something new every 5–10 levels up to 99, and a reason to visit several regions.
 
@@ -54,6 +54,8 @@ Every skill gets something new every 5–10 levels up to 99, and a reason to vis
 - **Prayer:** new bones and demon ashes; Protect Item, Retribution, Redemption, Preserve.
 - **Combat skills:** filled level bands (see Phase 3) so 1x training has somewhere to go at every level.
 
+1.1 shipped with 73 monsters (from 44), 427 items (from 238), 70+ recipes and 9 maps.
+
 ## Phase 2 — New skills [next → later]
 
 In dependency order, one release each:
@@ -78,14 +80,14 @@ Dungeons (separate maps):
 
 | Status | Dungeon | Entrance | Levels | Highlights |
 |---|---|---|---|---|
-| [now] | Brindlewood Sewers | manhole, Brindlewood | 1–25 | rats, bats, slimes; the Rat King mini-boss |
-| [now] | Highcrest Catacombs | crypt, Highcrest | 20–40 | skeletons, hill giants, spiders; mossy-key chest |
-| [now] | Crestfall Deeps | mine shaft, Crestfall | 15–60 | dwarven mining town: silver, gold, gems, mithril; dark lower level needs a light; cave eels |
-| [now] | Mortmire Crypt | under the manor | 30–60 | ghouls, wraiths, banshees; the Drowned Abbot |
-| [now] | Hollowroot Caverns | Elderglen | 40–100 | moss giants, treants, baby blue and blue dragons |
-| [now] | Frostpeak Ice Caves | Frosthold | 50–110 | frost trolls, ice spiders, frost wyrms; Hrimfang boss |
-| [now] | Tomb of the Scarab | the Great Pyramid | 45–140 | (existing) mummies, scarabs, the Scarab King |
-| [now] | Cinderhold Depths | the volcano | 70–150 | fire giants, cinderhounds, obsidian golems, black dragons |
+| [done] | Brindlewood Sewers | manhole, Brindlewood | 1–25 | rats, bats, slimes; the Rat King mini-boss |
+| [done] | Highcrest Catacombs | crypt, Highcrest | 20–40 | skeletons, hill giants, spiders; mossy-key chest |
+| [done] | Crestfall Deeps | mine shaft, Crestfall | 15–60 | dwarven mining town: silver, gold, gems, mithril; dark lower level needs a light; cave eels |
+| [done] | Mortmire Crypt | under the manor | 30–60 | ghouls, wraiths, banshees; the Drowned Abbot |
+| [done] | Hollowroot Caverns | Elderglen | 40–100 | moss giants, treants, baby blue and blue dragons |
+| [done] | Frostpeak Ice Caves | Frosthold | 50–110 | frost trolls, ice spiders, frost wyrms; Hrimfang boss |
+| [done] | Tomb of the Scarab | the Great Pyramid | 45–140 | (existing) mummies, scarabs, the Scarab King |
+| [done] | Cinderhold Depths | the volcano | 70–150 | fire giants, cinderhounds, obsidian golems, black dragons |
 | [later] | Wilderness dungeons | deep Wilderness | 50–200 | multi-combat, best rewards, highest risk |
 
 New creature sprites: bats, slimes, crabs, snakes, treants, trolls, golems, wyrms; variants of ghosts,
@@ -119,7 +121,7 @@ economy.
 | Version | Contents |
 |---|---|
 | 1.0 [done] | Android app, touch controls, portrait + landscape |
-| 1.1 [now] | Separate maps, 8 dungeons, the 13-skill buildout, skill guides, 1x default, validator |
+| 1.1 [done] | Separate maps, 8 dungeons, the 13-skill buildout, skill guides, 1x default, validator |
 | 1.2 | Ranged + Fletching, combat triangle |
 | 1.3 | Magic + Runecraft |
 | 1.4 | Herblore + Agility |

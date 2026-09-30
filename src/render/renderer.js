@@ -12,8 +12,8 @@ import { hash2, clamp } from '../util.js';
 import { BIOME } from '../world/gen.js';
 import { biomeAt, wildLevel } from '../game/world_info.js';
 
-const FLAT = new Set(['torch', 'banner_blue', 'banner_red', 'skulls', 'spinning_web', 'trapdoor', 'wheat', 'moonpetal', 'chair', 'stool']);
-const LIGHTS = { torch: [3.5, '#ffb050'], fire: [4, '#ffa040'], campfire: [4.5, '#ffa040'], fireplace: [3.5, '#ffa040'], candles: [2.5, '#ffd080'], crystal: [3, '#80d0ff'], obelisk: [3, '#c060ff'], lamp_post: [3.5, '#ffe0a0'], furnace: [3.5, '#ff9040'], portal: [3, '#c090ff'], moonpetal: [2, '#d0e8ff'], cauldron: [2, '#80ff80'], range: [2.5, '#ff9040'] };
+const FLAT = new Set(['torch', 'banner_blue', 'banner_red', 'skulls', 'spinning_web', 'trapdoor', 'manhole', 'sand_pit', 'wheat', 'moonpetal', 'chair', 'stool', 'potato_plant', 'flax_plant']);
+const LIGHTS = { heartwood: [3, '#ff7040'], lava_cave_entrance: [3.5, '#ff7030'], pottery_oven: [2.5, '#ff9040'], torch: [3.5, '#ffb050'], fire: [4, '#ffa040'], campfire: [4.5, '#ffa040'], fireplace: [3.5, '#ffa040'], candles: [2.5, '#ffd080'], crystal: [3, '#80d0ff'], obelisk: [3, '#c060ff'], lamp_post: [3.5, '#ffe0a0'], furnace: [3.5, '#ff9040'], portal: [3, '#c090ff'], moonpetal: [2, '#d0e8ff'], cauldron: [2, '#80ff80'], range: [2.5, '#ff9040'] };
 
 export class Renderer {
   constructor(canvas) {

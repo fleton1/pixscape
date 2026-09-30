@@ -41,7 +41,7 @@ async function boot() {
   const worlds = buildWorlds();
   status('Waking the townsfolk...');
   await nextFrame();
-  G.settings.xpRate = 4;
+  G.settings.xpRate = 1; // OSRS pace by default; Settings offers 2x-8x
   if (Math.min(innerWidth, innerHeight) < 600) G.settings.zoom = 2; // phones see more of the world
   game.init(worlds);
   G.audio = new AudioEngine();

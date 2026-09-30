@@ -15,16 +15,28 @@ export const METALS = {
   dragon: { name: 'Dragon', lvl: 60, smith: null, color: '#b3261c', val: 3000, t: 6 },
 };
 const TIER_ATT = [7, 10, 15, 21, 29, 45, 67];
-const TIER_DEF = { fullhelm: [4, 6, 9, 13, 19, 30, 34], platebody: [15, 21, 32, 46, 65, 82, 104], platelegs: [8, 11, 17, 24, 33, 51, 68], kiteshield: [6, 9, 13, 19, 27, 44, 50] };
+const TIER_DEF = {
+  fullhelm: [4, 6, 9, 13, 19, 30, 34], platebody: [15, 21, 32, 46, 65, 82, 104], platelegs: [8, 11, 17, 24, 33, 51, 68], kiteshield: [6, 9, 13, 19, 27, 44, 50],
+  medhelm: [3, 4, 6, 9, 13, 20], chainbody: [9, 13, 19, 28, 39, 50], sqshield: [5, 7, 10, 15, 21, 34], plateskirt: [8, 11, 17, 24, 33, 51],
+};
 
 // weapon kinds: speed, att/str multipliers, bars to smith, level offset for smithing
+// `newer` kinds were added in 1.1 and have no dragon version.
 export const SMITHABLES = [
+  { kind: 'dagger', name: 'dagger', bars: 1, off: 0, slot: 'weapon', speed: 4, a: 0.6, s: 0.5, newer: true },
+  { kind: 'mace', name: 'mace', bars: 1, off: 2, slot: 'weapon', speed: 5, a: 0.8, s: 0.85, prayer: 1, newer: true },
+  { kind: 'medhelm', name: 'med helm', bars: 1, off: 3, slot: 'head', newer: true },
+  { kind: 'sword', name: 'sword', bars: 1, off: 4, slot: 'weapon', speed: 4, a: 0.85, s: 0.8, newer: true },
   { kind: 'scimitar', name: 'scimitar', bars: 2, off: 5, slot: 'weapon', speed: 4, a: 1, s: 1 },
   { kind: 'longsword', name: 'longsword', bars: 2, off: 6, slot: 'weapon', speed: 5, a: 1.15, s: 1.25 },
   { kind: 'battleaxe', name: 'battleaxe', bars: 3, off: 10, slot: 'weapon', speed: 6, a: 1.05, s: 1.6 },
   { kind: 'twohand', name: '2h sword', bars: 3, off: 14, slot: 'weapon', speed: 7, a: 1.3, s: 2, twoHanded: true },
   { kind: 'fullhelm', name: 'full helm', bars: 2, off: 7, slot: 'head' },
+  { kind: 'sqshield', name: 'sq shield', bars: 2, off: 8, slot: 'shield', newer: true },
+  { kind: 'warhammer', name: 'warhammer', bars: 3, off: 9, slot: 'weapon', speed: 6, a: 0.9, s: 1.35, newer: true },
+  { kind: 'chainbody', name: 'chainbody', bars: 3, off: 11, slot: 'body', newer: true },
   { kind: 'platelegs', name: 'platelegs', bars: 3, off: 16, slot: 'legs' },
+  { kind: 'plateskirt', name: 'plateskirt', bars: 3, off: 16, slot: 'legs', newer: true },
   { kind: 'kiteshield', name: 'kiteshield', bars: 3, off: 12, slot: 'shield' },
   { kind: 'platebody', name: 'platebody', bars: 5, off: 18, slot: 'body' },
   { kind: 'axe', name: 'axe', bars: 1, off: 1, slot: 'weapon', speed: 5, a: 0.6, s: 0.6, tool: 'axe' },
@@ -34,11 +46,13 @@ export const SMITHABLES = [
 for (const [m, M] of Object.entries(METALS)) {
   if (m !== 'dragon') add(m + '_bar', { name: M.name + ' bar', value: Math.round(8 * M.val), icon: { kind: 'bar', color: M.color }, examine: `It's a bar of ${m}.` });
   for (const s of SMITHABLES) {
+    if (s.newer && m === 'dragon') continue;
     const id = `${m}_${s.kind}`;
     const o = { name: `${M.name} ${s.name}`, value: Math.round(s.bars * 20 * M.val), icon: { kind: s.kind, color: M.color }, smith: M.smith != null ? { lvl: Math.min(99, M.smith + s.off), bars: s.bars, bar: m + '_bar' } : null, metal: m, examine: `A ${m} ${s.name}.` };
-    const eq = { slot: s.slot, att: 0, str: 0, def: 0, look: { kind: s.kind, color: M.color } };
+    const eq = { slot: s.slot, att: 0, str: 0, def: 0, look: { kind: s.kind === 'plateskirt' ? 'platelegs' : s.kind, color: M.color } };
     if (s.speed) {
       eq.att = Math.round(TIER_ATT[M.t] * s.a); eq.str = Math.round((TIER_ATT[M.t] - 1) * s.s); eq.speed = s.speed;
+      if (s.prayer) eq.prayer = s.prayer + M.t;
       eq.req = { attack: M.lvl }; if (s.twoHanded) eq.twoHanded = true;
     } else {
       eq.def = TIER_DEF[s.kind][M.t]; eq.req = { defence: M.lvl };
@@ -65,21 +79,24 @@ for (const k of Object.keys(ITEMS)) if (k.startsWith('dragon_')) ITEMS[k].rare =
 
 // ---------- resources ----------
 add('coins', { name: 'Coins', stack: true, value: 1, icon: { kind: 'coins' }, examine: 'Lovely money!' });
-const logs = [['logs', 'Logs', '#8a5a2b', 1, 40], ['oak_logs', 'Oak logs', '#a0703a', 15, 60], ['willow_logs', 'Willow logs', '#7d6a3a', 30, 90], ['maple_logs', 'Maple logs', '#b0582a', 45, 135], ['yew_logs', 'Yew logs', '#6a3a1c', 60, 202.5], ['magic_logs', 'Magic logs', '#3a5aa0', 75, 303.8]];
+const logs = [['logs', 'Logs', '#8a5a2b', 1, 40], ['oak_logs', 'Oak logs', '#a0703a', 15, 60], ['willow_logs', 'Willow logs', '#7d6a3a', 30, 90], ['teak_logs', 'Teak logs', '#9a6a3a', 35, 105], ['maple_logs', 'Maple logs', '#b0582a', 45, 135], ['mahogany_logs', 'Mahogany logs', '#7a2e1c', 50, 157.5], ['yew_logs', 'Yew logs', '#6a3a1c', 60, 202.5], ['magic_logs', 'Magic logs', '#3a5aa0', 75, 303.8], ['heartwood_logs', 'Heartwood logs', '#c8402a', 90, 350]];
 export const FIREMAKING = {};
 for (const [id, name, c, lvl, xp] of logs) {
   add(id, { name, value: Math.round(xp * 0.6), icon: { kind: 'log', color: c }, examine: 'Logs cut from a tree.' });
   FIREMAKING[id] = { lvl, xp };
 }
-ITEMS.magic_logs.value = 800; ITEMS.yew_logs.value = 250;
-const ores = [['copper_ore', 'Copper ore', '#c8743a'], ['tin_ore', 'Tin ore', '#b8b3a8'], ['iron_ore', 'Iron ore', '#7a4a33'], ['coal', 'Coal', '#2a2826'], ['gold_ore', 'Gold ore', '#e8c13a'], ['mithril_ore', 'Mithril ore', '#4a5ea8'], ['adamantite_ore', 'Adamantite ore', '#4a8a52'], ['runite_ore', 'Runite ore', '#4ab7c8']];
-ores.forEach(([id, name, c], i) => add(id, { name, value: [5, 5, 17, 45, 150, 162, 400, 3200][i], icon: { kind: 'ore', color: c }, examine: 'An ore.' }));
+ITEMS.magic_logs.value = 800; ITEMS.yew_logs.value = 250; ITEMS.teak_logs.value = 90; ITEMS.mahogany_logs.value = 280; ITEMS.heartwood_logs.value = 1100;
+const ores = [['copper_ore', 'Copper ore', '#c8743a'], ['tin_ore', 'Tin ore', '#b8b3a8'], ['iron_ore', 'Iron ore', '#7a4a33'], ['coal', 'Coal', '#2a2826'], ['gold_ore', 'Gold ore', '#e8c13a'], ['mithril_ore', 'Mithril ore', '#4a5ea8'], ['adamantite_ore', 'Adamantite ore', '#4a8a52'], ['runite_ore', 'Runite ore', '#4ab7c8'], ['silver_ore', 'Silver ore', '#d8dce0']];
+ores.forEach(([id, name, c], i) => add(id, { name, value: [5, 5, 17, 45, 150, 162, 400, 3200, 75][i], icon: { kind: 'ore', color: c }, examine: 'An ore.' }));
 add('gold_bar', { name: 'Gold bar', value: 300, icon: { kind: 'bar', color: '#e8c13a' }, examine: "It's a bar of gold." });
+add('silver_bar', { name: 'Silver bar', value: 150, icon: { kind: 'bar', color: '#d8dce0' }, examine: "It's a bar of silver." });
+add('clay', { name: 'Clay', value: 2, icon: { kind: 'lump', color: '#b8a888' }, examine: 'Some hard dry clay.' });
 
 export const SMELTING = [
   { bar: 'bronze_bar', lvl: 1, xp: 6.2, ores: { copper_ore: 1, tin_ore: 1 }, smithXp: 12.5 },
   { bar: 'iron_bar', lvl: 15, xp: 12.5, ores: { iron_ore: 1 }, fail: 0.5, smithXp: 25 },
   { bar: 'steel_bar', lvl: 30, xp: 17.5, ores: { iron_ore: 1, coal: 2 }, smithXp: 37.5 },
+  { bar: 'silver_bar', lvl: 20, xp: 13.7, ores: { silver_ore: 1 } },
   { bar: 'gold_bar', lvl: 40, xp: 22.5, ores: { gold_ore: 1 } },
   { bar: 'mithril_bar', lvl: 50, xp: 30, ores: { mithril_ore: 1, coal: 4 }, smithXp: 50 },
   { bar: 'adamant_bar', lvl: 70, xp: 37.5, ores: { adamantite_ore: 1, coal: 6 }, smithXp: 62.5 },
@@ -94,17 +111,25 @@ const fish = [
   ['anchovies', 'Anchovies', '#8aa0b8', 1, 30, 1, 34, 8],
   ['sardine', 'Sardine', '#9ab0c0', 1, 40, 4, 38, 10],
   ['herring', 'Herring', '#b0b8a0', 5, 50, 5, 41, 15],
+  ['mackerel', 'Mackerel', '#7a9a8a', 10, 60, 6, 45, 12],
   ['trout', 'Trout', '#c09a70', 15, 70, 7, 49, 20],
+  ['cod', 'Cod', '#a09a7a', 18, 75, 7, 52, 18],
   ['pike', 'Pike', '#8a9a6a', 20, 80, 8, 54, 25],
   ['salmon', 'Salmon', '#e0806a', 25, 90, 9, 58, 40],
   ['tuna', 'Tuna', '#7080a0', 30, 100, 10, 63, 60],
+  ['cave_eel', 'Cave eel', '#6a7a5a', 38, 115, 8, 70, 45],
   ['lobster', 'Lobster', '#d04a2a', 40, 120, 12, 74, 150],
+  ['bass', 'Bass', '#5a7a6a', 43, 130, 13, 80, 90],
   ['swordfish', 'Swordfish', '#6a8ab0', 45, 140, 14, 86, 250],
+  ['monkfish', 'Monkfish', '#8a7a6a', 62, 150, 16, 90, 230],
   ['shark', 'Shark', '#7a8a96', 80, 210, 20, 99, 800],
+  ['anglerfish', 'Anglerfish', '#4a4a6a', 84, 230, 22, 99, 1200],
+  ['dark_crab', 'Dark crab', '#3a2a4a', 90, 215, 22, 99, 1000],
 ];
+const fishKind = (id) => (id === 'lobster' || id === 'dark_crab' ? 'lobster' : id === 'shrimps' || id === 'anchovies' ? 'shrimp' : 'fish');
 for (const [id, name, c, lvl, xp, heal, stop, val] of fish) {
-  add('raw_' + id, { name: 'Raw ' + name.toLowerCase(), value: val, icon: { kind: id === 'lobster' ? 'lobster' : id === 'shrimps' || id === 'anchovies' ? 'shrimp' : 'fish', color: c, raw: true }, examine: 'I should try cooking this.' });
-  add(id, { name, value: Math.round(val * 1.3), icon: { kind: id === 'lobster' ? 'lobster' : id === 'shrimps' || id === 'anchovies' ? 'shrimp' : 'fish', color: c }, food: { heal }, examine: 'Some nicely cooked fish.' });
+  add('raw_' + id, { name: 'Raw ' + name.toLowerCase(), value: val, icon: { kind: fishKind(id), color: c, raw: true }, examine: 'I should try cooking this.' });
+  add(id, { name, value: Math.round(val * 1.3), icon: { kind: fishKind(id), color: c }, food: { heal }, examine: 'Some nicely cooked fish.' });
   COOKING['raw_' + id] = { lvl, xp, out: id, burnt: 'burnt_fish', stop };
 }
 add('burnt_fish', { name: 'Burnt fish', value: 1, icon: { kind: 'fish', color: '#2a2420', burnt: true }, examine: 'Oops!' });
@@ -122,7 +147,10 @@ add('banana', { name: 'Banana', value: 2, icon: { kind: 'banana' }, food: { heal
 add('stew', { name: 'Stew', value: 20, icon: { kind: 'bowl', color: '#8a5a2a' }, food: { heal: 11 }, examine: "It's a meat and potato stew." });
 
 // ---------- bones ----------
-export const BONES = { bones: 4.5, big_bones: 15, babydragon_bones: 30, dragon_bones: 72, ashes: 0 };
+export const BONES = { bones: 4.5, bat_bones: 5.3, big_bones: 15, babydragon_bones: 30, wyrm_bones: 50, dragon_bones: 72, demon_ashes: 25, ashes: 0 };
+add('bat_bones', { name: 'Bat bones', value: 20, icon: { kind: 'bones', color: '#d8d0c0' }, examine: 'Bat bones. Nice and light.' });
+add('wyrm_bones', { name: 'Wyrm bones', value: 900, icon: { kind: 'bones', big: true, color: '#c8e0e8' }, examine: 'The frost still clings to them.' });
+add('demon_ashes', { name: 'Demon ashes', value: 300, icon: { kind: 'ashes', color: '#8a2a1a' }, examine: 'They are still warm.' });
 add('bones', { name: 'Bones', value: 1, icon: { kind: 'bones' }, examine: 'Bones are for burying!' });
 add('big_bones', { name: 'Big bones', value: 60, icon: { kind: 'bones', big: true }, examine: 'Ew, it has lumps of flesh on it.' });
 add('babydragon_bones', { name: 'Babydragon bones', value: 400, icon: { kind: 'bones', color: '#e8e0b0' }, examine: 'Ew, it has lumps of flesh on it.' });
@@ -133,6 +161,7 @@ add('ashes', { name: 'Ashes', value: 1, icon: { kind: 'ashes' }, examine: 'A hea
 const misc = [
   ['tinderbox', 'Tinderbox', 'tinderbox', 1, 'Useful for lighting a fire.'],
   ['small_net', 'Small fishing net', 'net', 5, 'Useful for catching small fish.'],
+  ['big_net', 'Big fishing net', 'bignet', 20, 'Useful for catching lots of fish.'],
   ['fishing_rod', 'Fishing rod', 'rod', 5, 'Useful for catching sardine or herring.'],
   ['fly_rod', 'Fly fishing rod', 'flyrod', 5, 'Useful for catching salmon or trout.'],
   ['lobster_pot', 'Lobster pot', 'lobsterpot', 20, 'Useful for catching lobsters.'],
@@ -248,6 +277,10 @@ wear('tyrant_maul', "Tyrant's maul", 'weapon', { att: 70, str: 118, speed: 6, tw
 wear('tyrant_ring', "Tyrant's ring", 'ring', { str: 8, att: 2 }, { kind: 'ring', color: '#e8e0c0' }, {}, 400000, { rare: true, examine: 'A ring of bone. It grips your finger tightly.' });
 wear('cape_of_the_wilds', 'Cape of the wilds', 'cape', { att: 4, str: 4, def: 6, prayer: 2 }, { kind: 'cape', color: '#5a1a1a' }, { color: '#5a1a1a', trim: '#d8a02a' }, 300000, { rare: true, examine: 'Worn by those who conquer the wilderness.' });
 wear('anti_dragon_shield', 'Anti-dragon shield', 'shield', { def: 7, antifire: true }, { kind: 'antidragon' }, { kind: 'antidragon', color: '#6a6a70' }, 20, { examine: 'This provides partial protection from dragonfire.' });
+wear('rat_crown', 'Rat crown', 'head', { def: 4 }, { kind: 'crown', color: '#8a8a88' }, { kind: 'crown', color: '#a8a8a0' }, 3000, { rare: true, examine: 'Tiny, tarnished and still warm.' });
+wear('abbots_censer', "Abbot's censer", 'weapon', { att: 40, str: 42, prayer: 8, speed: 5, req: { attack: 50 } }, { kind: 'mace', color: '#8ab0b0' }, { kind: 'mace', color: '#8ab0b0' }, 180000, { rare: true, examine: 'It still smokes with incense.' });
+wear('frostbite_blade', 'Frostbite blade', 'weapon', { att: 72, str: 70, speed: 4, req: { attack: 65 } }, { kind: 'frostblade', color: '#a8e0f8' }, { kind: 'frostblade', color: '#a8e0f8' }, 1100000, { rare: true, examine: 'Cold enough to burn.' });
+wear('frost_cape', 'Frost cape', 'cape', { att: 3, str: 3, def: 8, prayer: 1 }, { kind: 'cape', color: '#c8e8f8' }, { color: '#c8e8f8', trim: '#4a8ab8' }, 250000, { rare: true, examine: 'Woven from wyrm-frost.' });
 wear('elven_bow_cape', 'Elvenweave cape', 'cape', { def: 3, prayer: 3 }, { kind: 'cape', color: '#4aa06a' }, { color: '#4aa06a', trim: '#e8e0a0' }, 5000, { examine: 'Woven from moonlight and leaves.' });
 
 // ---------- quest items ----------
@@ -260,11 +293,144 @@ quest('scarab_tablet', 'Scarab tablet', 'tablet', '#e0c070', 'The complete table
 quest('heart_of_scarab', 'Heart of the Scarab', 'heart', '#2ab0d8', 'It pulses with a faint blue light.');
 quest('emberwing_head', "Emberwing's head", 'head', '#b3261c', 'The head of the great dragon Emberwing.');
 quest('moonpetal_flower', 'Moonpetal', 'flower', '#d8e8ff', 'A glowing flower.');
-quest('ships_charter', "Ship's chart", 'scroll', '#e0d0a0', 'A chart marking a route to Cinderhold.');
 
 // ---------- skilling drops ----------
 add('bird_nest', { name: "Bird's nest", value: 300, icon: { kind: 'nest' }, examine: 'It fell out of the tree.', rare: false });
 add('giant_key', { name: 'Mossy key', value: 0, icon: { kind: 'key', color: '#5a8a3a' }, examine: 'A key covered in moss. It opens something big.' });
+
+// =====================================================================================
+// 1.1 skill buildout: kitchen, pottery, glass, leather & dragonhide, spinning, jewellery,
+// thieving goods. Recipes that make these live in data/recipes.js.
+// =====================================================================================
+const simple = (id, name, icon, value, examine, extra = {}) => add(id, { name, value, icon, examine, ...extra });
+
+// ---------- containers & water ----------
+simple('jug', 'Jug', { kind: 'jug' }, 1, 'An empty jug.');
+simple('jug_of_water', 'Jug of water', { kind: 'jug', color: '#4a8ad8' }, 1, 'It\'s full of water.');
+simple('bucket_of_water', 'Bucket of water', { kind: 'bucket', color: '#4a8ad8' }, 6, 'It\'s a bucket of water.');
+simple('bucket_of_sand', 'Bucket of sand', { kind: 'bucket', color: '#e0c880' }, 6, 'It\'s a bucket of sand.');
+simple('bowl', 'Bowl', { kind: 'bowl', color: '#6a4a2a', empty: true }, 4, 'Useful for mixing things.');
+simple('bowl_of_water', 'Bowl of water', { kind: 'bowl', color: '#4a8ad8' }, 4, 'It\'s a bowl of water.');
+
+// ---------- kitchen ----------
+simple('bread_dough', 'Bread dough', { kind: 'dough', color: '#e8d8b0' }, 10, 'Some uncooked dough.');
+simple('pastry_dough', 'Pastry dough', { kind: 'dough', color: '#f0e0c0' }, 10, 'Some pastry dough.');
+simple('pizza_base', 'Pizza base', { kind: 'pizza', color: '#e8d8b0', plain: true }, 10, 'It\'s a pizza base.');
+simple('potato', 'Potato', { kind: 'potato' }, 2, 'A potato.', { food: { heal: 1 } });
+simple('tomato', 'Tomato', { kind: 'tomato' }, 4, 'A ripe tomato.', { food: { heal: 2 } });
+simple('cheese', 'Cheese', { kind: 'cheese' }, 8, 'A wedge of cheese.', { food: { heal: 2 } });
+simple('grapes', 'Grapes', { kind: 'berries', color: '#7a3a9a' }, 4, 'Good grapes for wine making.');
+simple('chocolate_bar', 'Chocolate bar', { kind: 'chocolate' }, 15, 'Mmmmm chocolate.', { food: { heal: 3 } });
+simple('cake_tin', 'Cake tin', { kind: 'caketin' }, 10, 'Useful for baking cakes.');
+simple('pie_dish', 'Pie dish', { kind: 'piedish' }, 3, 'Deep enough to make a pie.');
+simple('pie_shell', 'Pie shell', { kind: 'pie', color: '#e8d0a0', empty: true }, 10, 'I need to find a filling for this pie.');
+simple('seaweed', 'Seaweed', { kind: 'seaweed' }, 2, 'Slightly damp seaweed.');
+simple('soda_ash', 'Soda ash', { kind: 'powder', color: '#e8e4d8' }, 2, 'One of the ingredients for making glass.');
+const pie = (id, name, filling, heal, value) => {
+  simple('uncooked_' + id, 'Uncooked ' + name.toLowerCase(), { kind: 'pie', color: filling, raw: true }, value, 'This would be much tastier cooked.');
+  simple(id, name, { kind: 'pie', color: filling }, value * 2, 'Freshly baked.', { food: { heal } });
+};
+pie('redberry_pie', 'Redberry pie', '#c0202a', 10, 12);
+pie('meat_pie', 'Meat pie', '#8a4a2a', 12, 16);
+pie('fish_pie', 'Fish pie', '#c0a080', 14, 30);
+simple('burnt_bread', 'Burnt bread', { kind: 'bread', burnt: true }, 1, 'Well, it\'s definitely cooked.');
+simple('burnt_pie', 'Burnt pie', { kind: 'pie', color: '#2a2420', burnt: true }, 1, 'Oops. Burnt.');
+simple('incomplete_stew', 'Incomplete stew', { kind: 'bowl', color: '#a88a5a' }, 4, 'I need to add something more to it.');
+simple('uncooked_stew', 'Uncooked stew', { kind: 'bowl', color: '#a0703a' }, 10, 'I need to cook this.');
+simple('burnt_stew', 'Burnt stew', { kind: 'bowl', color: '#2a2420' }, 1, 'Oops. Burnt.');
+simple('incomplete_pizza', 'Incomplete pizza', { kind: 'pizza', color: '#d83a2a' }, 12, 'I need to add some cheese.');
+simple('uncooked_pizza', 'Uncooked pizza', { kind: 'pizza', color: '#d83a2a', cheese: true, raw: true }, 16, 'This needs cooking.');
+simple('plain_pizza', 'Plain pizza', { kind: 'pizza', color: '#d83a2a', cheese: true }, 40, 'A cheese and tomato pizza.', { food: { heal: 14 } });
+simple('meat_pizza', 'Meat pizza', { kind: 'pizza', color: '#d83a2a', cheese: true, top: '#7a3a1a' }, 60, 'A pizza with bits of meat on it.', { food: { heal: 16 } });
+simple('anchovy_pizza', 'Anchovy pizza', { kind: 'pizza', color: '#d83a2a', cheese: true, top: '#8aa0b8' }, 80, 'A pizza with anchovies.', { food: { heal: 18 } });
+simple('burnt_pizza', 'Burnt pizza', { kind: 'pizza', color: '#2a2420', burnt: true }, 1, 'Oops. Burnt.');
+simple('uncooked_cake', 'Uncooked cake', { kind: 'caketin', raw: true }, 20, 'Now all I need to do is cook it.');
+simple('chocolate_cake', 'Chocolate cake', { kind: 'cake', choc: true }, 90, 'This looks very tasty.', { food: { heal: 15 } });
+simple('burnt_cake', 'Burnt cake', { kind: 'caketin', burnt: true }, 1, 'Argh, what a mess!');
+simple('jug_of_wine', 'Jug of wine', { kind: 'jug', color: '#8a1a4a' }, 60, 'It\'s full of wine.', { food: { heal: 11 } });
+simple('jug_of_bad_wine', 'Jug of bad wine', { kind: 'jug', color: '#4a5a2a' }, 1, 'Oh dear, this wine is terrible!');
+ITEMS.stew.examine = 'It\'s a meat and potato stew.';
+
+// ---------- pottery ----------
+simple('soft_clay', 'Soft clay', { kind: 'lump', color: '#c89a6a' }, 8, 'Clay that\'s ready to be used.');
+simple('unfired_pot', 'Unfired pot', { kind: 'pot', color: '#c8a888', unfired: true }, 3, 'I need to put this in a pottery oven.');
+simple('unfired_pie_dish', 'Unfired pie dish', { kind: 'piedish', unfired: true }, 3, 'I need to put this in a pottery oven.');
+simple('unfired_bowl', 'Unfired bowl', { kind: 'bowl', color: '#c8a888', unfired: true }, 3, 'I need to put this in a pottery oven.');
+
+// ---------- glass & light ----------
+simple('molten_glass', 'Molten glass', { kind: 'lump', color: '#a8e0e8', glass: true }, 15, 'Hot glass ready to be blown.');
+simple('glassblowing_pipe', 'Glassblowing pipe', { kind: 'pipe' }, 2, 'Use this on molten glass to make things.');
+simple('beer_glass', 'Beer glass', { kind: 'glass' }, 2, 'I need to fill this with beer.');
+simple('vial', 'Vial', { kind: 'vial' }, 3, 'An empty vial.');
+simple('unpowered_orb', 'Unpowered orb', { kind: 'orb' }, 60, 'I\'d like to charge this with magic one day.');
+simple('empty_lantern', 'Empty lantern', { kind: 'lantern', empty: true }, 20, 'It needs a candle.');
+simple('candle', 'Candle', { kind: 'candle' }, 3, 'A white candle.');
+simple('lit_candle', 'Lit candle', { kind: 'candle', lit: true }, 3, 'A lit candle. It lights up dark caves.', { light: true });
+simple('candle_lantern', 'Candle lantern', { kind: 'lantern' }, 25, 'It needs lighting.');
+simple('lit_lantern', 'Lit lantern', { kind: 'lantern', lit: true }, 25, 'A lit lantern. It lights up dark caves.', { light: true });
+
+// ---------- spinning ----------
+simple('shears', 'Shears', { kind: 'shears' }, 1, 'For shearing sheep.');
+simple('wool', 'Wool', { kind: 'wool' }, 1, 'I think this came from a sheep.');
+simple('ball_of_wool', 'Ball of wool', { kind: 'wool', ball: true }, 2, 'Spun from sheep\'s wool.');
+simple('flax', 'Flax', { kind: 'flax' }, 5, 'A plant cultivated for fibres.');
+simple('bow_string', 'Bow string', { kind: 'string' }, 100, 'I need a bow stave to attach this to.');
+
+// ---------- leather & hides ----------
+simple('needle', 'Needle', { kind: 'needle' }, 1, 'Used with a thread to make clothes.');
+add('thread', { name: 'Thread', stack: true, value: 1, icon: { kind: 'thread' }, examine: 'Use with a needle to make leather things.' });
+simple('leather', 'Leather', { kind: 'cloth', color: '#9a6a3a' }, 15, 'It\'s a piece of leather.');
+simple('hard_leather', 'Hard leather', { kind: 'cloth', color: '#6a4a22' }, 30, 'It\'s a piece of hard leather.');
+add('steel_studs', { name: 'Steel studs', stack: true, value: 30, icon: { kind: 'studs' }, examine: 'A set of studs for leather armour.', smith: { lvl: 36, bars: 1, bar: 'steel_bar' } });
+wear('leather_vambraces', 'Leather vambraces', 'hands', { att: 1, def: 2 }, { kind: 'vambraces', color: '#8a5a2b' }, { color: '#8a5a2b' }, 18);
+wear('hardleather_body', 'Hardleather body', 'body', { def: 12, req: { defence: 10 } }, { kind: 'leatherbody', color: '#6a4a22' }, { kind: 'shirt', color: '#6a4a22' }, 80);
+wear('studded_body', 'Studded body', 'body', { def: 18, req: { defence: 20 } }, { kind: 'leatherbody', color: '#7a5a32', studs: true }, { kind: 'shirt', color: '#7a5a32' }, 300);
+wear('studded_chaps', 'Studded chaps', 'legs', { def: 10, req: { defence: 20 } }, { kind: 'chaps', color: '#7a5a32', studs: true }, { kind: 'pants', color: '#7a5a32' }, 250);
+export const DHIDES = [
+  { id: 'green', name: 'Green', color: '#3a8a3a', lvl: 57, xp: 62, def: [4, 12, 25], val: 1600 },
+  { id: 'blue', name: 'Blue', color: '#2a5ab0', lvl: 66, xp: 70, def: [5, 15, 32], val: 2000 },
+  { id: 'red', name: 'Red', color: '#b02a2a', lvl: 73, xp: 78, def: [6, 18, 40], val: 2600 },
+  { id: 'black', name: 'Black', color: '#2a2a30', lvl: 79, xp: 86, def: [7, 22, 48], val: 3600 },
+];
+for (const h of DHIDES) {
+  simple(h.id + '_dragonhide', `${h.name} dragonhide`, { kind: 'hide', color: h.color, scaly: true }, Math.round(h.val / 2), 'The scaly rough hide from a dragon.');
+  simple(h.id + '_dragon_leather', `${h.name} dragon leather`, { kind: 'cloth', color: h.color }, h.val, 'It\'s a piece of prepared dragonhide.');
+  wear(h.id + '_dhide_vamb', `${h.name} d'hide vambraces`, 'hands', { att: 2, def: h.def[0] }, { kind: 'vambraces', color: h.color }, { color: h.color }, h.val * 1.2);
+  wear(h.id + '_dhide_chaps', `${h.name} d'hide chaps`, 'legs', { def: h.def[1] }, { kind: 'chaps', color: h.color }, { kind: 'pants', color: h.color }, h.val * 2.4);
+  wear(h.id + '_dhide_body', `${h.name} d'hide body`, 'body', { def: h.def[2], req: { defence: 40 } }, { kind: 'leatherbody', color: h.color, scaly: true }, { kind: 'shirt', color: h.color }, h.val * 3.6);
+}
+
+// ---------- gems & jewellery ----------
+export const SEMI_GEMS = [
+  { id: 'opal', name: 'Opal', color: '#e8e0f0', lvl: 1, xp: 15, val: 30 },
+  { id: 'jade', name: 'Jade', color: '#6ab07a', lvl: 13, xp: 20, val: 60 },
+  { id: 'red_topaz', name: 'Red topaz', color: '#e86a3a', lvl: 16, xp: 25, val: 90 },
+];
+for (const g of SEMI_GEMS) {
+  simple('uncut_' + g.id, 'Uncut ' + g.name.toLowerCase(), { kind: 'uncut', color: g.color }, Math.round(g.val / 2), 'An uncut semi-precious stone.');
+  add(g.id, { name: g.name, value: g.val, icon: { kind: 'gem', color: g.color }, examine: 'A semi-precious stone.', cut: { from: 'uncut_' + g.id, lvl: g.lvl, xp: g.xp } });
+}
+simple('necklace_mould', 'Necklace mould', { kind: 'mould_ring', necklace: true }, 5, 'Used to make gold necklaces.');
+simple('bracelet_mould', 'Bracelet mould', { kind: 'mould_ring', bracelet: true }, 5, 'Used to make gold bracelets.');
+simple('holy_mould', 'Holy mould', { kind: 'mould_ring', holy: true }, 5, 'A mould for holy symbols.');
+{
+  const lv = { gold: [[6, 20], [7, 25]], sapphire: [[22, 55], [23, 60]], emerald: [[29, 60], [30, 65]], ruby: [[40, 75], [42, 80]], diamond: [[56, 90], [58, 95]], dragonstone: [[72, 105], [74, 110]] };
+  const names = { gold: 'Gold', sapphire: 'Sapphire', emerald: 'Emerald', ruby: 'Ruby', diamond: 'Diamond', dragonstone: 'Dragonstone' };
+  const cols = { gold: null, sapphire: '#2a5ad8', emerald: '#2ab04a', ruby: '#d82a3a', diamond: '#e8f0f8', dragonstone: '#a03ad8' };
+  Object.keys(lv).forEach((g, i) => {
+    const gem = g === 'gold' ? null : g, val = [150, 250, 500, 1000, 2000, 10000][i];
+    add(g + '_necklace', { name: names[g] + ' necklace', value: val + 300, icon: { kind: 'necklace', color: cols[g] }, equip: { slot: 'neck', att: i, str: 0, def: i * 2, prayer: 0, look: { color: cols[g] || '#e8c13a' } }, examine: 'A shiny necklace.' });
+    add(g + '_bracelet', { name: names[g] + ' bracelet', value: val + 250, icon: { kind: 'bracelet', color: cols[g] }, equip: { slot: 'hands', att: i, str: i, def: i, prayer: 0, look: { color: cols[g] || '#e8c13a' } }, examine: 'A shiny bracelet.' });
+    JEWELLERY.push({ out: g + '_necklace', gem, mould: 'necklace_mould', lvl: lv[g][0][0], xp: lv[g][0][1] });
+    JEWELLERY.push({ out: g + '_bracelet', gem, mould: 'bracelet_mould', lvl: lv[g][1][0], xp: lv[g][1][1] });
+  });
+  JEWELLERY.sort((a, b) => a.lvl - b.lvl);
+}
+
+// ---------- thieving goods ----------
+simple('fur', 'Fur', { kind: 'cloth', color: '#b89a6a' }, 120, 'Warm, soft fur.');
+simple('spice', 'Spice', { kind: 'powder', color: '#c8501a' }, 230, 'A small pouch of expensive spice.');
+simple('lockpick', 'Lockpick', { kind: 'key', color: '#9a9a9a' }, 20, 'For picking locks.');
 
 export function item(id) {
   const it = ITEMS[id];

@@ -60,6 +60,14 @@ export function damagePlayer(dmg, src, kind = 'hit') {
   p.hitsplat(dmg, dmg > 0 ? kind : 'block');
   if (src) { p.lastHitBy = src; p.lastHitTick = G.tick; }
   if (dmg > 0) sfx('hurt');
+  if (p.hp > 0 && p.hp < p.maxHp / 10 && p.prayers.has('redemption')) {
+    const pr = p.skills.prayer;
+    p.hp += Math.floor(pr.lvl / 4);
+    pr.cur = 0; p.prayers.clear();
+    msg('Your Redemption prayer heals you!', '#0000ff'); sfx('prayoff');
+    G.effects.push({ kind: 'sparkle', follow: p, t: performance.now() });
+    G.ui && G.ui.dirty('prayer');
+  }
   G.ui && G.ui.dirty('orbs');
   // auto retaliate
   if (src && G.settings.autoRetaliate && !p.target && !p.path.length && !p.action && !G.ui?.dialogueOpen()) {
@@ -171,7 +179,34 @@ export function bossTick(n) {
       }
       if (pct < 0.5 && n.phase === 0) { n.phase = 1; n.say('Soldiers of bone, awaken!'); for (let i = 0; i < 3; i++) summon('skeleton', n); }
       break;
+    default: if (n.def.mechs) runMechs(n, pct);
   }
+}
+
+// Data-driven boss mechanics (npcs.js `mechs`):
+//   summon: at hp fractions, call `n` of `npc`      aoe: every N ticks, telegraphed tiles
+//   enrage: below a fraction, hit harder and faster
+function runMechs(n, pct) {
+  const p = G.player;
+  n.fired = n.fired || {};
+  n.def.mechs.forEach((m, i) => {
+    if (m.type === 'summon') {
+      m.at.forEach((f, j) => {
+        const k = `${i}.${j}`;
+        if (pct < f && !n.fired[k]) { n.fired[k] = true; if (m.say) n.say(m.say); for (let c = 0; c < m.n; c++) summon(m.npc, n); }
+      });
+    } else if (m.type === 'aoe' && G.tick % m.every === 0) {
+      if (m.say) n.say(m.say);
+      const tiles = [[p.x, p.y]];
+      if (m.pattern === 'square') { for (let j = -1; j <= 1; j++) for (let q = -1; q <= 1; q++) if (j || q) tiles.push([p.x + q, p.y + j]); }
+      else for (let c = 0; c < m.n; c++) tiles.push([p.x + randInt(-2, 2), p.y + randInt(-2, 2)]);
+      G.telegraphs.push({ tiles, at: G.tick + 3, dmg: m.dmg, color: m.color, kind: m.kind || 'slam', src: n, t0: performance.now() });
+    } else if (m.type === 'enrage' && pct < m.at && !n.fired['e' + i]) {
+      n.fired['e' + i] = true;
+      if (m.say) n.say(m.say);
+      n.def = { ...n.def, maxHit: m.maxHit ?? n.def.maxHit, speed: m.speed ?? n.def.speed };
+    }
+  });
 }
 
 function summon(id, n) {
@@ -257,6 +292,7 @@ export function killPlayer() {
   G.effects.push({ kind: 'playerdeath', t: performance.now() });
   const wl = wildLevel(p.x, p.y);
   const dx = p.x, dy = p.y;
+  const keepN = p.prayers.has('protect_item') ? 4 : 3;
   for (const n of G.npcs) if (n.target === p) { n.target = null; n.returning = true; }
   after(4, () => {
     if (wl > 0) {
@@ -265,7 +301,7 @@ export function killPlayer() {
       p.inv.forEach((s, i) => s && all.push({ where: 'inv', i, id: s.id, qty: s.qty }));
       for (const [slot, e] of Object.entries(p.equip)) if (e) all.push({ where: 'equip', slot, id: e.id, qty: e.qty });
       all.sort((a, b) => (ITEMS[b.id].stack ? 0 : ITEMS[b.id].value) - (ITEMS[a.id].stack ? 0 : ITEMS[a.id].value));
-      const keep = all.filter((e) => !ITEMS[e.id].stack).slice(0, 3);
+      const keep = all.filter((e) => !ITEMS[e.id].stack).slice(0, keepN);
       let lostVal = 0;
       for (const e of all) {
         if (keep.includes(e)) continue;

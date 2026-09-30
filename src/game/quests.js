@@ -1,5 +1,6 @@
 // Quests, NPC dialogue scripts, clue scrolls and quest-specific world hooks.
 import { G, msg, sfx, after } from './state.js';
+import { tannerTalk } from './crafting.js';
 import { ITEMS } from '../data/items.js';
 import { SKILL_NAMES } from '../data/skills.js';
 import { randInt, pickWeighted, commas, cheb } from '../util.js';
@@ -80,6 +81,7 @@ function complete(id, cb) {
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
 export const DIALOGUE = {
+  tanner: (d) => tannerTalk(d),
   async townsfolk(d) {
     await d.npc(pick([
       'Hello there! Lovely day for it, isn\'t it?',
@@ -547,7 +549,7 @@ export function dig() {
       const st = clueStep();
       if (st.type === 'dig') {
         const [x, y] = stepTile(st);
-        if (cheb(p.x, p.y, x, y) <= 1) { advanceClue(); return; }
+        if (G.world === G.overworld && cheb(p.x, p.y, x, y) <= 1) { advanceClue(); return; }
       }
     }
     msg('Nothing interesting happens.');

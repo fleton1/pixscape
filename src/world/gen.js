@@ -32,7 +32,7 @@ export function generateWorld() {
   const rng = mulberry32(20260926);
   const R = () => rng();
   const B = makeBuilder(w, R);
-  const { reserved, idx, inb, reserve, setT, getT, area, place, fill, building, fenceRect, npc, walkable, spawnIn, icon, carve, blob } = B;
+  const { reserved, idx, inb, reserve, setT, getT, area, place, fill, building, fenceRect, npc, walkable, spawnIn, icon, carve, blob, placeNear, entrance } = B;
 
   // ------------------------------------------------------------ landmasses
   const MAIN = [[116, 12], [180, 8], [260, 10], [330, 14], [372, 26], [380, 60], [372, 100], [386, 130], [414, 150], [419, 319], [262, 319], [250, 262], [232, 258], [210, 262], [186, 252], [160, 236], [142, 212], [126, 198], [118, 176], [124, 150], [112, 130], [114, 100], [108, 60], [110, 30]];
@@ -438,6 +438,46 @@ export function generateWorld() {
   w.labels.push({ name: 'Cinderhold', x: 96, y: 296, size: 1 });
   w.points.cinderholdDock = w.docks.cinderhold;
 
+  // ================================================================ 1.1: DUNGEON ENTRANCES
+  entrance('manhole', 214, 181, 'sewers', 'You climb down into the stinking sewers.');
+  entrance('mine_shaft', 268, 136, 'deeps', 'You climb down the long ladder into Crestfall Deeps.');
+  entrance('stairs_down', 197, 225, 'crypt', 'You descend into the crypt beneath the manor.', true);
+  entrance('cave_entrance', 60, 196, 'hollowroot', 'You duck into the roots of the forest.');
+  entrance('ice_cave_entrance', 352, 90, 'icecaves', 'You enter the freezing caves.');
+  entrance('lava_cave_entrance', 88, 292, 'depths', 'You squeeze down into the heart of the volcano.');
+
+  // ================================================================ 1.1: SKILLING ADDITIONS
+  // Brindlewood crafting yard and tanner
+  area('Crafting yard', 184, 176, 195, 184, 'town');
+  placeNear('pottery_wheel', 187, 178); placeNear('pottery_oven', 190, 178); placeNear('spinning_wheel', 193, 178);
+  npc('potter', 189, 181, { shop: 'crafting', wander: 1 }); icon('shop', 189, 181); icon('craft', 190, 178);
+  npc('tanner', 199, 175, { wander: 1 }); icon('craft', 199, 175);
+  placeNear('sink', 200, 152);
+  // Hilda's farm: sheep pen, fields, dairy churn, water pump
+  fenceRect(165, 130, 172, 134, [[168, 134]]);
+  spawnIn('sheep', 4, 168, 132, 2);
+  fill(160, 147, 166, 151, T.FARMLAND);
+  for (let y = 147; y <= 151; y++) for (let x = 160; x <= 166; x++) if ((x + y) % 2 === 0) w.addObject(y < 149 ? 'potato_plant' : 'tomato_plant', x, y);
+  placeNear('churn', 184, 145); placeNear('water_pump', 181, 145);
+  // Elderglen flax field and vineyard
+  for (let y = 170; y <= 173; y++) for (let x = 60; x <= 66; x++) if ((x + y) % 2 === 0 && walkable(x, y)) w.addObject('flax_plant', x, y);
+  for (const [x, y] of [[40, 170], [42, 170], [44, 170]]) placeNear('grape_vine', x, y);
+  // sand
+  placeNear('sand_pit', 123, 152); placeNear('sand_pit', 326, 224);
+  // thieving: stalls, chests, marks
+  placeNear('stall_silver', 236, 104); placeNear('stall_fur', 342, 108); placeNear('stall_spice', 330, 208);
+  placeNear('chest_10', 213, 123); placeNear('chest_50', 139, 167);
+  npc('hero', 212, 98, { wander: 2 }); npc('hero', 221, 98, { wander: 2 });
+  spawnIn('warrior', 3, 228, 118, 6); spawnIn('rogue', 2, 134, 170, 4); spawnIn('rogue', 2, 150, 84, 6);
+  // beaches: crabs
+  spawnIn('rock_crab', 6, 117, 138, 5); spawnIn('rock_crab', 4, 114, 186, 5); spawnIn('sand_crab', 6, 148, 296, 7);
+  // trees
+  for (const [x, y] of [[26, 126], [33, 128]]) placeNear('heartwood', x, y);
+  // extra rocks and fishing
+  w.mines.push({ cx: 150, cy: 178, r: 3, rocks: { clay_rock: 4 } }, { cx: 72, cy: 210, r: 4, rocks: { silver_rock: 2, clay_rock: 2 } });
+  w.mines[0].rocks.silver_rock = 2; w.mines[2].rocks.gem_rock = 2;
+  w.fishHints.push([ps.end + 1, 164, 'spot_bignet'], [ps.end + 2, 166, 'spot_bignet'], [140, 300, 'spot_monk'], [182, 296, 'spot_monk'], [84, 306, 'spot_angler'], [110, 294, 'spot_angler'], [200, 10, 'spot_darkcrab'], [166, 14, 'spot_darkcrab']);
+
   // ================================================================ ROADS
   const roadCost = (x, y) => {
     const t = getT(x, y);
@@ -578,6 +618,7 @@ export function generateWorld() {
         case BIOME.ELVEN:
           if (h < (t === T.DARKGRASS ? 0.34 : 0.07) && t !== T.SAND) {
             if (nearWater(x, y, 2) && h2 < 0.6) tree = 'willow';
+            else if (h2 < 0.06) tree = 'teak';
             else if (h2 < 0.3) tree = 'oak';
             else if (h2 < 0.36) tree = 'yew';
             else if (h2 < 0.46) tree = 'maple';
@@ -593,7 +634,7 @@ export function generateWorld() {
           else if (nearWater(x, y, 2) && h < 0.12) tree = 'palm';
           break;
         case BIOME.SWAMP: if (h < 0.12) tree = h2 < 0.4 ? 'swamp_tree' : 'dead_tree'; break;
-        case BIOME.TROPIC: if (h < (t === T.DARKGRASS ? 0.4 : t === T.SAND ? 0.05 : 0.12)) tree = t === T.SAND || h2 < 0.4 ? 'palm' : 'jungle_tree'; break;
+        case BIOME.TROPIC: if (h < (t === T.DARKGRASS ? 0.4 : t === T.SAND ? 0.05 : 0.12)) tree = t === T.SAND || h2 < 0.4 ? 'palm' : h2 < 0.6 ? 'teak' : h2 < 0.75 ? 'mahogany' : 'jungle_tree'; break;
         case BIOME.VOLCANIC: if (h < 0.03) tree = h2 < 0.5 ? 'dead_tree' : 'lava_rock'; break;
       }
       if (tree && !nearRoad) { w.addObject(tree, x, y); continue; }
