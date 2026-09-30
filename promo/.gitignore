@@ -1,0 +1,7 @@
+raw/
+txt/
+frames/
+starts.json
+filter.txt
+*.mp4
+*.jpg
