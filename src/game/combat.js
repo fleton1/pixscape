@@ -74,7 +74,8 @@ function playerRangedAttack(n) {
     if (!r.infinite && !r.aoe && Math.random() < 0.75) dropAmmo(ammoId, n.x + Math.floor(n.size / 2), n.y + Math.floor(n.size / 2));
     // chinchompas burst: everything next to the target is hit too
     if (r.aoe) {
-      G.effects.push({ kind: 'explode', tiles: [[n.x, n.y]], t: performance.now() });
+      const burst = []; for (let dy = -1; dy <= n.size; dy++) for (let dx = -1; dx <= n.size; dx++) burst.push([n.x + dx, n.y + dy]);
+      G.effects.push({ kind: 'explode', tiles: burst, t: performance.now() });
       for (const m of G.npcs) {
         if (m === n || m.dead || !m.combat || Math.max(Math.abs(m.x - n.x), Math.abs(m.y - n.y)) > 1) continue;
         const d2 = roll(), real2 = Math.min(d2, m.hp);
