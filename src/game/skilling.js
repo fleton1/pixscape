@@ -287,10 +287,10 @@ export function smith(itemId, amount) {
   startAction(() => {
     if (made >= amount || p.count(s.bar) < s.bars) { if (made === 0) msg(`You don't have enough bars to make ${aOrAn(it.name.toLowerCase())}.`); return false; }
     p.remove(s.bar, s.bars);
-    p.add(itemId);
+    p.add(itemId, s.qty || 1);
     p.addXp('smithing', xpPer * s.bars);
     sfx('anvil');
-    msg(`You hammer the ${ITEMS[s.bar].name.replace(' bar', '').toLowerCase()} and make ${aOrAn(it.name.toLowerCase())}.`);
+    msg(`You hammer the ${ITEMS[s.bar].name.replace(' bar', '').toLowerCase()} and make ${s.qty > 1 ? s.qty + ' ' + it.name.toLowerCase() : aOrAn(it.name.toLowerCase())}.`);
     made++;
     return made < amount && p.count(s.bar) >= s.bars ? 5 : false;
   }, 3);

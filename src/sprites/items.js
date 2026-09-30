@@ -76,6 +76,30 @@ function draw(icon, p) {
     case 'mace': p.line(3, 14, 10, 7, '#6a4a2a'); p.ball(11, 5, 3.5, 3.5, c); p.set(10, 4, hi); for (const [x, y] of [[11, 1], [15, 5], [8, 3], [13, 8]]) p.set(x, y, sh); break;
     case 'warhammer': p.line(2, 14, 10, 6, '#6a4a2a'); p.poly([[7, 4], [11, 0], [15, 4], [11, 8]], c); p.line(11, 0, 15, 4, hi); break;
     case 'frostblade': diagBlade(p, 4, 11, 10, c, 2, 1); p.line(1, 14, 4, 11, '#2a4a6a'); p.set(8, 7, '#e8f8ff'); p.set(11, 4, '#e8f8ff'); break;
+    case 'knife': p.line(3, 13, 7, 9, '#6a4a2a'); p.line(4, 14, 8, 10, '#5a3a1a'); p.line(8, 8, 13, 3, '#d0d0d0'); p.line(9, 9, 14, 4, '#9a9a9a'); break;
+    case 'shaft': for (let i = 0; i < 3; i++) p.line(2 + i * 2, 14, 12 + i * 2, 2, '#b08850'); break;
+    case 'arrow':
+      for (let i = 0; i < (icon.headless ? 3 : 3); i++) {
+        const o = i * 2;
+        p.line(2 + o, 14, 11 + o, 4, '#a07840');
+        p.set(2 + o, 13, '#e8e8e8'); p.set(3 + o, 14, '#e8e8e8'); p.set(1 + o, 14, '#d84a4a');
+        if (!icon.headless) { p.set(12 + o, 3, c); p.set(13 + o, 2, hi); p.set(11 + o, 3, c); p.set(12 + o, 4, c); }
+      }
+      break;
+    case 'arrowtips': for (const [x, y] of [[4, 5], [9, 4], [6, 10], [11, 9]]) p.poly([[x, y - 2], [x + 2, y + 1], [x - 2, y + 1]], c); break;
+    case 'darttip': for (const [x, y] of [[5, 6], [10, 5], [7, 11]]) { p.line(x - 1, y + 2, x + 1, y - 2, c); p.set(x + 1, y - 2, hi); } break;
+    case 'dart': for (const [x, y] of [[3, 12], [7, 9]]) { p.line(x, y, x + 5, y - 5, c); p.set(x + 5, y - 5, hi); p.set(x - 1, y + 1, '#e8e8e8'); p.set(x, y + 1, '#e8e8e8'); } break;
+    case 'shortbow': case 'longbow': {
+      const long = icon.kind === 'longbow';
+      const pts = long ? [[3, 1], [7, 3], [10, 7], [12, 11], [13, 15]] : [[4, 2], [8, 4], [10, 8], [11, 12], [11, 14]];
+      for (let i = 0; i + 1 < pts.length; i++) { p.line(pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1], c); p.line(pts[i][0] - 1, pts[i][1], pts[i + 1][0] - 1, pts[i + 1][1], sh); }
+      if (!icon.unstrung) p.line(pts[0][0], pts[0][1], pts[pts.length - 1][0], pts[pts.length - 1][1], '#e8e0c8');
+      break;
+    }
+    case 'stock': p.line(2, 13, 11, 4, c); p.line(3, 13, 12, 4, sh); p.line(2, 14, 4, 12, sh); p.rect(9, 5, 2, 2, dk); break;
+    case 'limbs': p.line(2, 10, 8, 6, c); p.line(8, 6, 14, 10, c); p.line(2, 11, 8, 7, sh); p.line(8, 7, 14, 11, sh); break;
+    case 'crossbow': p.line(2, 14, 11, 5, '#6a4a2a'); p.line(3, 14, 12, 5, '#5a3a1a'); p.line(5, 3, 14, 12, c); p.line(6, 3, 15, 12, sh); if (!icon.unstrung) p.line(5, 4, 13, 12, '#e8e0c8'); break;
+    case 'bolt': for (const [x, y] of [[3, 12], [6, 9], [9, 6]]) { p.line(x, y, x + 4, y - 4, '#8a6a4a'); p.set(x + 4, y - 4, c); p.set(x + 5, y - 5, hi); if (!icon.unf) p.set(x - 1, y + 1, '#d8d8d8'); } break;
     case 'studs': for (const [x, y] of [[4, 5], [9, 4], [6, 9], [11, 9], [8, 13]]) { p.ball(x, y, 1.8, 1.8, '#9aa0a8'); p.set(x - 1, y - 1, '#e0e4e8'); } break;
     case 'lump': p.ball(8, 10, 5.5, 4, c); p.ball(6, 8, 2.5, 2, shade(c, 0.2)); if (icon.glass) { p.set(6, 7, '#ffffff'); p.ellipse(10, 11, 1.5, 1, '#e8ffff'); } break;
     case 'jug': p.poly([[5, 4], [11, 4], [13, 8], [12, 14], [4, 14], [3, 8]], '#b8a888'); p.rect(6, 2, 4, 2, '#a89878'); p.line(13, 6, 14, 10, '#a89878'); if (icon.color) p.ellipse(8, 5, 2.5, 1, icon.color); break;

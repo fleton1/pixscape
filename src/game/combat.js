@@ -5,9 +5,78 @@ import { NPCS, RARE_TABLE, PETS } from '../data/npcs.js';
 import { pickWeighted, randInt, commas } from '../util.js';
 import { spawnNpc } from './npc.js';
 import { wildLevel } from './world_info.js';
-import { touchingCardinal } from './entity.js';
+import { touchingCardinal, withinRange } from './entity.js';
 
 const STYLE_XP = { accurate: 'attack', aggressive: 'strength', defensive: 'defence' };
+
+// The combat triangle: monsters can be weak (`weak: 'ranged'`) or resistant (`strong: 'ranged'`)
+// to a style, which shifts their defence against it.
+export function npcDefRoll(n, style) {
+  const d = n.def;
+  const bonus = (d.defBonus || 0) + (d.weak === style ? -30 : 0) + (d.strong === style ? 45 : 0);
+  return (d.def + 9) * (bonus + 64);
+}
+
+// Can the player hit `n` from (x, y)? Melee needs to stand next to it, ranged needs range and sight.
+export function canHitFrom(p, n, x, y) {
+  if (!p.rangedWeapon()) return touchingCardinal(x, y, n.x, n.y, n.size);
+  if (!withinRange(x, y, n.x, n.y, n.size, p.attackRange())) return false;
+  const tx = Math.max(n.x, Math.min(x, n.x + n.size - 1)), ty = Math.max(n.y, Math.min(y, n.y + n.size - 1));
+  return G.world.sees(x, y, tx, ty);
+}
+
+export function playerRangedMaxHit(p) {
+  const b = p.bonuses();
+  const eff = Math.floor(p.cur('ranged') * p.prayerMult('rng')) + (p.rangedStyle === 'accurate' ? 3 : 0) + 8;
+  return Math.floor(0.5 + (eff * (b.rstr + 64)) / 640);
+}
+function playerRangedRoll(p) {
+  const b = p.bonuses();
+  const eff = Math.floor(p.cur('ranged') * p.prayerMult('rng')) + (p.rangedStyle === 'accurate' ? 3 : 0) + 8;
+  return eff * (b.rng + 64);
+}
+
+// Fire at `n`. Uses up the arrow, bolt or dart; most can be picked up again where they land.
+function playerRangedAttack(n) {
+  const p = G.player, r = p.rangedWeapon();
+  const slot = r.type === 'thrown' ? 'weapon' : 'ammo';
+  const ammo = p.equip[slot];
+  if (!ammo) { msg(r.type === 'crossbow' ? 'There are no bolts left in your quiver.' : 'There is no ammo left in your quiver.'); p.target = null; return; }
+  if (!p.ammoFits()) { msg(r.type === 'crossbow' ? 'You can\'t use that ammo with your crossbow.' : 'You can\'t use that ammo with your bow.'); p.target = null; return; }
+  const ammoId = ammo.id;
+  if (--ammo.qty <= 0) { p.equip[slot] = null; p.lookDirty = true; }
+  G.ui && (G.ui.dirty('equip'), G.ui.dirty('combat'));
+  p.attackCd = p.attackSpeed();
+  p.playAnim('attack', 2);
+  p.faceTile(n.x + (n.size - 1) / 2, n.y + (n.size - 1) / 2);
+  const dist = Math.max(Math.abs(n.x - p.x), Math.abs(n.y - p.y));
+  const flight = 1 + Math.floor(dist / 4);
+  projectile(p, n, ITEMS[ammoId].icon.color || '#c8c8c8', flight, r.type === 'thrown' ? 'dart' : 'arrow');
+  sfx('miss');
+  const hit = Math.random() < hitChance(playerRangedRoll(p), npcDefRoll(n, 'ranged'));
+  const mh = playerRangedMaxHit(p);
+  const dmg = hit ? randInt(Math.min(1, mh), mh) : 0;
+  if (!n.target) { n.target = p; n.returning = false; if (n.attackCd <= 0) n.attackCd = 1 + flight; }
+  after(flight, () => {
+    if (Math.random() < 0.75) dropAmmo(ammoId, n.x + Math.floor(n.size / 2), n.y + Math.floor(n.size / 2));
+    if (n.dead) return;
+    const real = Math.min(dmg, n.hp);
+    n.hp -= real;
+    n.hitsplat(dmg, dmg > 0 ? 'hit' : 'block');
+    if (dmg > 0) sfx('hit');
+    if (real > 0) {
+      if (p.rangedStyle === 'longrange') { p.addXp('ranged', real * 2); p.addXp('defence', real * 2); }
+      else p.addXp('ranged', real * 4);
+      p.addXp('hitpoints', real * 1.33);
+    }
+    n.lastHitTick = G.tick;
+    if (n.hp <= 0) killNpc(n);
+  });
+}
+function dropAmmo(id, x, y) {
+  const g = G.groundItems.find((q) => q.id === id && q.x === x && q.y === y && !q.loot);
+  if (g) { g.qty++; g.expire = G.tick + 300; } else G.game.dropGround(id, 1, x, y);
+}
 
 function hitChance(att, def) {
   return att > def ? 1 - (def + 2) / (2 * (att + 1)) : att / (2 * (def + 1));
@@ -31,12 +100,11 @@ export function playerDefRoll(p) {
 
 export function playerAttack(n) {
   const p = G.player;
+  if (p.rangedWeapon()) { playerRangedAttack(n); return; }
   p.attackCd = p.attackSpeed();
   p.playAnim('attack', 2);
   p.faceTile(n.x + (n.size - 1) / 2, n.y + (n.size - 1) / 2);
-  const d = n.def;
-  const npcDef = (d.def + 9) * ((d.defBonus || 0) + 64);
-  const hit = Math.random() < hitChance(playerAttRoll(p), npcDef);
+  const hit = Math.random() < hitChance(playerAttRoll(p), npcDefRoll(n, 'melee'));
   const mh = playerMaxHit(p);
   const dmg = hit ? randInt(Math.min(1, mh), mh) : 0;
   const real = Math.min(dmg, n.hp);
@@ -107,6 +175,15 @@ export function npcAttack(n) {
     return;
   }
   const style = d.style || 'melee';
+  if (style === 'range') {
+    projectile(n, p, d.arrowColor || '#b0703a', 2, 'arrow');
+    after(1, () => {
+      if (p.dead) return;
+      const dmg = npcDmg(n);
+      damagePlayer(p.protecting('range') ? 0 : dmg, n);
+    });
+    return;
+  }
   if (style === 'magic') {
     projectile(n, p, '#8a3ae8', 2, 'bolt');
     after(1, () => {
@@ -140,7 +217,7 @@ function dragonfire(n, max) {
 }
 
 export function projectile(from, to, color, ticks, kind) {
-  G.projectiles.push({ fx: from.x + (from.size - 1) / 2, fy: from.y + (from.size - 1) / 2, target: to, color, t0: performance.now(), dur: ticks * 600 * 0.9, kind });
+  G.projectiles.push({ fx: from.x + ((from.size || 1) - 1) / 2, fy: from.y + ((from.size || 1) - 1) / 2, target: to, color, t0: performance.now(), dur: ticks * 600 * 0.9, kind });
 }
 
 // Boss behaviour that runs every tick while engaged.

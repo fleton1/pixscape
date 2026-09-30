@@ -8,7 +8,7 @@ import { itemOptions, useOnItem, dropSlot } from '../game/actions.js';
 import { iconURL, iconFor } from '../sprites/items.js';
 import { skillIcon, tabIcon, prayerIcon, orbIcon } from '../sprites/ui.js';
 import { buildSprite } from '../sprites/chars.js';
-import { playerMaxHit } from '../game/combat.js';
+import { playerMaxHit, playerRangedMaxHit } from '../game/combat.js';
 import { smelt, smith, craftJewellery } from '../game/skilling.js';
 import { makeableCount, levelOk, make } from '../game/crafting.js';
 import { RECIPES, recipeOut } from '../data/recipes.js';
@@ -271,15 +271,15 @@ export class UI {
   renderEquip() {
     const p = G.player;
     const panel = $('#p-equipment');
-    const pos = { head: [1, 0], cape: [0, 1], neck: [1, 1], weapon: [0, 2], body: [1, 2], shield: [2, 2], legs: [1, 3], hands: [0, 4], feet: [1, 4], ring: [2, 4] };
+    const pos = { head: [1, 0], cape: [0, 1], neck: [1, 1], ammo: [2, 1], weapon: [0, 2], body: [1, 2], shield: [2, 2], legs: [1, 3], hands: [0, 4], feet: [1, 4], ring: [2, 4] };
     let html = '<div class="paperdoll">';
     for (const [slot, [cx, cy]] of Object.entries(pos)) {
       const e = p.equip[slot];
-      html += `<div class="eslot" data-slot="${slot}" style="left:${18 + cx * 58}px;top:${6 + cy * 46}px">${e ? `<img src="${iconURL(e.id, e.qty)}">` : `<span class="ghost">${slot}</span>`}</div>`;
+      html += `<div class="eslot" data-slot="${slot}" style="left:${18 + cx * 58}px;top:${6 + cy * 46}px">${e ? `<img src="${iconURL(e.id, e.qty)}">${ITEMS[e.id].stack ? `<span class="qty">${fmtNum(e.qty)}</span>` : ''}` : `<span class="ghost">${slot}</span>`}</div>`;
     }
     html += '</div>';
     const b = p.bonuses();
-    html += `<div class="bonuses"><div>Attack bonus: <b>${b.att >= 0 ? '+' : ''}${b.att}</b></div><div>Strength bonus: <b>+${b.str}</b></div><div>Defence bonus: <b>+${b.def}</b></div><div>Prayer bonus: <b>+${b.prayer}</b></div><div>Max hit: <b>${playerMaxHit(p)}</b></div><div>Attack speed: <b>${(p.attackSpeed() * 0.6).toFixed(1)}s</b></div></div>`;
+    html += `<div class="bonuses"><div>Attack bonus: <b>${b.att >= 0 ? '+' : ''}${b.att}</b></div><div>Strength bonus: <b>+${b.str}</b></div><div>Defence bonus: <b>+${b.def}</b></div><div>Ranged attack: <b>${b.rng >= 0 ? '+' : ''}${b.rng}</b></div><div>Ranged strength: <b>+${b.rstr}</b></div><div>Prayer bonus: <b>+${b.prayer}</b></div><div>Max hit: <b>${p.rangedWeapon() ? playerRangedMaxHit(p) : playerMaxHit(p)}</b></div><div>Attack speed: <b>${(p.attackSpeed() * 0.6).toFixed(1)}s</b></div></div>`;
     panel.innerHTML = html;
     panel.querySelectorAll('.eslot').forEach((el) => {
       const slot = el.dataset.slot;
@@ -319,12 +319,17 @@ export class UI {
     const p = G.player;
     const w = p.weapon();
     const panel = $('#p-combat');
-    const styles = [['accurate', 'Accurate', 'Attack'], ['aggressive', 'Aggressive', 'Strength'], ['defensive', 'Defensive', 'Defence']];
+    const ranged = !!p.rangedWeapon();
+    const styles = ranged
+      ? [['accurate', 'Accurate', 'ranged', 'Ranged XP'], ['rapid', 'Rapid', 'ranged', 'Ranged XP'], ['longrange', 'Longrange', 'defence', 'Ranged + Def XP']]
+      : [['accurate', 'Accurate', 'attack', 'Attack XP'], ['aggressive', 'Aggressive', 'strength', 'Strength XP'], ['defensive', 'Defensive', 'defence', 'Defence XP']];
+    const cur = ranged ? p.rangedStyle : p.style;
+    const ammoNote = ranged && !p.ammoFits() ? '<div class="bonuses small danger">No usable ammo equipped</div>' : '';
     panel.innerHTML = `<div class="ctitle">${w ? w.name : 'Unarmed'}</div><div class="clevel">Combat Lvl: ${p.combatLevel()}</div>
-      <div class="styles">${styles.map(([k, n, s]) => `<button class="style ${p.style === k ? 'on' : ''}" data-s="${k}"><img src="${skillIcon(s.toLowerCase())}"><div>${n}</div><small>${s} XP</small></button>`).join('')}</div>
+      <div class="styles">${styles.map(([k, n, s, x]) => `<button class="style ${cur === k ? 'on' : ''}" data-s="${k}"><img src="${skillIcon(s)}"><div>${n}</div><small>${x}</small></button>`).join('')}</div>
       <button class="toggle ${G.settings.autoRetaliate ? 'on' : ''}" id="autoret">Auto Retaliate<br><small>(${G.settings.autoRetaliate ? 'On' : 'Off'})</small></button>
-      <div class="bonuses small">Max hit: ${playerMaxHit(p)} &nbsp; Speed: ${(p.attackSpeed() * 0.6).toFixed(1)}s</div>`;
-    panel.querySelectorAll('.style').forEach((b) => (b.onclick = () => { p.style = b.dataset.s; this.dirty('combat'); sfx('click'); }));
+      <div class="bonuses small">Max hit: ${ranged ? playerRangedMaxHit(p) : playerMaxHit(p)} &nbsp; Speed: ${(p.attackSpeed() * 0.6).toFixed(1)}s${ranged ? ` &nbsp; Range: ${p.attackRange()}` : ''}</div>${ammoNote}`;
+    panel.querySelectorAll('.style').forEach((b) => (b.onclick = () => { if (ranged) p.rangedStyle = b.dataset.s; else p.style = b.dataset.s; this.dirty('combat'); sfx('click'); }));
     $('#autoret').onclick = () => { G.settings.autoRetaliate = !G.settings.autoRetaliate; this.dirty('combat'); sfx('click'); };
   }
 
@@ -404,7 +409,8 @@ export class UI {
     // exclusive groups
     for (const other of PRAYERS) {
       if (!p.prayers.has(other.id)) continue;
-      const clash = ((pr.protect || pr.overhead) && (other.protect || other.overhead)) || ['att', 'str', 'def'].some((k) => pr[k] && other[k]);
+      const offence = (x) => x.att || x.str || x.rng;
+      const clash = ((pr.protect || pr.overhead) && (other.protect || other.overhead)) || ['att', 'str', 'def', 'rng'].some((k) => pr[k] && other[k]) || (pr.rng && offence(other)) || (other.rng && offence(pr));
       if (clash) p.prayers.delete(other.id);
     }
     p.prayers.add(id);

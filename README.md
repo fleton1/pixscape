@@ -89,9 +89,13 @@ like the other sideloaded apps. APKs are attached to the [GitHub releases](https
   Highcrest Catacombs, Crestfall Deeps (a dwarven mining town with a pitch-black lower seam; bring a
   light), Mortmire Crypt, Hollowroot Caverns, Frostpeak Ice Caves, the Tomb of the Scarab and the
   Cinderhold Depths.
-- **13 skills** on the OSRS XP curve (levels 1-99) at 1x by default: Attack, Strength, Defence,
-  Hitpoints, Prayer, Woodcutting, Firemaking, Fishing, Cooking, Mining, Smithing, Crafting and
-  Thieving. Every skill has unlocks all the way up. Tap a skill for its guide.
+- **15 skills** on the OSRS XP curve (levels 1-99) at 1x by default: Attack, Strength, Defence,
+  Ranged, Hitpoints, Prayer, Woodcutting, Fletching, Firemaking, Fishing, Cooking, Mining, Smithing,
+  Crafting and Thieving. Every skill has unlocks all the way up. Tap a skill for its guide.
+  - Ranged: shortbows and longbows (normal to heartwood), crossbows, darts; arrows and bolts from
+    bronze to dragon, which you can pick back up; accurate / rapid / longrange styles; line of sight.
+  - Fletching: knife on logs for shafts, bows and stocks; string bows and crossbows; arrows, darts
+    and bolts in batches.
   - Cooking: water, dough, bread, pies, stew, pizzas, cakes, cheese and wine, from farm ingredients.
   - Crafting: pottery, glassblowing, spinning, leather to black dragonhide, gems and jewellery.
   - Smithing: daggers to platebodies (15 pieces per metal), silver, steel studs.
@@ -99,7 +103,10 @@ like the other sideloaded apps. APKs are attached to the [GitHub releases](https
   - Mining: clay, silver and gem rocks. Woodcutting: teak, mahogany and heartwood.
   - Thieving: 9 pickpocket targets, 6 stalls and trapped chests.
 - **73 monsters**, from rats and rock crabs to black dragons, each with a drop that matters to a skill.
-- **Combat.** OSRS-style accuracy and max-hit formulas, combat styles, 14 prayers, potions, food, and a 0.6s game tick.
+- **Combat.** OSRS-style accuracy and max-hit formulas, melee and ranged styles, 20 prayers, potions,
+  food, and a 0.6s game tick. A combat triangle: dragons, giants and bats are weak to ranged,
+  skeletons and golems shrug it off, ghosts resist melee, metal armour spoils your aim, and archers
+  shoot back (Protect from Missiles).
 - **Bosses** with mechanics:
   - Rat King and the Drowned Abbot (mini-bosses), and Hrimfang the frost wyrm.
   - Goblin Warlord: summons adds.

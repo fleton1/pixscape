@@ -27,6 +27,17 @@ function weaponPixels(p, kind, color, hx, hy, ang, s, glow) {
     case 'scimitar': for (let o = -1; o <= 1; o++) dot(1, o, guard); blade(L(8), s > 1.2 ? 2 : 1, -1); dot(L(8) + 1, -L(8) * 0.35, hi); break;
     case 'longsword': for (let o = -1; o <= 1; o++) dot(1, o, guard); blade(L(9), s > 1.2 ? 3 : 2); dot(L(9) + 1, 0, hi); break;
     case 'twohand': for (let o = -2; o <= 2; o++) dot(1, o, guard); blade(L(12), 2); dot(L(12) + 1, 0, hi); break;
+    case 'shortbow': case 'longbow': {
+      // held upright in front of the hand: a curved stave with its string
+      const h = L(kind === 'longbow' ? 7 : 5);
+      for (let o = -h; o <= h; o++) { const bow = 1 + Math.round((1 - (o / h) ** 2) * L(2)); dot(bow, o, Math.abs(o) === h ? sh : color); dot(0, o, '#e8e0c8'); }
+      break;
+    }
+    case 'crossbow':
+      for (let t = -L(1); t <= L(5); t++) dot(t, 0, '#6a4a2a');
+      for (let o = -L(3); o <= L(3); o++) dot(L(4) - Math.round(Math.abs(o) / 2), o, Math.abs(o) === L(3) ? hi : color);
+      break;
+    case 'dart': dot(1, 0, color); dot(2, 0, hi); dot(0, 0, '#e8e8e8'); break;
     case 'dagger': dot(1, -1, guard); dot(1, 1, guard); blade(L(4), 1); dot(L(4) + 1, 0, hi); break;
     case 'sword': for (let o = -1; o <= 1; o++) dot(1, o, guard); blade(L(7), 2); dot(L(7) + 1, 0, hi); break;
     case 'frostblade': for (let o = -1; o <= 1; o++) dot(1, o, '#2a4a6a'); blade(L(9), 2, -1); glow && glow.push(pt(L(6), 0)); break;

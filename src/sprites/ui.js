@@ -26,6 +26,8 @@ const SKILL_DRAW = {
   prayer: (p) => { const c = '#f0f0e0'; p.poly([[8, 1], [10, 6], [15, 8], [10, 10], [8, 15], [6, 10], [1, 8], [6, 6]], c); p.set(8, 8, '#a0c8ff'); },
   firemaking: (p) => { p.poly([[4, 14], [3, 8], [6, 3], [7, 7], [9, 1], [12, 7], [13, 14]], '#e0501a'); p.poly([[6, 14], [7, 9], [9, 6], [10, 10], [11, 14]], '#ffc040'); },
   cooking: (p) => { p.ball(8, 5, 5, 3.5, '#f8f8f8'); p.rect(4, 6, 8, 6, '#f0f0f0'); p.hline(4, 11, 11, '#b0b0b0'); },
+  ranged: (p) => { p.line(3, 2, 3, 14, '#e8e0c8'); p.line(3, 2, 8, 4, '#8a5a2a'); p.line(8, 4, 10, 8, '#8a5a2a'); p.line(10, 8, 8, 12, '#8a5a2a'); p.line(8, 12, 3, 14, '#8a5a2a'); p.line(4, 8, 14, 8, '#c8c8c8'); p.poly([[13, 6], [15, 8], [13, 10]], '#9a9a9a'); p.set(5, 7, '#e84a4a'); p.set(5, 9, '#e84a4a'); },
+  fletching: (p) => { p.line(2, 14, 12, 4, '#8a6a3a'); p.poly([[11, 2], [15, 1], [14, 5]], '#b0b0b0'); p.line(2, 11, 5, 14, '#e8e8e8'); p.line(3, 10, 6, 13, '#4aa0a0'); },
   woodcutting: (p) => { p.line(4, 15, 11, 5, '#8a5a2a'); p.poly([[9, 2], [14, 1], [15, 7], [11, 7]], '#9a9a9a'); p.set(3, 4, '#3a7a2a'); p.ball(4, 5, 2.5, 2.5, '#3a7a2a'); },
 };
 export function skillIcon(s) { return mk('sk_' + s, 16, 16, SKILL_DRAW[s]); }
@@ -43,7 +45,7 @@ const TAB_DRAW = {
 };
 export function tabIcon(t) { return mk('tab_' + t, 17, 17, TAB_DRAW[t]); }
 
-const PRAYER_COLORS = { thick_skin: '#b09070', burst_str: '#c04040', clarity: '#c0a040', rock_skin: '#8a8070', superhuman: '#e04040', reflexes: '#e0c040', rapid_heal: '#e04080', steel_skin: '#a0a8b0', ultimate_str: '#ff5050', incredible: '#ffe050', protect_magic: '#6a8aff', protect_range: '#6ad06a', protect_melee: '#e0e0e0', chivalry: '#e8c13a', protect_item: '#e8c878', redemption: '#f0f0f0', preserve: '#8ae0c8' };
+const PRAYER_COLORS = { thick_skin: '#b09070', burst_str: '#c04040', clarity: '#c0a040', rock_skin: '#8a8070', superhuman: '#e04040', reflexes: '#e0c040', rapid_heal: '#e04080', steel_skin: '#a0a8b0', ultimate_str: '#ff5050', incredible: '#ffe050', protect_magic: '#6a8aff', protect_range: '#6ad06a', protect_melee: '#e0e0e0', chivalry: '#e8c13a', protect_item: '#e8c878', sharp_eye: '#8ac84a', hawk_eye: '#a0e05a', eagle_eye: '#c8f070', redemption: '#f0f0f0', preserve: '#8ae0c8' };
 export function prayerIcon(id, on) {
   return mk('pr_' + id + on, 18, 18, (p) => {
     const c = PRAYER_COLORS[id] || '#fff';

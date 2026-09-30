@@ -3,7 +3,7 @@
 export const ITEMS = {};
 const add = (id, o) => (ITEMS[id] = { id, value: 1, stack: false, examine: '', ...o });
 
-export const SLOTS = ['head', 'cape', 'neck', 'weapon', 'body', 'shield', 'legs', 'hands', 'feet', 'ring'];
+export const SLOTS = ['head', 'cape', 'neck', 'ammo', 'weapon', 'body', 'shield', 'legs', 'hands', 'feet', 'ring'];
 
 export const METALS = {
   bronze: { name: 'Bronze', lvl: 1, smith: 1, color: '#b0703a', val: 1, t: 0 },
@@ -56,6 +56,8 @@ for (const [m, M] of Object.entries(METALS)) {
       eq.req = { attack: M.lvl }; if (s.twoHanded) eq.twoHanded = true;
     } else {
       eq.def = TIER_DEF[s.kind][M.t]; eq.req = { defence: M.lvl };
+      // metal armour gets in the way of aiming
+      eq.rng = { fullhelm: -3, medhelm: -1, platebody: -10, chainbody: -5, platelegs: -7, plateskirt: -6, kiteshield: -8, sqshield: -6 }[s.kind] || 0;
       if (s.kind === 'platebody' && m === 'rune') eq.quest = 'dragons_bane';
     }
     if (s.tool) {
@@ -241,11 +243,11 @@ add('prayer_potion', { name: 'Prayer potion', value: 250, icon: { kind: 'potion'
 const wear = (id, name, slot, stats, icon, look, value = 50, extra = {}) =>
   add(id, { name, value, icon, equip: { slot, att: 0, str: 0, def: 0, prayer: 0, ...stats, look }, examine: extra.examine || `A ${name.toLowerCase()}.`, ...extra });
 wear('wooden_shield', 'Wooden shield', 'shield', { def: 3 }, { kind: 'woodshield' }, { kind: 'woodshield', color: '#8a5a2b' }, 20);
-wear('leather_body', 'Leather body', 'body', { def: 8 }, { kind: 'leatherbody', color: '#8a5a2b' }, { kind: 'shirt', color: '#8a5a2b' }, 30);
-wear('leather_chaps', 'Leather chaps', 'legs', { def: 4 }, { kind: 'chaps', color: '#7a4a22' }, { kind: 'pants', color: '#7a4a22' }, 25);
+wear('leather_body', 'Leather body', 'body', { def: 8, rng: 8 }, { kind: 'leatherbody', color: '#8a5a2b' }, { kind: 'shirt', color: '#8a5a2b' }, 30);
+wear('leather_chaps', 'Leather chaps', 'legs', { def: 4, rng: 4 }, { kind: 'chaps', color: '#7a4a22' }, { kind: 'pants', color: '#7a4a22' }, 25);
 wear('leather_gloves', 'Leather gloves', 'hands', { def: 1 }, { kind: 'gloves', color: '#7a4a22' }, { color: '#7a4a22' }, 10);
 wear('leather_boots', 'Leather boots', 'feet', { def: 1 }, { kind: 'boots', color: '#6a3a1a' }, { color: '#5a3218' }, 10);
-wear('coif', 'Coif', 'head', { def: 2 }, { kind: 'coif', color: '#8a5a2b' }, { kind: 'coif', color: '#8a5a2b' }, 20);
+wear('coif', 'Coif', 'head', { def: 2, rng: 2 }, { kind: 'coif', color: '#8a5a2b' }, { kind: 'coif', color: '#8a5a2b' }, 20);
 wear('chef_hat', "Chef's hat", 'head', {}, { kind: 'chefhat' }, { kind: 'chefhat', color: '#f0f0f0' }, 2);
 wear('wizard_hat', 'Wizard hat', 'head', { def: 0 }, { kind: 'wizhat', color: '#2a3aa0' }, { kind: 'wizhat', color: '#2a3aa0' }, 10);
 wear('wizard_robe', 'Wizard robe top', 'body', { def: 0 }, { kind: 'robe', color: '#2a3aa0' }, { kind: 'robe', color: '#2a3aa0' }, 20);
@@ -257,7 +259,7 @@ const capes = [['red', '#b02a2a'], ['blue', '#2a4ab0'], ['green', '#2a8a3a'], ['
 for (const [c, hex] of capes) wear(`${c}_cape`, `${c[0].toUpperCase() + c.slice(1)} cape`, 'cape', { def: 1 }, { kind: 'cape', color: hex }, { color: hex }, 20);
 const berets = [['red', '#b02a2a'], ['blue', '#2a4ab0'], ['black', '#1e1e24'], ['white', '#e8e8e8']];
 for (const [c, hex] of berets) wear(`${c}_beret`, `${c[0].toUpperCase() + c.slice(1)} beret`, 'head', {}, { kind: 'beret', color: hex }, { kind: 'beret', color: hex }, 500, { rare: true });
-wear('ranger_boots', 'Ranger boots', 'feet', { att: 4, def: 5 }, { kind: 'boots', color: '#2a6a2a' }, { color: '#2a6a2a' }, 25000, { rare: true, examine: 'Legendary boots. Rarely seen.' });
+wear('ranger_boots', 'Ranger boots', 'feet', { rng: 8, def: 5 }, { kind: 'boots', color: '#2a6a2a' }, { color: '#2a6a2a' }, 25000, { rare: true, examine: 'Legendary boots. Rarely seen.' });
 wear('holy_sandals', 'Holy sandals', 'feet', { prayer: 4, def: 2 }, { kind: 'boots', color: '#e0c890' }, { color: '#e0c890' }, 8000, { rare: true });
 wear('gilded_scimitar', 'Gilded scimitar', 'weapon', { att: 47, str: 45, speed: 4, req: { attack: 40 } }, { kind: 'scimitar', color: '#3a9cb6', gilded: true }, { kind: 'scimitar', color: '#e8c13a' }, 60000, { rare: true });
 wear('gilded_platebody', 'Gilded platebody', 'body', { def: 82, req: { defence: 40 } }, { kind: 'platebody', color: '#3a9cb6', gilded: true }, { kind: 'platebody', color: '#3a9cb6', trim: '#e8c13a' }, 90000, { rare: true });
@@ -382,22 +384,22 @@ add('thread', { name: 'Thread', stack: true, value: 1, icon: { kind: 'thread' },
 simple('leather', 'Leather', { kind: 'cloth', color: '#9a6a3a' }, 15, 'It\'s a piece of leather.');
 simple('hard_leather', 'Hard leather', { kind: 'cloth', color: '#6a4a22' }, 30, 'It\'s a piece of hard leather.');
 add('steel_studs', { name: 'Steel studs', stack: true, value: 30, icon: { kind: 'studs' }, examine: 'A set of studs for leather armour.', smith: { lvl: 36, bars: 1, bar: 'steel_bar' } });
-wear('leather_vambraces', 'Leather vambraces', 'hands', { att: 1, def: 2 }, { kind: 'vambraces', color: '#8a5a2b' }, { color: '#8a5a2b' }, 18);
-wear('hardleather_body', 'Hardleather body', 'body', { def: 12, req: { defence: 10 } }, { kind: 'leatherbody', color: '#6a4a22' }, { kind: 'shirt', color: '#6a4a22' }, 80);
-wear('studded_body', 'Studded body', 'body', { def: 18, req: { defence: 20 } }, { kind: 'leatherbody', color: '#7a5a32', studs: true }, { kind: 'shirt', color: '#7a5a32' }, 300);
-wear('studded_chaps', 'Studded chaps', 'legs', { def: 10, req: { defence: 20 } }, { kind: 'chaps', color: '#7a5a32', studs: true }, { kind: 'pants', color: '#7a5a32' }, 250);
+wear('leather_vambraces', 'Leather vambraces', 'hands', { rng: 4, def: 2 }, { kind: 'vambraces', color: '#8a5a2b' }, { color: '#8a5a2b' }, 18);
+wear('hardleather_body', 'Hardleather body', 'body', { def: 12, rng: 8, req: { defence: 10 } }, { kind: 'leatherbody', color: '#6a4a22' }, { kind: 'shirt', color: '#6a4a22' }, 80);
+wear('studded_body', 'Studded body', 'body', { def: 18, rng: 11, req: { defence: 20, ranged: 20 } }, { kind: 'leatherbody', color: '#7a5a32', studs: true }, { kind: 'shirt', color: '#7a5a32' }, 300);
+wear('studded_chaps', 'Studded chaps', 'legs', { def: 10, rng: 6, req: { ranged: 20 } }, { kind: 'chaps', color: '#7a5a32', studs: true }, { kind: 'pants', color: '#7a5a32' }, 250);
 export const DHIDES = [
-  { id: 'green', name: 'Green', color: '#3a8a3a', lvl: 57, xp: 62, def: [4, 12, 25], val: 1600 },
-  { id: 'blue', name: 'Blue', color: '#2a5ab0', lvl: 66, xp: 70, def: [5, 15, 32], val: 2000 },
-  { id: 'red', name: 'Red', color: '#b02a2a', lvl: 73, xp: 78, def: [6, 18, 40], val: 2600 },
-  { id: 'black', name: 'Black', color: '#2a2a30', lvl: 79, xp: 86, def: [7, 22, 48], val: 3600 },
+  { id: 'green', name: 'Green', color: '#3a8a3a', lvl: 57, xp: 62, def: [4, 12, 25], rng: [8, 11, 15], req: 40, val: 1600 },
+  { id: 'blue', name: 'Blue', color: '#2a5ab0', lvl: 66, xp: 70, def: [5, 15, 32], rng: [9, 14, 20], req: 50, val: 2000 },
+  { id: 'red', name: 'Red', color: '#b02a2a', lvl: 73, xp: 78, def: [6, 18, 40], rng: [10, 17, 25], req: 60, val: 2600 },
+  { id: 'black', name: 'Black', color: '#2a2a30', lvl: 79, xp: 86, def: [7, 22, 48], rng: [11, 20, 30], req: 70, val: 3600 },
 ];
 for (const h of DHIDES) {
   simple(h.id + '_dragonhide', `${h.name} dragonhide`, { kind: 'hide', color: h.color, scaly: true }, Math.round(h.val / 2), 'The scaly rough hide from a dragon.');
   simple(h.id + '_dragon_leather', `${h.name} dragon leather`, { kind: 'cloth', color: h.color }, h.val, 'It\'s a piece of prepared dragonhide.');
-  wear(h.id + '_dhide_vamb', `${h.name} d'hide vambraces`, 'hands', { att: 2, def: h.def[0] }, { kind: 'vambraces', color: h.color }, { color: h.color }, h.val * 1.2);
-  wear(h.id + '_dhide_chaps', `${h.name} d'hide chaps`, 'legs', { def: h.def[1] }, { kind: 'chaps', color: h.color }, { kind: 'pants', color: h.color }, h.val * 2.4);
-  wear(h.id + '_dhide_body', `${h.name} d'hide body`, 'body', { def: h.def[2], req: { defence: 40 } }, { kind: 'leatherbody', color: h.color, scaly: true }, { kind: 'shirt', color: h.color }, h.val * 3.6);
+  wear(h.id + '_dhide_vamb', `${h.name} d'hide vambraces`, 'hands', { rng: h.rng[0], def: h.def[0], req: { ranged: h.req } }, { kind: 'vambraces', color: h.color }, { color: h.color }, h.val * 1.2);
+  wear(h.id + '_dhide_chaps', `${h.name} d'hide chaps`, 'legs', { rng: h.rng[1], def: h.def[1], req: { ranged: h.req } }, { kind: 'chaps', color: h.color }, { kind: 'pants', color: h.color }, h.val * 2.4);
+  wear(h.id + '_dhide_body', `${h.name} d'hide body`, 'body', { rng: h.rng[2], def: h.def[2], req: { defence: 40, ranged: h.req } }, { kind: 'leatherbody', color: h.color, scaly: true }, { kind: 'shirt', color: h.color }, h.val * 3.6);
 }
 
 // ---------- gems & jewellery ----------
@@ -431,6 +433,64 @@ simple('holy_mould', 'Holy mould', { kind: 'mould_ring', holy: true }, 5, 'A mou
 simple('fur', 'Fur', { kind: 'cloth', color: '#b89a6a' }, 120, 'Warm, soft fur.');
 simple('spice', 'Spice', { kind: 'powder', color: '#c8501a' }, 230, 'A small pouch of expensive spice.');
 simple('lockpick', 'Lockpick', { kind: 'key', color: '#9a9a9a' }, 20, 'For picking locks.');
+
+// =====================================================================================
+// 1.2 Ranged & Fletching: bows, arrows, darts, crossbows, bolts.
+//   equip.ranged = { type: 'bow' | 'crossbow' | 'thrown', range, tier }  (tier = best ammo it fires)
+//   ammo items:    equip.slot 'ammo', equip.ammo = { type: 'arrow' | 'bolt', tier }, equip.rstr
+// Recipes for all of these are in data/recipes.js.
+// =====================================================================================
+add('knife', { name: 'Knife', value: 6, icon: { kind: 'knife' }, examine: 'A dangerous looking knife.' });
+add('arrow_shaft', { name: 'Arrow shaft', stack: true, value: 1, icon: { kind: 'shaft' }, examine: 'A wooden arrow shaft.' });
+add('headless_arrow', { name: 'Headless arrow', stack: true, value: 1, icon: { kind: 'arrow', headless: true }, examine: 'A wooden arrow shaft with flights attached.' });
+export const BOW_WOODS = [
+  { pre: '', logs: 'logs', name: '', color: '#8a5a2b', req: 1, fl: [5, 10], xp: [5, 10], rng: 8, tier: 1, val: 50 },
+  { pre: 'oak_', logs: 'oak_logs', name: 'Oak ', color: '#a0703a', req: 5, fl: [20, 25], xp: [16.5, 25], rng: 14, tier: 2, val: 150 },
+  { pre: 'willow_', logs: 'willow_logs', name: 'Willow ', color: '#7d6a3a', req: 20, fl: [35, 40], xp: [33.3, 41.5], rng: 20, tier: 3, val: 400 },
+  { pre: 'maple_', logs: 'maple_logs', name: 'Maple ', color: '#b0582a', req: 30, fl: [50, 55], xp: [50, 58.3], rng: 29, tier: 4, val: 800 },
+  { pre: 'yew_', logs: 'yew_logs', name: 'Yew ', color: '#6a3a1c', req: 40, fl: [65, 70], xp: [67.5, 75], rng: 47, tier: 5, val: 1600 },
+  { pre: 'magic_', logs: 'magic_logs', name: 'Magic ', color: '#3a5aa0', req: 50, fl: [80, 85], xp: [83.3, 91.5], rng: 69, tier: 5, val: 4000 },
+  { pre: 'heartwood_', logs: 'heartwood_logs', name: 'Heartwood ', color: '#c8402a', req: 65, fl: [92, 96], xp: [110, 120], rng: 82, tier: 6, val: 30000 },
+];
+for (const b of BOW_WOODS) {
+  for (const [k, range, speed] of [['shortbow', 7, 4], ['longbow', 9, 6]]) {
+    const id = b.pre + k, nm = b.name + k;
+    add(id + '_u', { name: `${nm[0].toUpperCase() + nm.slice(1)} (u)`, value: Math.round(b.val * (k === 'longbow' ? 1.2 : 1) * 0.6), icon: { kind: k, color: b.color, unstrung: true }, examine: 'I need to find a string for this.' });
+    add(id, { name: nm[0].toUpperCase() + nm.slice(1), value: Math.round(b.val * (k === 'longbow' ? 1.2 : 1)), icon: { kind: k, color: b.color }, examine: `A ${nm.toLowerCase()}.`,
+      equip: { slot: 'weapon', att: 0, str: 0, def: 0, rng: b.rng, speed, twoHanded: true, req: { ranged: b.req }, ranged: { type: 'bow', range, tier: b.tier }, look: { kind: k, color: b.color } } });
+  }
+}
+ITEMS.heartwood_shortbow.rare = false;
+export const AMMO_METALS = [
+  // metal, tier, arrow rstr, arrow fletch lvl/xp, dart rstr, dart fletch lvl/xp, dart req, bolt rstr, crossbow fletch lvl/xp, crossbow rng, crossbow req, stock
+  { m: 'bronze', tier: 0, arrow: [7, 1, 1.3], dart: [1, 10, 1.8, 1], bolt: 10, xbow: [9, 12, 18, 1, 'wooden_stock'], val: 1 },
+  { m: 'iron', tier: 1, arrow: [10, 15, 2.5], dart: [3, 22, 3.8, 1], bolt: 22, xbow: [39, 22, 30, 16, 'oak_stock'], val: 3 },
+  { m: 'steel', tier: 2, arrow: [16, 30, 5], dart: [4, 37, 7.5, 5], bolt: 32, xbow: [46, 27, 42, 26, 'willow_stock'], val: 12 },
+  { m: 'mithril', tier: 3, arrow: [22, 45, 7.5], dart: [7, 52, 11.2, 20], bolt: 44, xbow: [54, 32, 52, 36, 'teak_stock'], val: 32 },
+  { m: 'adamant', tier: 4, arrow: [31, 60, 10], dart: [10, 67, 15, 30], bolt: 56, xbow: [61, 41, 61, 46, 'maple_stock'], val: 80 },
+  { m: 'rune', tier: 5, arrow: [49, 75, 12.5], dart: [14, 81, 18.8, 40], bolt: 72, xbow: [69, 50, 90, 61, 'mahogany_stock'], val: 200 },
+  { m: 'dragon', tier: 6, arrow: [60, 90, 15], val: 900 },
+];
+export const STOCKS = [['wooden_stock', 'Wooden stock', 'logs', 9, 6], ['oak_stock', 'Oak stock', 'oak_logs', 24, 16], ['willow_stock', 'Willow stock', 'willow_logs', 39, 22], ['teak_stock', 'Teak stock', 'teak_logs', 46, 27], ['maple_stock', 'Maple stock', 'maple_logs', 54, 32], ['mahogany_stock', 'Mahogany stock', 'mahogany_logs', 61, 41]];
+for (const [id, name, logs, lvl, xp] of STOCKS) add(id, { name, value: 20 + lvl * 3, icon: { kind: 'stock', color: ITEMS[logs].icon.color }, examine: 'A crossbow stock.' });
+for (const a of AMMO_METALS) {
+  const M = METALS[a.m], Nm = M.name;
+  const smith = (off, qty) => (M.smith != null ? { lvl: Math.min(99, M.smith + off), bars: 1, bar: a.m + '_bar', qty } : null);
+  add(a.m + '_arrowtips', { name: `${Nm} arrowtips`, stack: true, value: Math.max(1, Math.round(a.val * 0.4)), icon: { kind: 'arrowtips', color: M.color }, examine: 'I can make some arrows with these.', smith: smith(5, 15), rare: a.m === 'dragon' });
+  add(a.m + '_arrow', { name: `${Nm} arrow`, stack: true, value: a.val, icon: { kind: 'arrow', color: M.color }, examine: `Arrows with ${a.m} heads.`,
+    equip: { slot: 'ammo', att: 0, str: 0, def: 0, rstr: a.arrow[0], ammo: { type: 'arrow', tier: a.tier }, look: {} } });
+  if (!a.dart) continue;
+  add(a.m + '_dart_tip', { name: `${Nm} dart tip`, stack: true, value: Math.max(1, Math.round(a.val * 0.5)), icon: { kind: 'darttip', color: M.color }, examine: 'Deadly, once it has flights.', smith: smith(4, 10) });
+  add(a.m + '_dart', { name: `${Nm} dart`, stack: true, value: a.val + 1, icon: { kind: 'dart', color: M.color }, examine: `A deadly throwing dart with ${a.m} tip.`,
+    equip: { slot: 'weapon', att: 0, str: 0, def: 0, rng: 2 + a.tier * 2, rstr: a.dart[0], speed: 3, req: { ranged: a.dart[3] }, ranged: { type: 'thrown', range: 4 }, look: { kind: 'dart', color: M.color } } });
+  add(a.m + '_limbs', { name: `${Nm} limbs`, value: a.val * 20, icon: { kind: 'limbs', color: M.color }, examine: 'A pair of crossbow limbs.', smith: smith(6, 1) });
+  add(a.m + '_crossbow_u', { name: `${Nm} crossbow (u)`, value: a.val * 30, icon: { kind: 'crossbow', color: M.color, unstrung: true }, examine: 'It needs a string.' });
+  add(a.m + '_crossbow', { name: `${Nm} crossbow`, value: a.val * 40, icon: { kind: 'crossbow', color: M.color }, examine: `A ${a.m} crossbow.`,
+    equip: { slot: 'weapon', att: 0, str: 0, def: 0, rng: a.xbow[2], speed: 5, req: { ranged: a.xbow[3] }, ranged: { type: 'crossbow', range: 7, tier: a.tier }, look: { kind: 'crossbow', color: M.color } } });
+  add(a.m + '_bolts_unf', { name: `${Nm} bolts (unf)`, stack: true, value: Math.max(1, Math.round(a.val * 0.5)), icon: { kind: 'bolt', color: M.color, unf: true }, examine: 'Unfeathered bolts.', smith: smith(3, 10) });
+  add(a.m + '_bolts', { name: `${Nm} bolts`, stack: true, value: a.val * 2, icon: { kind: 'bolt', color: M.color }, examine: `Crossbow bolts with ${a.m} tips.`,
+    equip: { slot: 'ammo', att: 0, str: 0, def: 0, rstr: a.bolt, ammo: { type: 'bolt', tier: a.tier }, look: {} } });
+}
 
 export function item(id) {
   const it = ITEMS[id];

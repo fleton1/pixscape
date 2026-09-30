@@ -60,9 +60,10 @@ Every skill gets something new every 5–10 levels up to 99, and a reason to vis
 
 In dependency order, one release each:
 
-1. **Ranged + Fletching** — bows, arrows, darts, crossbows; brings in the combat triangle (monsters get
-   separate defence against melee, ranged and magic). Dragonhide becomes ranged armour.
-2. **Magic + Runecraft** — elemental strike/bolt/blast/wave, a teleport to every town, high alchemy,
+1. **Ranged + Fletching** [done in 1.2] — bows (normal to heartwood), arrows, darts, crossbows, bolts;
+   the combat triangle (monster weaknesses and resistances, armour aim penalties, archers that shoot
+   back); dragonhide is ranged armour; Sharp/Hawk/Eagle Eye prayers.
+2. **Magic + Runecraft** [next] — elemental strike/bolt/blast/wave, a teleport to every town, high alchemy,
    superheat, jewellery enchanting (teleport necklaces, recoil ring), battlestaves from orbs.
 3. **Herblore** — herbs from monster drops, vials from glassblowing; shop potions become craftable,
    plus antifire and antipoison (poison added to combat).
@@ -122,7 +123,7 @@ economy.
 |---|---|
 | 1.0 [done] | Android app, touch controls, portrait + landscape |
 | 1.1 [done] | Separate maps, 8 dungeons, the 13-skill buildout, skill guides, 1x default, validator |
-| 1.2 | Ranged + Fletching, combat triangle |
+| 1.2 [done] | Ranged + Fletching, combat triangle |
 | 1.3 | Magic + Runecraft |
 | 1.4 | Herblore + Agility |
 | 1.5 | Slayer, more monsters, Wilderness dungeons |

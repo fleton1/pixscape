@@ -23,7 +23,12 @@ export function recipesForStation(o, item = null) {
 }
 
 // How many times the player can make a recipe right now.
+// For batch recipes this counts actions (each makes up to `batch`).
 export function makeableCount(r) {
+  const n = unitsAvailable(r);
+  return r.batch ? Math.ceil(n / r.batch) : n;
+}
+function unitsAvailable(r) {
   const p = G.player;
   if (r.keep.some((t) => !p.has(t))) return 0;
   let n = Infinity;
@@ -70,18 +75,20 @@ export function make(r, qty = 1, o = null) {
   const once = () => {
     if (o && o.removed) return false;
     if (made >= qty || !makeableCount(r)) return false;
-    for (const [id, q] of Object.entries(r.in)) p.remove(id, q);
-    for (const [id, q] of Object.entries(r.returns)) p.add(id, q);
+    const units = r.batch ? Math.min(r.batch, unitsAvailable(r)) : 1;
+    for (const [id, q] of Object.entries(r.in)) p.remove(id, q * units);
+    for (const [id, q] of Object.entries(r.returns)) p.add(id, q * units);
     made++;
     if (Math.random() < burnChance(r, o)) {
       p.add(r.burn.item);
       msg(r.verb === 'cook' ? `You accidentally burn the ${ITEMS[outId].name.toLowerCase()}.` : `The ${ITEMS[outId].name.toLowerCase()} is ruined.`);
       sfx('error');
     } else {
-      p.add(outId, outQty);
-      if (r.skill && r.xp) p.addXp(r.skill, r.xp);
+      p.add(outId, outQty * units);
+      if (r.skill && r.xp) p.addXp(r.skill, r.xp * units);
       sfx(r.verb === 'cook' ? 'cook' : r.verb === 'fill' ? 'splash' : 'click');
-      if (qty === 1 || made === 1) msg(r.verb === 'fill' ? `You fill the ${ITEMS[Object.keys(r.in)[0]].name.toLowerCase()}.` : r.verb === 'light' ? `You light the ${ITEMS[Object.keys(r.in)[0]].name.toLowerCase()}.` : `You make ${aOrAn(ITEMS[outId].name.toLowerCase())}.`);
+      if (units > 1) msg(`You make ${units} ${ITEMS[outId].name.toLowerCase()}${units > 1 && !ITEMS[outId].name.endsWith('s') ? 's' : ''}.`);
+      else if (qty === 1 || made === 1) msg(r.verb === 'fill' ? `You fill the ${ITEMS[Object.keys(r.in)[0]].name.toLowerCase()}.` : r.verb === 'light' ? `You light the ${ITEMS[Object.keys(r.in)[0]].name.toLowerCase()}.` : `You make ${aOrAn(ITEMS[outId].name.toLowerCase())}.`);
     }
     return made < qty && makeableCount(r) ? r.ticks || 2 : false;
   };

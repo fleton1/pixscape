@@ -1,35 +1,40 @@
-export const SKILLS = ['attack', 'hitpoints', 'mining', 'strength', 'thieving', 'smithing', 'defence', 'crafting', 'fishing', 'prayer', 'firemaking', 'cooking', 'woodcutting'];
+export const SKILLS = ['attack', 'hitpoints', 'mining', 'strength', 'thieving', 'smithing', 'defence', 'crafting', 'fishing', 'ranged', 'fletching', 'cooking', 'prayer', 'firemaking', 'woodcutting'];
 export const SKILL_NAMES = {
   attack: 'Attack', hitpoints: 'Hitpoints', mining: 'Mining', strength: 'Strength', thieving: 'Thieving', smithing: 'Smithing', defence: 'Defence',
-  crafting: 'Crafting', fishing: 'Fishing', prayer: 'Prayer', firemaking: 'Firemaking', cooking: 'Cooking', woodcutting: 'Woodcutting',
+  crafting: 'Crafting', fishing: 'Fishing', prayer: 'Prayer', firemaking: 'Firemaking', cooking: 'Cooking', woodcutting: 'Woodcutting', ranged: 'Ranged', fletching: 'Fletching',
 };
 export const SKILL_COLORS = {
   attack: '#9b2020', hitpoints: '#d83030', mining: '#5a5a5a', strength: '#1f8a3a', thieving: '#6a3a8a', smithing: '#6a6a6a', defence: '#4a6ab0',
-  crafting: '#8a6a3a', fishing: '#4a8ac8', prayer: '#e8e8d0', firemaking: '#e0701a', cooking: '#7a2a8a', woodcutting: '#3a7a2a',
+  crafting: '#8a6a3a', fishing: '#4a8ac8', prayer: '#e8e8d0', firemaking: '#e0701a', cooking: '#7a2a8a', woodcutting: '#3a7a2a', ranged: '#5a8a2a', fletching: '#2a7a6a',
 };
 
 export const PRAYERS = [
   { id: 'thick_skin', name: 'Thick Skin', lvl: 1, drain: 1 / 12, def: 0.05, desc: '+5% Defence' },
   { id: 'burst_str', name: 'Burst of Strength', lvl: 4, drain: 1 / 12, str: 0.05, desc: '+5% Strength' },
   { id: 'clarity', name: 'Clarity of Thought', lvl: 7, drain: 1 / 12, att: 0.05, desc: '+5% Attack' },
+  { id: 'sharp_eye', name: 'Sharp Eye', lvl: 8, drain: 1 / 12, rng: 0.05, desc: '+5% Ranged' },
   { id: 'rock_skin', name: 'Rock Skin', lvl: 10, drain: 1 / 6, def: 0.1, desc: '+10% Defence' },
   { id: 'superhuman', name: 'Superhuman Strength', lvl: 13, drain: 1 / 6, str: 0.1, desc: '+10% Strength' },
   { id: 'reflexes', name: 'Improved Reflexes', lvl: 16, drain: 1 / 6, att: 0.1, desc: '+10% Attack' },
   { id: 'rapid_heal', name: 'Rapid Heal', lvl: 22, drain: 1 / 18, heal: true, desc: '2x Hitpoints regen' },
   { id: 'protect_item', name: 'Protect Item', lvl: 25, drain: 1 / 18, desc: 'Keep 1 extra item on death' },
+  { id: 'hawk_eye', name: 'Hawk Eye', lvl: 26, drain: 1 / 6, rng: 0.1, desc: '+10% Ranged' },
   { id: 'steel_skin', name: 'Steel Skin', lvl: 28, drain: 1 / 3, def: 0.15, desc: '+15% Defence' },
   { id: 'ultimate_str', name: 'Ultimate Strength', lvl: 31, drain: 1 / 3, str: 0.15, desc: '+15% Strength' },
   { id: 'incredible', name: 'Incredible Reflexes', lvl: 34, drain: 1 / 3, att: 0.15, desc: '+15% Attack' },
   { id: 'protect_magic', name: 'Protect from Magic', lvl: 37, drain: 1 / 3, protect: 'magic', desc: 'Blocks magic & breath attacks' },
   { id: 'protect_range', name: 'Protect from Missiles', lvl: 40, drain: 1 / 3, protect: 'range', desc: 'Blocks ranged & swarm attacks' },
   { id: 'protect_melee', name: 'Protect from Melee', lvl: 43, drain: 1 / 3, protect: 'melee', desc: 'Blocks melee attacks' },
+  { id: 'eagle_eye', name: 'Eagle Eye', lvl: 44, drain: 1 / 3, rng: 0.15, desc: '+15% Ranged' },
   { id: 'redemption', name: 'Redemption', lvl: 49, drain: 1 / 12, overhead: true, desc: 'Heals you when nearly dead' },
   { id: 'preserve', name: 'Preserve', lvl: 55, drain: 1 / 18, desc: 'Stat boosts last 50% longer' },
   { id: 'chivalry', name: 'Chivalry', lvl: 60, drain: 1 / 1.5, att: 0.15, str: 0.18, def: 0.2, desc: '+15% Att, +18% Str, +20% Def', quest: 'dragons_bane' },
 ];
 
 export const SHOPS = {
-  brindle_general: { name: 'Brindlewood General Store', general: true, items: [['pot', 5], ['jug', 5], ['bowl', 5], ['bucket', 5], ['tinderbox', 5], ['shears', 3], ['small_net', 5], ['hammer', 5], ['chisel', 3], ['spade', 3], ['bronze_axe', 5], ['bronze_pickaxe', 5], ['bread', 10], ['cake_tin', 3], ['candle', 10], ['fishing_bait', 500], ['wooden_shield', 3], ['leather_boots', 3], ['leather_gloves', 3], ['red_cape', 3], ['blue_cape', 3]] },
+  brindle_general: { name: 'Brindlewood General Store', general: true, items: [['knife', 5], ['pot', 5], ['jug', 5], ['bowl', 5], ['bucket', 5], ['tinderbox', 5], ['shears', 3], ['small_net', 5], ['hammer', 5], ['chisel', 3], ['spade', 3], ['bronze_axe', 5], ['bronze_pickaxe', 5], ['bread', 10], ['cake_tin', 3], ['candle', 10], ['fishing_bait', 500], ['wooden_shield', 3], ['leather_boots', 3], ['leather_gloves', 3], ['red_cape', 3], ['blue_cape', 3]] },
+  bowyer: { name: "Lenna's Bows", items: [['knife', 10], ['feather', 2000], ['arrow_shaft', 500], ['bow_string', 20], ['bronze_arrow', 1000], ['iron_arrow', 1000], ['steel_arrow', 300], ['shortbow', 5], ['longbow', 5], ['oak_shortbow', 4], ['oak_longbow', 4], ['willow_shortbow', 2], ['willow_longbow', 2], ['bronze_dart', 500], ['iron_dart', 300], ['coif', 5], ['leather_body', 5], ['leather_chaps', 5], ['leather_vambraces', 5]] },
+  fletcher: { name: 'Highcrest Fletchers', items: [['knife', 5], ['feather', 1000], ['bow_string', 10], ['iron_arrow', 1000], ['steel_arrow', 500], ['mithril_arrow', 200], ['adamant_arrow', 50], ['maple_shortbow', 2], ['bronze_crossbow', 3], ['iron_crossbow', 3], ['steel_crossbow', 2], ['bronze_bolts', 500], ['iron_bolts', 300], ['steel_bolts', 200], ['steel_dart', 300], ['studded_body', 2], ['studded_chaps', 2]] },
   dwarf: { name: 'Deepdelve Supplies', items: [['bronze_pickaxe', 5], ['iron_pickaxe', 5], ['steel_pickaxe', 3], ['mithril_pickaxe', 2], ['adamant_pickaxe', 1], ['hammer', 5], ['candle', 20], ['lit_candle', 5], ['candle_lantern', 5], ['tinderbox', 5], ['coal', 0], ['silver_bar', 5], ['stew', 10], ['fishing_rod', 3], ['fishing_bait', 300]] },
   crafting: { name: "Mira's Crafting Supplies", items: [['needle', 10], ['thread', 500], ['chisel', 5], ['glassblowing_pipe', 5], ['ring_mould', 5], ['necklace_mould', 5], ['amulet_mould', 5], ['bracelet_mould', 5], ['holy_mould', 3], ['soft_clay', 20], ['pie_dish', 10], ['bowl', 10], ['pot', 10], ['molten_glass', 5], ['ball_of_wool', 20], ['leather', 10], ['wizard_hat', 2], ['wizard_robe', 2]] },
   smithy: { name: "Highcrest Smithy", items: [['hammer', 10], ['bronze_bar', 20], ['iron_bar', 20], ['steel_bar', 10], ['bronze_pickaxe', 5], ['iron_pickaxe', 5], ['steel_pickaxe', 3], ['mithril_pickaxe', 2], ['adamant_pickaxe', 1], ['rune_pickaxe', 1], ['iron_axe', 5], ['steel_axe', 3], ['mithril_axe', 2], ['adamant_axe', 1], ['rune_axe', 1], ['ring_mould', 5], ['amulet_mould', 5]] },

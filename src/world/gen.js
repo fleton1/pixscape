@@ -473,6 +473,11 @@ export function generateWorld() {
   spawnIn('rock_crab', 6, 117, 138, 5); spawnIn('rock_crab', 4, 114, 186, 5); spawnIn('sand_crab', 6, 148, 296, 7);
   // trees
   for (const [x, y] of [[26, 126], [33, 128]]) placeNear('heartwood', x, y);
+
+  // ================================================================ 1.2: RANGED
+  spawnIn('goblin_archer', 3, 162, 120, 8); spawnIn('bandit_archer', 3, 350, 241, 6);
+  npc('elf_bowyer', 51, 170, { shop: 'bowyer', wander: 1 }); icon('shop', 51, 170);
+  npc('shopkeeper', 241, 111, { shop: 'fletcher', name: 'Fletcher Oswin', wander: 1 }); icon('shop', 241, 111);
   // extra rocks and fishing
   w.mines.push({ cx: 150, cy: 178, r: 3, rocks: { clay_rock: 4 } }, { cx: 72, cy: 210, r: 4, rocks: { silver_rock: 2, clay_rock: 2 } });
   w.mines[0].rocks.silver_rock = 2; w.mines[2].rocks.gem_rock = 2;

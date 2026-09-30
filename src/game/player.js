@@ -21,7 +21,8 @@ export class Player extends Mover {
     this.path = [];
     this.running = true;
     this.runEnergy = 100;
-    this.style = 'accurate';
+    this.style = 'accurate';        // melee: accurate | aggressive | defensive
+    this.rangedStyle = 'accurate';  // ranged: accurate | rapid | longrange
     this.prayers = new Set();
     this.prayerDrain = 0;
     this.target = null;       // {kind, ref, option}
@@ -54,7 +55,8 @@ export class Player extends Mover {
     const s = this.skills;
     const base = 0.25 * (s.defence.lvl + s.hitpoints.lvl + Math.floor(s.prayer.lvl / 2));
     const melee = 0.325 * (s.attack.lvl + s.strength.lvl);
-    return Math.floor(base + melee);
+    const ranged = 0.325 * Math.floor(s.ranged.lvl * 1.5);
+    return Math.floor(base + Math.max(melee, ranged));
   }
   addXp(skill, amount, raw = false) {
     const rate = raw ? 1 : G.settings.xpRate || 1;
@@ -147,17 +149,35 @@ export class Player extends Mover {
 
   // ---------------- equipment
   bonuses() {
-    const b = { att: 0, str: 0, def: 0, prayer: 0 };
+    const b = { att: 0, str: 0, def: 0, prayer: 0, rng: 0, rstr: 0 };
+    const ranged = this.rangedWeapon();
     for (const s of SLOTS) {
       const e = this.equip[s];
       if (!e) continue;
       const eq = ITEMS[e.id].equip;
-      b.att += eq.att || 0; b.str += eq.str || 0; b.def += eq.def || 0; b.prayer += eq.prayer || 0;
+      b.att += eq.att || 0; b.str += eq.str || 0; b.def += eq.def || 0; b.prayer += eq.prayer || 0; b.rng += eq.rng || 0;
+      // ammo only counts when the weapon fires it
+      if (s !== 'ammo' || (ranged && ranged.type !== 'thrown' && this.ammoFits())) b.rstr += eq.rstr || 0;
     }
     return b;
   }
   weapon() { return this.equip.weapon ? ITEMS[this.equip.weapon.id] : null; }
-  attackSpeed() { const w = this.weapon(); return w ? w.equip.speed || 4 : 4; }
+  rangedWeapon() { const w = this.weapon(); return w && w.equip.ranged ? w.equip.ranged : null; }
+  // Does the equipped ammo work with the equipped bow or crossbow?
+  ammoFits() {
+    const r = this.rangedWeapon(), a = this.equip.ammo && ITEMS[this.equip.ammo.id].equip.ammo;
+    if (!r || r.type === 'thrown') return true;
+    return !!a && a.type === (r.type === 'bow' ? 'arrow' : 'bolt') && a.tier <= r.tier;
+  }
+  attackSpeed() {
+    const w = this.weapon(), base = w ? w.equip.speed || 4 : 4;
+    return this.rangedWeapon() && this.rangedStyle === 'rapid' ? base - 1 : base;
+  }
+  attackRange() {
+    const r = this.rangedWeapon();
+    if (!r) return 1;
+    return Math.min(10, r.range + (this.rangedStyle === 'longrange' ? 2 : 0));
+  }
   // A lit lantern or candle (item.light) carried or worn lights up pitch-black caves.
   lightSource() { return [...this.inv, ...Object.values(this.equip)].some((s) => s && ITEMS[s.id].light); }
   hasAntifire() { const s = this.equip.shield; return s && ITEMS[s.id].equip.antifire; }
@@ -191,8 +211,11 @@ export class Player extends Mover {
     if (needed > this.freeSlots()) { msg('You don\'t have enough free inventory space to do that.'); return; }
     this.inv[i] = null;
     const old = this.equip[slot];
-    this.equip[slot] = { id: s.id, qty: s.qty };
-    if (old) this.inv[i] = old;
+    if (old && old.id === s.id && it.stack) { old.qty += s.qty; }   // topping up arrows or darts
+    else {
+      this.equip[slot] = { id: s.id, qty: s.qty };
+      if (old) this.inv[i] = old;
+    }
     for (const r of toRemove) { const o = this.equip[r]; this.equip[r] = null; this.add(o.id, o.qty); }
     sfx('equip');
     this.lookDirty = true;

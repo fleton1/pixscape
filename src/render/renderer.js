@@ -394,6 +394,14 @@ export class Renderer {
           ctx.beginPath(); ctx.arc(bx, byy, 4 - i * 0.5, 0, Math.PI * 2); ctx.fill();
         }
         ctx.globalAlpha = 1;
+      } else if (pr.kind === 'arrow' || pr.kind === 'dart') {
+        const k2 = Math.min(1, k + 0.05);
+        const x2 = ((pr.fx + 0.5) + (tx + ts - (pr.fx + 0.5)) * k2) * TS, y2 = ((pr.fy + 0.5) + (ty + ts - (pr.fy + 0.5)) * k2) * TS - 8 - Math.sin(k2 * Math.PI) * 8;
+        const a = Math.atan2(y2 - y, x2 - x), L = pr.kind === 'dart' ? 3 : 6;
+        ctx.strokeStyle = '#6a4a2a'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x - Math.cos(a) * L, y - Math.sin(a) * L); ctx.lineTo(x, y); ctx.stroke();
+        ctx.fillStyle = pr.color; ctx.fillRect(Math.round(x + Math.cos(a) * 1.5) - 1, Math.round(y + Math.sin(a) * 1.5) - 1, 2, 2);
+        ctx.fillStyle = '#e8e8e8'; ctx.fillRect(Math.round(x - Math.cos(a) * L), Math.round(y - Math.sin(a) * L), 1, 1);
       } else if (pr.kind === 'swarm') {
         for (let i = 0; i < 6; i++) { ctx.fillStyle = '#1e3a4a'; ctx.fillRect(x + Math.sin(now / 50 + i) * 4, y + Math.cos(now / 60 + i * 2) * 3, 2, 2); }
       } else {

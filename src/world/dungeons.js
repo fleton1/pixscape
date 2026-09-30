@@ -68,7 +68,7 @@ function catacombs() {
   place('boss_chest', 45, 52, { mossy: true });
   place('torch', 6, 44); w.addObject('torch', 13, 44);
   spawnIn('skeleton', 7, 13, 29, 7); spawnIn('hill_giant', 6, 40, 28, 7); spawnIn('giant_spider', 6, 14, 9, 8); spawnIn('zombie', 6, 38, 49, 8); spawnIn('rat', 3, 10, 49, 3);
-  spawnIn('giant_bat', 3, 40, 28, 6); spawnIn('ghost', 2, 38, 49, 6);
+  spawnIn('giant_bat', 3, 40, 28, 6); spawnIn('ghost', 2, 38, 49, 6); spawnIn('skeleton_archer', 4, 13, 29, 7);
   B.finish([[D.PEBBLES, 0.03], [D.BONES, 0.015], [D.MUSHROOM, 0.005]]);
   return w;
 }

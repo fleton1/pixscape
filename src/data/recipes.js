@@ -4,7 +4,7 @@
 //   station: null (use item on item) or the object type(s) it needs, e.g. 'range'
 //   burn:    { item, stop } - chance to fail into `item`, falling to 0 at level `stop`
 // Recipes are also what the skill guides list, so every unlock shows up there automatically.
-import { DHIDES, ITEMS } from './items.js';
+import { DHIDES, ITEMS, BOW_WOODS, AMMO_METALS, STOCKS } from './items.js';
 
 export const RECIPES = [];
 const r = (o) => RECIPES.push({ skill: null, lvl: 1, xp: 0, in: {}, keep: [], returns: {}, station: null, ...o });
@@ -96,6 +96,28 @@ for (const h of DHIDES) {
   sew(h.id + '_dhide_vamb', h.lvl, h.xp, leather, 1);
   sew(h.id + '_dhide_chaps', h.lvl + 3, h.xp * 2, leather, 2);
   sew(h.id + '_dhide_body', h.lvl + 6, h.xp * 3, leather, 3);
+}
+
+// ------------------------------------------------------------------ fletching
+//   batch: make up to this many per action (arrows and darts come in bundles like 15 or 10)
+for (const [logs, lvl, n, xp] of [['logs', 1, 15, 5], ['oak_logs', 15, 30, 10], ['willow_logs', 30, 45, 15], ['maple_logs', 45, 60, 20], ['yew_logs', 60, 75, 25], ['magic_logs', 75, 90, 30]])
+  r({ id: 'shafts_' + logs, skill: 'fletching', lvl, xp, in: { [logs]: 1 }, keep: ['knife'], out: ['arrow_shaft', n], verb: 'cut' });
+for (const b of BOW_WOODS) {
+  ['shortbow', 'longbow'].forEach((k, i) => {
+    r({ id: `cut_${b.pre}${k}`, skill: 'fletching', lvl: b.fl[i], xp: b.xp[i], in: { [b.logs]: 1 }, keep: ['knife'], out: `${b.pre}${k}_u`, verb: 'cut' });
+    r({ id: `string_${b.pre}${k}`, skill: 'fletching', lvl: b.fl[i], xp: b.xp[i], in: { [`${b.pre}${k}_u`]: 1, bow_string: 1 }, out: `${b.pre}${k}` });
+  });
+}
+for (const [id, , logs, lvl, xp] of STOCKS) r({ id: 'cut_' + id, skill: 'fletching', lvl, xp, in: { [logs]: 1 }, keep: ['knife'], out: id, verb: 'cut' });
+r({ id: 'headless_arrow', skill: 'fletching', xp: 1, in: { arrow_shaft: 1, feather: 1 }, out: 'headless_arrow', batch: 15 });
+for (const a of AMMO_METALS) {
+  r({ id: a.m + '_arrow', skill: 'fletching', lvl: a.arrow[1], xp: a.arrow[2], in: { headless_arrow: 1, [a.m + '_arrowtips']: 1 }, out: a.m + '_arrow', batch: 15 });
+  if (!a.dart) continue;
+  r({ id: a.m + '_dart', skill: 'fletching', lvl: a.dart[1], xp: a.dart[2], in: { [a.m + '_dart_tip']: 1, feather: 1 }, out: a.m + '_dart', batch: 10 });
+  const [lvl, xp, , , stock] = a.xbow;
+  r({ id: a.m + '_crossbow_u', skill: 'fletching', lvl, xp, in: { [stock]: 1, [a.m + '_limbs']: 1 }, keep: ['hammer'], out: a.m + '_crossbow_u', ticks: 3 });
+  r({ id: a.m + '_crossbow', skill: 'fletching', lvl, xp, in: { [a.m + '_crossbow_u']: 1, bow_string: 1 }, out: a.m + '_crossbow' });
+  r({ id: a.m + '_bolts', skill: 'fletching', lvl, xp: [0.5, 1.5, 3.5, 5, 7, 10][a.tier], in: { [a.m + '_bolts_unf']: 1, feather: 1 }, out: a.m + '_bolts', batch: 10 });
 }
 
 // Tanning is a paid service (the tanner), not a recipe: hide -> leather, and the fee.
