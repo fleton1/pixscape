@@ -199,6 +199,7 @@ export class Renderer {
     else if (depleted && o.type === 'wheat') return;
     else if (d.fence) key = 'fence_' + this.fenceMask(o);
     else if (d.door) key = `${d.gate ? 'gate' : 'door'}_${o.open ? 1 : 0}_${o.vert ? 1 : 0}`;
+    else if (o.type === 'brazier') key = o.broken ? 'brazier_broken' : o.lit ? 'brazier_lit' : 'brazier';
     let set = OBJ_SPRITES[key];
     if (d.patch) {
       const st = patchState(o);

@@ -8,6 +8,7 @@ import { gracefulPieces } from './agility.js';
 import { slayerCheck } from './slayer.js';
 import { questVisit } from './questengine.js';
 import { tickTraps } from './farming.js';
+import { events } from './events.js';
 import { magicAttack } from './magic.js';
 import { tickAction } from './skilling.js';
 import { findPath } from '../world/path.js';
@@ -19,6 +20,7 @@ import { wildLevel, placeName, musicAt, areaAt, underground } from './world_info
 import { questDrops, questMine } from './quests.js';
 import { performNpc, performObj, pickupItem } from './actions.js';
 import { commas, cheb } from '../util.js';
+import { tickBraziers } from './braziers.js';
 
 const SAVE_KEY = 'pixscape_save_v1';
 const SAVE_VERSION = 2;
@@ -105,6 +107,9 @@ export const game = {
     }
     this.tickStats(ranSteps);
     this.tickWorld();
+    events.tick();
+    tickBraziers();
+    if (G.tick % 100 === 0) G.ui && G.ui.dirty('quests');
     this.checkArea();
     if (G.tick % 50 === 0) this.save();
     G.ui && G.ui.dirty('orbs');
@@ -354,6 +359,7 @@ export const game = {
     for (const n of w.npcs) if (n.target) { n.target = null; n.returning = true; }
     G.renderer && G.renderer.mapChanged();
     G.minimap && G.minimap.mapChanged();
+    G.ui && G.ui.dirty('event');
     this.lastArea = undefined;
   },
   home() { return G.overworld.points.spawn; },

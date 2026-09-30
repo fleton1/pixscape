@@ -642,6 +642,7 @@ for (const [region, dy] of Object.entries(DIARIES)) {
 // 1.7 Farming & Hunter (crop and prey data in data/farming.js)
 // =====================================================================================
 add('weeds', { name: 'Weeds', value: 1, icon: { kind: 'grass', color: '#6a7a3a' }, examine: 'A handful of weeds.' });
+add('stardust', { name: 'Stardust', stack: true, value: 30, icon: { kind: 'powder', color: '#e8e0ff' }, examine: 'Dust from a fallen star. Traders pay well for it.' });
 add('rake', { name: 'Rake', value: 6, icon: { kind: 'rake' }, examine: 'Use this to clear weeds.' });
 add('seed_dibber', { name: 'Seed dibber', value: 6, icon: { kind: 'dibber' }, examine: 'Use this to plant seeds with.' });
 add('compost', { name: 'Compost', value: 30, icon: { kind: 'bucket', color: '#5a3a1a' }, examine: 'Makes crops grow better. Use it on a patch.' });
@@ -661,6 +662,16 @@ COOKING.raw_bird_meat = { lvl: 11, xp: 62, out: 'roast_bird_meat', burnt: 'burnt
 for (const [id, name, color, rstr, req] of [['grey_chinchompa', 'Grey chinchompa', '#9a9aa0', 45, 45], ['red_chinchompa', 'Red chinchompa', '#c83a2a', 70, 55], ['black_chinchompa', 'Black chinchompa', '#2a2a30', 90, 65]])
   add(id, { name, stack: true, value: { grey: 500, red: 1200, black: 2500 }[id.split('_')[0]], icon: { kind: 'chin', color }, examine: 'It explodes on impact. Hits everything next to the target, too.',
     equip: { slot: 'weapon', att: 0, str: 0, def: 0, rng: 20 + (req - 45), rstr, speed: 4, req: { ranged: req }, ranged: { type: 'thrown', range: 7, aoe: true }, look: { kind: 'dart', color } } });
+
+// =====================================================================================
+// 1.8 Quality of life: the Frost Heart
+// =====================================================================================
+add('frost_root', { name: 'Frost root', value: 0, icon: { kind: 'root', color: '#a8d0e8' }, examine: 'A root that burns hot and bright, despite the frost on it.' });
+add('supply_crate', { name: 'Supply crate', value: 0, icon: { kind: 'casket', color: '#8a6a3a' }, examine: 'A crate of supplies from the Frost Heart. Open it!' });
+for (const [id, name, slot, kind, look] of [['pyromancer_hood', 'Pyromancer hood', 'head', 'coif', { kind: 'hood', color: '#c84a1a' }], ['pyromancer_garb', 'Pyromancer garb', 'body', 'robe', { kind: 'robe', color: '#c84a1a' }],
+  ['pyromancer_robe', 'Pyromancer robe', 'legs', 'chaps', { kind: 'pants', color: '#8a2a10' }], ['pyromancer_boots', 'Pyromancer boots', 'feet', 'boots', { color: '#5a1a08' }]])
+  wear(id, name, slot, { def: 2 }, { kind, color: slot === 'legs' ? '#8a2a10' : '#c84a1a' }, look, 5000, { examine: 'Warm and flame-proof. Firemakers get a little more from their fires in it.', pyro: true, rare: true });
+wear('warm_gloves', 'Warm gloves', 'hands', { def: 1 }, { kind: 'gloves', color: '#d8602a' }, { color: '#d8602a' }, 2500, { examine: 'Toasty. The Frost Heart\'s cold can\'t get through these.', rare: true });
 
 export function item(id) {
   const it = ITEMS[id];

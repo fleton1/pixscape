@@ -137,7 +137,7 @@ like the other sideloaded apps. APKs are attached to the [GitHub releases](https
   - Fishing: 18 fish, including cave eels, monkfish, anglerfish and Wilderness dark crabs.
   - Mining: clay, silver and gem rocks. Woodcutting: teak, mahogany and heartwood.
   - Thieving: 9 pickpocket targets, 6 stalls and trapped chests.
-- **73 monsters**, from rats and rock crabs to black dragons, each with a drop that matters to a skill.
+- **Over 100 monsters**, from rats and rock crabs to black dragons, each with a drop that matters to a skill.
 - **Combat.** OSRS-style accuracy and max-hit formulas, melee and ranged styles, 20 prayers, potions,
   food, and a 0.6s game tick. Melee, ranged and magic form a combat triangle: dragons, giants and bats are weak to ranged,
   skeletons and golems shrug it off, ghosts resist melee, armoured knights are weak to magic, demons
@@ -154,15 +154,24 @@ like the other sideloaded apps. APKs are attached to the [GitHub releases](https
   Mortmire Coven and the Crestfall Dwarves, plus First Steps quests for Ranged, Fletching, Magic,
   Runecraft, Agility, Herblore and Slayer. New quests are data (`data/storylines.js`) run by a small
   engine (`game/questengine.js`).
-- **Achievement diaries** for seven regions, four tiers each, with region rewards and XP lamps
+- **Achievement diaries** for eight regions, four tiers each, with region rewards and XP lamps
   (Quests tab, Achievement Diaries).
+- **World events** every 15-30 minutes: shooting stars, goblin raids and a travelling merchant (the
+  Quests tab shows what's on).
+- **The Frost Heart** in Frostpeak Keep, just south of Frosthold (Firemaking 50): keep four braziers lit
+  and fed with frozen roots to shatter the heart. Points earn supply crates; the pyromancer outfit
+  boosts Firemaking XP.
+- **The Vesper Exchange**: Broker Casimir in Vesperhold buys and sells almost anything at market
+  prices that drift over time and react to your own trading.
+- **Bank tabs and placeholders**, a collection log in categories, and an adventure log of your
+  milestones on the stats page.
 - **Treasure trails.** Clue scrolls drop from monsters. Dig or talk your way to reward caskets (partyhats exist...).
 - **Towns and travel.** Banks, shops, furnaces and anvils, ships between islands, and a home teleport.
 - **Procedural soundtrack.** A different theme per region, plus synthesized sound effects.
 - **Autosave** to `localStorage`.
 
 Deaths outside the Wilderness only send you home. In the Wilderness you keep your 3 most valuable
-items and the rest stay where you fell. The XP rate defaults to 4x ("chill") and can be changed in Settings.
+items and the rest stay where you fell. The XP rate defaults to 1x, like the original, and can be changed in Settings.
 
 ## Code layout
 

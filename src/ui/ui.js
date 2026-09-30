@@ -2,7 +2,9 @@
 import { G, msg, sfx } from '../game/state.js';
 import { ITEMS, SLOTS, SMELTING, JEWELLERY, METALS, SMITHABLES, GEMS } from '../data/items.js';
 import { SKILLS, SKILL_NAMES, PRAYERS, SHOPS } from '../data/skills.js';
-import { PETS } from '../data/npcs.js';
+import { PETS, NPCS } from '../data/npcs.js';
+import { SLAYER_REQ } from '../data/slayer.js';
+import { events } from '../game/events.js';
 import { QUESTS } from '../game/quests.js';
 import { itemOptions, useOnItem, dropSlot } from '../game/actions.js';
 import { iconURL, iconFor } from '../sprites/items.js';
@@ -18,6 +20,8 @@ import { skillGuide } from '../data/guide.js';
 import { DIARIES, TIERS, TIER_LAMPS, diaryItem } from '../data/diaries.js';
 import { xpForLevel, commas, fmtNum, clamp } from '../util.js';
 import { wildLevel, placeName } from '../game/world_info.js';
+import { brazier } from '../game/braziers.js';
+import { exchangeList, canBuy, exBuyPrice, exSellPrice, trend, exBuy, exSell } from '../game/exchange.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const h = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html !== undefined) e.innerHTML = html; return e; };
@@ -98,8 +102,10 @@ export class UI {
     if (d.has('settings')) this.renderSettings();
     if (d.has('magic')) this.renderMagic();
     if (d.has('wild')) this.renderWild();
+    if (d.has('event')) this.renderMinigame();
     if (d.has('bank') && this.window === 'bank') this.renderBank();
     if (d.has('shop') && this.window === 'shop') this.renderShop();
+    if (d.has('inv') && this.window === 'exchange') this.renderExchange();
     d.clear();
   }
 
@@ -156,6 +162,9 @@ export class UI {
     this.dirty('orbs');
   }
   levelUp(skill, lvl) {
+    if (lvl % 10 === 0 || lvl === 99 || lvl === 5) G.player.logEvent(`Reached level ${lvl} ${SKILL_NAMES[skill]}`);
+    const tl = G.player.totalLevel();
+    if (tl % 100 === 0) G.player.logEvent(`Reached total level ${tl}`);
     this.chat(`Congratulations, you just advanced ${/^[aeiou]/i.test(SKILL_NAMES[skill]) ? 'an' : 'a'} ${SKILL_NAMES[skill]} level. Your ${SKILL_NAMES[skill]} level is now ${lvl}.`, '#0000aa');
     const b = h('div', 'levelup', `<img src="${skillIcon(skill)}"><div><b>Congratulations!</b><br>You've just advanced ${/^[aeiou]/i.test(SKILL_NAMES[skill]) ? 'an' : 'a'} ${SKILL_NAMES[skill]} level.<br>You have now reached level <span class="y">${lvl}</span>.</div>`);
     $('#toasts').appendChild(b);
@@ -175,6 +184,15 @@ export class UI {
     const el = $('#area-banner');
     el.innerHTML = `<div class="rule"></div><span>${name}</span><div class="rule"></div>`;
     el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  }
+  renderMinigame() {
+    const el = $('#minigame');
+    const on = G.world.id === 'braziers';
+    el.style.display = on ? '' : 'none';
+    if (!on) return;
+    const pct = Math.max(0, Math.round((brazier.heart / 300) * 100));
+    el.innerHTML = brazier.pause ? `<b>The Frost Heart</b><br>Dormant. It stirs again in ${Math.ceil(brazier.pause * 0.6)}s.`
+      : `<b>The Frost Heart</b><div class="bar"><div style="width:${pct}%"></div></div>Points: ${brazier.points}${brazier.points < 100 ? ' <span style="color:#c8b890">(100 for a crate)</span>' : ''}`;
   }
   renderWild() {
     const wl = wildLevel(G.player.x, G.player.y);
@@ -249,6 +267,7 @@ export class UI {
     if (!p.inv[i]) return null;
     if (this.window === 'bank') return [{ text: `Deposit-${this.bankQty === Infinity ? 'All' : this.bankQty} <span class="m-item">${ITEMS[p.inv[i].id].name}</span>` }, {}];
     if (this.window === 'shop') return [{ text: `Value <span class="m-item">${ITEMS[p.inv[i].id].name}</span>` }, {}];
+    if (this.window === 'exchange') return [{ text: `Look up <span class="m-item">${ITEMS[p.inv[i].id].name}</span>` }, {}];
     return itemOptions(i);
   }
   invClick(e, i) {
@@ -266,6 +285,7 @@ export class UI {
     if (!s) { if (G.useItem) { G.useItem = null; this.dirty('inv'); } return; }
     if (this.window === 'bank') { this.deposit(i, this.bankQty); return; }
     if (this.window === 'shop') { this.sellValue(i); return; }
+    if (this.window === 'exchange') { this.exFilter = ITEMS[s.id].name; this.renderExchange(true); return; }
     if (e.shiftKey) { dropSlot(i); return; }
     const opts = itemOptions(i);
     if (opts.length) opts[0].fn();
@@ -358,7 +378,8 @@ export class UI {
       const s = p.stage(id);
       html += `<div class="quest ${s >= 100 ? 'done' : s > 0 ? 'started' : ''}" data-q="${id}">${q.name}</div>`;
     }
-    html += '</div><div class="qbtns"><button id="btn-diary">Achievement Diaries</button><button id="btn-clog">Collection Log</button><button id="btn-stats">Adventure Stats</button></div>';
+    html += `</div><div class="evline">${events.describe()}</div>`;
+    html += '<div class="qbtns"><button id="btn-diary">Achievement Diaries</button><button id="btn-clog">Collection Log</button><button id="btn-stats">Adventure Stats</button></div>';
     panel.innerHTML = html;
     panel.querySelectorAll('.quest').forEach((el) => (el.onclick = () => this.openJournal(el.dataset.q)));
     $('#btn-clog').onclick = () => this.openCollection();
@@ -372,6 +393,7 @@ export class UI {
   }
   questComplete(id) {
     const q = QUESTS[id], p = G.player;
+    p.logEvent(`Quest complete: ${q.name}`);
     this.dirty('quests');
     this.openWindow('qc', `<div class="scroll qc"><h2>Congratulations!</h2><p>You have completed <b>${q.name}</b>!</p><div class="qcbody"><div class="qcart"></div><div><b>You are awarded:</b><br>${q.rewards.join('<br>')}</div></div><p class="qp">Quest Points: <b>${p.questPoints}</b></p></div>`, 'Quest Complete');
     G.effects.push({ kind: 'fireworks', follow: p, t: performance.now() });
@@ -402,36 +424,58 @@ export class UI {
       const { r, t } = el.dataset;
       if (p.flags.diary[r + ':' + t]) return;
       p.flags.diary[r + ':' + t] = true;
-      p.give(diaryItem(r, t)); p.give('lamp', TIER_LAMPS[t]);
+      p.give(diaryItem(r, t)); p.give('lamp', TIER_LAMPS[t]); p.logCollection(diaryItem(r, t));
+      p.logEvent(`Completed the ${t} ${DIARIES[r].name} diary`);
       msg(`Well done! You have completed the ${t} ${DIARIES[r].name} diary.`, '#ef1020');
       sfx('quest'); G.effects.push({ kind: 'fireworks', follow: p, t: performance.now() });
       this.openDiaries(r);
     }));
   }
-  openCollection() {
+  // Collection log, by where things come from. Things already owned count even if never logged.
+  collectionCategories() {
+    const cats = [], seen = new Set();
+    const addCat = (name, ids) => { ids = ids.filter((id) => ITEMS[id] && !seen.has(id)); ids.forEach((id) => seen.add(id)); if (ids.length) cats.push({ name, ids }); };
+    const npcs = Object.entries(NPCS);
+    addCat('Bosses', npcs.filter(([, n]) => n.boss).flatMap(([, n]) => (n.drops?.uniques || []).map((u) => u.item)));
+    addCat('Slayer', npcs.filter(([id]) => SLAYER_REQ[id]).flatMap(([, n]) => (n.drops?.uniques || []).map((u) => u.item)));
+    addCat('Monsters', npcs.flatMap(([, n]) => (n.drops?.uniques || []).map((u) => u.item)));
+    addCat('Rare finds', Object.values(ITEMS).filter((i) => i.rare && !i.id.includes('_diary_')).map((i) => i.id));
+    addCat('Diaries', Object.keys(ITEMS).filter((id) => id.includes('_diary_')));
+    return cats;
+  }
+  openCollection(tab = 0) {
     const p = G.player;
-    const uniques = Object.values(ITEMS).filter((i) => i.rare);
-    let html = '<div class="clog"><h3>Items</h3><div class="grid">';
-    for (const it of uniques) {
-      const n = p.collection[it.id] || 0;
-      html += `<div class="cl ${n ? 'got' : ''}" title="${it.name}${n ? ' (x' + n + ')' : ''}"><img src="${iconURL(it.id)}">${n > 1 ? `<span>${n}</span>` : ''}</div>`;
+    const has = (id) => p.collection[id] || (p.hasAnywhere(id) ? 1 : 0);
+    const cats = this.collectionCategories();
+    const petIds = Object.keys(PETS);
+    const total = cats.reduce((a, c) => a + c.ids.length, 0) + petIds.length;
+    const got = cats.reduce((a, c) => a + c.ids.filter(has).length, 0) + petIds.filter((id) => p.collection['pet_' + id]).length;
+    let html = `<div class="ftabs">${[...cats.map((c) => c.name), 'Pets'].map((n, i) => `<button class="${i === tab ? 'on' : ''}" data-t="${i}">${n}</button>`).join('')}</div><div class="clog">`;
+    if (tab < cats.length) {
+      const c = cats[tab];
+      html += `<h3>${c.name} <small>${c.ids.filter(has).length}/${c.ids.length}</small></h3><div class="grid">`;
+      for (const id of c.ids) { const n = has(id); html += `<div class="cl ${n ? 'got' : ''}" title="${ITEMS[id].name}${n > 1 ? ' (x' + n + ')' : ''}"><img src="${iconURL(id)}">${n > 1 ? `<span>${n}</span>` : ''}</div>`; }
+      html += '</div>';
+    } else {
+      html += '<h3>Pets</h3><div class="grid pets">';
+      for (const [id, pet] of Object.entries(PETS)) {
+        const ok = p.collection['pet_' + id];
+        const set = buildSprite(pet.look.kind === 'human' ? { ...pet.look, tiny: true, short: false } : pet.look, 'pet_' + id);
+        html += `<div class="cl pet ${ok ? 'got' : ''}" data-pet="${id}" title="${pet.name} - ${pet.from}"><img src="${set.frames.down.idle[0].toDataURL()}"></div>`;
+      }
+      html += `</div><p class="hint">${G.touch ? 'Tap' : 'Click'} an owned pet to have it follow you.</p>`;
     }
-    html += '</div><h3>Pets</h3><div class="grid pets">';
-    for (const [id, pet] of Object.entries(PETS)) {
-      const got = p.collection['pet_' + id];
-      const set = buildSprite(pet.look.kind === 'human' ? { ...pet.look, tiny: true, short: false } : pet.look, 'pet_' + id);
-      html += `<div class="cl pet ${got ? 'got' : ''}" data-pet="${id}" title="${pet.name} - ${pet.from}"><img src="${set.frames.down.idle[0].toDataURL()}"></div>`;
-    }
-    const count = uniques.filter((i) => p.collection[i.id]).length + Object.keys(PETS).filter((id) => p.collection['pet_' + id]).length;
-    html += `</div><div class="cltotal">Obtained: <span class="y">${count}/${uniques.length + Object.keys(PETS).length}</span></div><p class="hint">Click an owned pet to have it follow you.</p></div>`;
+    html += `<div class="cltotal">Obtained: <span class="y">${got}/${total}</span></div></div>`;
     this.openWindow('clog', html, 'Collection Log');
+    document.querySelectorAll('.ftabs button').forEach((b) => (b.onclick = () => this.openCollection(+b.dataset.t)));
     document.querySelectorAll('.cl.pet.got').forEach((el) => (el.onclick = () => { p.pet = p.pet === el.dataset.pet ? null : el.dataset.pet; G.game.spawnPet(); msg(p.pet ? `Your ${PETS[p.pet].name} is now following you.` : 'Your pet goes home.'); }));
   }
   openStats() {
     const p = G.player, s = p.stats;
     const kills = Object.entries(s.kills).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k, v]) => `<div>${k.replace(/_/g, ' ')}: <b>${v}</b></div>`).join('') || '<div>None yet!</div>';
     const mins = Math.floor(s.playTicks * 0.6 / 60);
-    this.openWindow('stats', `<div class="scroll"><h2>${escapeHtml(p.name)}</h2><p>Combat level <b>${p.combatLevel()}</b> &middot; Total level <b>${p.totalLevel()}</b> &middot; Quest points <b>${p.questPoints}</b></p><p>Time played: <b>${Math.floor(mins / 60)}h ${mins % 60}m</b> &middot; Deaths: <b>${s.deaths}</b> &middot; Clues solved: <b>${s.clues || 0}</b></p>${p.flags.dragonslayer ? '<p class="y2">Title: Dragonslayer</p>' : ''}<h3>Kill counts</h3><div class="kc">${kills}</div></div>`, 'Adventure Stats');
+    const log = (s.log || []).slice(0, 40).map((e) => `<div class="alog"><small>${new Date(e.t).toLocaleDateString()}</small> ${escapeHtml(e.text)}</div>`).join('') || '<div>Nothing yet. Go on an adventure!</div>';
+    this.openWindow('stats', `<div class="scroll"><h2>${escapeHtml(p.name)}</h2><p>Combat level <b>${p.combatLevel()}</b> &middot; Total level <b>${p.totalLevel()}</b> &middot; Quest points <b>${p.questPoints}</b></p><p>Time played: <b>${Math.floor(mins / 60)}h ${mins % 60}m</b> &middot; Deaths: <b>${s.deaths}</b> &middot; Clues solved: <b>${s.clues || 0}</b></p>${p.flags.dragonslayer ? '<p class="y2">Title: Dragonslayer</p>' : ''}<h3>Kill counts</h3><div class="kc">${kills}</div><h3>Adventure log</h3>${log}</div>`, 'Adventure Stats');
   }
 
   // ================================================================ prayer
@@ -619,11 +663,24 @@ export class UI {
     const body = $('#window .wbody');
     if (!body) return;
     const f = (this.bankFilter || '').toLowerCase();
-    const items = p.bank.map((b, i) => [b, i]).filter(([b]) => !f || ITEMS[b.id].name.toLowerCase().includes(f));
+    // tabs: 'all' shows everything; 0-8 are the player's tabs (0 is the main one)
+    if (this.bankTab === undefined) this.bankTab = 'all';
+    const usedTabs = [...new Set(p.bank.map((b) => b.tab || 0))].filter((t) => t > 0).sort((a, b) => a - b);
+    if (this.bankTab !== 'all' && this.bankTab > 0 && !usedTabs.includes(this.bankTab)) this.bankTab = 'all';
+    const items = p.bank.map((b, i) => [b, i])
+      .filter(([b]) => this.bankTab === 'all' || (b.tab || 0) === this.bankTab)
+      .filter(([b]) => !f || ITEMS[b.id].name.toLowerCase().includes(f))
+      .sort(([a], [b]) => (this.bankTab === 'all' ? (a.tab || 0) - (b.tab || 0) : 0));
     const val = p.bank.reduce((a, b) => a + ITEMS[b.id].value * b.qty, 0);
-    body.innerHTML = `<div class="bankbar"><input id="bank-search" placeholder="Search..." value="${escapeHtml(this.bankFilter || '')}"><span class="bv">Value: <span class="y">${commas(val)}</span></span></div>
-      <div class="bankgrid">${items.map(([b, i]) => `<div class="bslot" data-i="${i}"><img src="${iconURL(b.id, b.qty)}"><span class="qty ${b.qty >= 10000000 ? 'g' : b.qty >= 100000 ? 'w' : ''}">${fmtNum(b.qty)}</span></div>`).join('')}</div>
-      <div class="bankbtns"><span>Quantity:</span>${[1, 5, 10, Infinity].map((q) => `<button class="bq ${this.bankQty === q ? 'on' : ''}" data-q="${q}">${q === Infinity ? 'All' : q}</button>`).join('')}<button id="dep-inv">Deposit inventory</button><button id="dep-eq">Deposit worn</button></div>`;
+    const tabBtn = (t, label) => `<button class="btab ${this.bankTab === t ? 'on' : ''}" data-t="${t}">${label}</button>`;
+    const firstOf = (t) => { const b = p.bank.find((x) => (x.tab || 0) === t); return b ? `<img src="${iconURL(b.id, 1)}">` : t; };
+    body.innerHTML = `<div class="banktabs">${tabBtn('all', 'All')}${tabBtn(0, firstOf(0))}${usedTabs.map((t) => tabBtn(t, firstOf(t))).join('')}</div>
+      <div class="bankbar"><input id="bank-search" placeholder="Search..." value="${escapeHtml(this.bankFilter || '')}"><span class="bv">Value: <span class="y">${commas(val)}</span></span></div>
+      <div class="bankgrid">${items.map(([b, i]) => `<div class="bslot ${b.qty ? '' : 'ph'}" data-i="${i}"><img src="${iconURL(b.id, b.qty || 1)}">${b.qty ? `<span class="qty ${b.qty >= 10000000 ? 'g' : b.qty >= 100000 ? 'w' : ''}">${fmtNum(b.qty)}</span>` : ''}</div>`).join('')}</div>
+      <div class="bankbtns"><span>Quantity:</span>${[1, 5, 10, Infinity].map((q) => `<button class="bq ${this.bankQty === q ? 'on' : ''}" data-q="${q}">${q === Infinity ? 'All' : q}</button>`).join('')}<button id="dep-inv">Deposit inventory</button><button id="dep-eq">Deposit worn</button><button id="ph-toggle" class="${p.flags.placeholders ? 'on' : ''}">Placeholders</button></div>
+      <div class="shophint">${G.touch ? 'Hold' : 'Right-click'} an item to move it to another tab.</div>`;
+    body.querySelectorAll('.btab').forEach((el) => (el.onclick = () => { this.bankTab = el.dataset.t === 'all' ? 'all' : +el.dataset.t; this.renderBank(); }));
+    $('#ph-toggle').onclick = () => { p.flags.placeholders = !p.flags.placeholders; if (!p.flags.placeholders) p.bank = p.bank.filter((b) => b.qty > 0); this.renderBank(); };
     const search = $('#bank-search');
     search.oninput = () => { this.bankFilter = search.value; this.renderBank(); const s = $('#bank-search'); s.focus(); s.setSelectionRange(s.value.length, s.value.length); };
     search.onkeydown = (e) => e.stopPropagation();
@@ -634,7 +691,14 @@ export class UI {
         const b = p.bank[i];
         if (!b) return;
         const nm = `<span class="m-item">${ITEMS[b.id].name}</span>`;
-        if (e.button === 2) this.openMenu(e.clientX, e.clientY, [1, 5, 10, Infinity].map((q) => ({ text: `Withdraw-${q === Infinity ? 'All' : q} ${nm}`, fn: () => this.withdraw(i, q) })).concat([{ text: `Examine ${nm}`, fn: () => msg(ITEMS[b.id].examine) }, { text: 'Cancel', fn: () => {} }]));
+        if (e.button === 2) {
+          const usedTabs = [...new Set(p.bank.map((x) => x.tab || 0))];
+          const next = [1, 2, 3, 4, 5, 6, 7, 8].find((t) => !usedTabs.includes(t));
+          const moves = [...usedTabs.filter((t) => t !== (b.tab || 0)).sort().map((t) => ({ text: `Move to ${t ? 'tab ' + t : 'main tab'}`, fn: () => { b.tab = t; this.renderBank(); } })),
+            ...(next ? [{ text: `Move to new tab (${next})`, fn: () => { b.tab = next; this.renderBank(); } }] : [])];
+          const opts = b.qty ? [1, 5, 10, Infinity].map((q) => ({ text: `Withdraw-${q === Infinity ? 'All' : q} ${nm}`, fn: () => this.withdraw(i, q) })) : [{ text: `Release placeholder ${nm}`, fn: () => { p.bank.splice(i, 1); this.renderBank(); } }];
+          this.openMenu(e.clientX, e.clientY, [...opts, ...moves, { text: `Examine ${nm}`, fn: () => msg(ITEMS[b.id].examine) }, { text: 'Cancel', fn: () => {} }]);
+        }
         else this.withdraw(i, this.bankQty);
       };
       el.onmouseenter = () => { const b = p.bank[i]; if (b) this.hoverText([{ text: `Withdraw-${this.bankQty === Infinity ? 'All' : this.bankQty} <span class="m-item">${ITEMS[b.id].name}</span>` }, {}]); };
@@ -647,7 +711,7 @@ export class UI {
   bankAdd(id, qty) {
     const p = G.player;
     const b = p.bank.find((x) => x.id === id);
-    if (b) b.qty += qty; else p.bank.push({ id, qty });
+    if (b) b.qty += qty; else p.bank.push({ id, qty, tab: typeof this.bankTab === 'number' ? this.bankTab : 0 });
   }
   deposit(i, qty, quiet) {
     const p = G.player;
@@ -664,12 +728,13 @@ export class UI {
     const p = G.player;
     const b = p.bank[i];
     if (!b) return;
+    if (!b.qty) return;
     const n = Math.min(qty, b.qty);
     let got;
     if (ITEMS[b.id].stack) { if (!p.canAdd(b.id)) { msg("You don't have enough inventory space."); return; } p.add(b.id, n); got = n; }
     else { const space = p.freeSlots(); got = Math.min(n, space); if (!got) { msg("You don't have enough inventory space."); return; } p.add(b.id, got); }
     b.qty -= got;
-    if (b.qty <= 0) p.bank.splice(i, 1);
+    if (b.qty <= 0 && !p.flags.placeholders) p.bank.splice(i, 1);
     sfx('bank');
     this.renderBank();
   }
@@ -677,6 +742,40 @@ export class UI {
     const p = G.player, s = p.inv[i];
     const nm = `<span class="m-item">${ITEMS[s.id].name}</span>`;
     return [1, 5, 10, Infinity].map((q) => ({ text: `Deposit-${q === Infinity ? 'All' : q} ${nm}`, fn: () => this.deposit(i, q) })).concat([{ text: 'Cancel', fn: () => {} }]);
+  }
+
+  // ---------------------------------------------------------------- the Vesper Exchange
+  openExchange() {
+    this.openWindow('exchange', '', 'The Vesper Exchange');
+    this.exFilter = '';
+    this.setTab('inventory');
+    this.renderExchange(true);
+  }
+  renderExchange(rebuild) {
+    const body = $('#window .wbody');
+    if (!body || this.window !== 'exchange') return;
+    if (rebuild || !body.querySelector('.exsearch')) {
+      body.innerHTML = `<input class="exsearch" placeholder="Search for an item to buy or sell..." autocomplete="off" aria-label="Search the Exchange"><div class="exlist"></div><div class="shophint">Prices move with the market, and with your own trading.</div>`;
+      const inp = body.querySelector('.exsearch');
+      inp.value = this.exFilter || '';
+      inp.oninput = () => { this.exFilter = inp.value; this.renderExchange(); };
+      inp.onkeydown = (e) => e.stopPropagation();
+    }
+    const p = G.player;
+    const ids = exchangeList(this.exFilter || '');
+    const arrow = { up: '<span class="up">▲</span>', down: '<span class="down">▼</span>', flat: '<span class="flat">–</span>' };
+    const list = body.querySelector('.exlist');
+    list.innerHTML = ids.length ? ids.map((id) => {
+      const held = p.count(id), buy = canBuy(id);
+      return `<div class="exrow" data-id="${id}"><img src="${iconURL(id, 1)}"><div class="exname">${ITEMS[id].name}${held ? ` <span class="held">(${commas(held)})</span>` : ''}<br><span class="exprice">${buy ? `Buy ${commas(exBuyPrice(id))}` : 'Not sold'} · Sell ${commas(exSellPrice(id))} ${arrow[trend(id)]}</span></div>`
+        + `<div class="exbtns">${buy ? '<button data-a="b1">Buy 1</button><button data-a="b10">Buy 10</button>' : ''}${held ? '<button data-a="s1">Sell 1</button><button data-a="sa">Sell all</button>' : ''}</div></div>`;
+    }).join('') : `<div class="exempty">${this.exFilter ? 'Nothing on the Exchange matches that.' : 'Search for an item, or click an item in your inventory.'}</div>`;
+    list.querySelectorAll('.exrow button').forEach((b) => (b.onclick = () => {
+      const id = b.closest('.exrow').dataset.id, a = b.dataset.a;
+      if (a === 'b1') exBuy(id, 1); else if (a === 'b10') exBuy(id, 10);
+      else if (a === 's1') exSell(id, 1); else exSell(id, Infinity);
+      this.renderExchange();
+    }));
   }
 
   // ---------------------------------------------------------------- shops
@@ -700,7 +799,7 @@ export class UI {
     }
     if (this.window === 'shop') this.renderShop();
   }
-  buyPrice(id) { return Math.max(1, Math.round(ITEMS[id].value * 1.05)); }
+  buyPrice(id) { return Math.max(1, Math.round(ITEMS[id].value * (SHOPS[this.shopId]?.markup || 1.05))); }
   sellPrice(id) { const shop = SHOPS[this.shopId]; const sells = shop.items.some(([i]) => i === id); return Math.floor(ITEMS[id].value * (sells ? 0.55 : 0.4)); }
   renderShop() {
     const body = $('#window .wbody');

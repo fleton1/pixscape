@@ -90,7 +90,7 @@ export class Player extends Mover {
   }
   has(id, n = 1) { return this.count(id) >= n; }
   hasEquipped(id) { return Object.values(this.equip).some((e) => e && e.id === id); }
-  hasAnywhere(id) { return this.has(id) || this.hasEquipped(id) || this.bank.some((b) => b.id === id); }
+  hasAnywhere(id) { return this.has(id) || this.hasEquipped(id) || this.bank.some((b) => b.id === id && b.qty > 0); }
   canAdd(id, qty = 1) {
     if (ITEMS[id].stack) return this.inv.some((s) => s && s.id === id) || this.freeSlots() > 0;
     return this.freeSlots() >= qty;
@@ -149,7 +149,13 @@ export class Player extends Mover {
   logCollection(id) {
     const first = !this.collection[id];
     this.collection[id] = (this.collection[id] || 0) + 1;
-    if (first && ITEMS[id]?.rare) msg(`New item added to your collection log: ${ITEMS[id].name}`, '#ef1020');
+    if (first && ITEMS[id]) { msg(`New item added to your collection log: ${ITEMS[id].name}`, '#ef1020'); this.logEvent(`Collection log: ${ITEMS[id].name}`); }
+  }
+  // Adventure log: milestones worth remembering, newest first.
+  logEvent(text) {
+    const log = (this.stats.log ||= []);
+    log.unshift({ t: Date.now(), text });
+    if (log.length > 200) log.length = 200;
   }
 
   // ---------------- equipment

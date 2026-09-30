@@ -683,6 +683,16 @@ function creature(look, anim, frame) {
       p.line(2, 9, 0, 11, '#8a929a');
       break;
     }
+    case 'phoenix': {
+      p = new Painter(16, 16);
+      p.line(2, 8 - f2, 0, 4 - f2, '#e8602a'); p.line(3, 8 - f2, 1, 3 - f2, '#f0c040');
+      p.ball(7, 9, 4, 3, '#d83a1a'); p.ball(6, 8, 2, 1.5, '#f08a2a');
+      p.ball(11, 5, 2, 1.8, '#e8602a'); p.set(12, 4, '#1a1a1a'); p.line(13, 5, 14, 6, '#f0c040');
+      p.line(11, 3, 10, 1, '#f0c040'); p.line(12, 3, 12, 1, '#f0d060');
+      p.line(3, 11, 0, 14, '#e8602a'); p.line(4, 11, 2, 15, '#f0c040');
+      p.vline(7, 12, 14, '#8a3a10'); p.vline(9, 12, 14, '#8a3a10');
+      break;
+    }
     case 'raccoon': {
       p = new Painter(16, 12);
       p.line(1, 6, 3, 8, '#4a4a4a'); p.set(0, 5, '#2a2a2a');

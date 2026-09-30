@@ -330,7 +330,22 @@ function altarRealm(rune) {
   return w;
 }
 
-export const DUNGEONS = { catacombs, tomb, sewers, deeps, crypt, hollowroot, icecaves, depths, essence, bloodhollow, rift, ...Object.fromEntries(RUNES.map((r) => ['altar_' + r.id, () => altarRealm(r)])) };
+// ------------------------------------------------------------------ Frostpeak Keep: the Frost Heart (Firemaking 50)
+function frostKeep() {
+  const { w, B } = scaffold({ id: 'braziers', name: 'Frostpeak Keep', W: 34, H: 30, floor: T.STONEFLOOR, wall: T.WALL_ICE, biome: BIOME.ICECAVE, music: 'frost', dark: 0.3, seed: 58 });
+  B.room(3, 3, 28, 24);
+  for (const [cx, cy] of [[8, 6], [26, 22], [7, 21], [25, 7]]) B.blob(cx, cy, 2.5, T.SNOW, 0.4, (x, y) => w.t(x, y) === T.STONEFLOOR);
+  B.area('Frostpeak Keep', 0, 0, 33, 29, 'frost');
+  B.place('frost_heart', 16, 13);
+  for (const [x, y] of [[10, 8], [23, 8], [10, 19], [23, 19]]) B.place('brazier', x, y);
+  for (const [x, y] of [[5, 5], [28, 5], [5, 24], [28, 24], [4, 14], [29, 14]]) B.place('frozen_roots', x, y);
+  B.place('keep_exit', 16, 25, { toMain: true, msg: 'You leave the keep. The ordinary cold feels almost warm.' });
+  w.points.arrive = [16, 23];
+  B.finish([[D.SNOWTUFT, 0.04], [D.CRACKS, 0.02]]);
+  return w;
+}
+
+export const DUNGEONS = { catacombs, tomb, sewers, deeps, crypt, hollowroot, icecaves, depths, essence, bloodhollow, rift, braziers: frostKeep, ...Object.fromEntries(RUNES.map((r) => ['altar_' + r.id, () => altarRealm(r)])) };
 
 export function buildDungeons() {
   return Object.values(DUNGEONS).map((f) => f());

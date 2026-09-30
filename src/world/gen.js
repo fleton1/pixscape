@@ -464,6 +464,7 @@ export function generateWorld() {
   entrance('stairs_down', 197, 225, 'crypt', 'You descend into the crypt beneath the manor.', true);
   entrance('cave_entrance', 60, 196, 'hollowroot', 'You duck into the roots of the forest.');
   entrance('ice_cave_entrance', 352, 90, 'icecaves', 'You enter the freezing caves.');
+  entrance('keep_gate', 342, 120, 'braziers', 'You push open the gates of Frostpeak Keep. Light the braziers and feed them roots to wear down the Frost Heart.');
   entrance('lava_cave_entrance', 88, 292, 'depths', 'You squeeze down into the heart of the volcano.');
 
   // ================================================================ 1.1: SKILLING ADDITIONS

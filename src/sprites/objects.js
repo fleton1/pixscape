@@ -409,6 +409,35 @@ export function buildObjectSprites() {
   S.sarcophagus = [build((p) => { p.rect(2, 2, 12, 28, '#c8a050'); p.rect(3, 3, 10, 26, '#b08840'); p.ball(8, 7, 3.5, 3.5, '#e8c13a'); p.set(7, 7, '#1a3a8a'); p.set(9, 7, '#1a3a8a'); p.rect(5, 12, 6, 12, '#2a5aa0'); for (let y = 13; y < 24; y += 2) p.hline(5, 10, y, '#e8c13a'); }, 16, 32)];
   S.portal = [0, 1, 2].map((f) => build((p) => { p.ellipse(8, 12, 7, 11, '#3a1a6a'); p.ellipse(8, 12, 5.5, 9.5, '#7a3ae8'); p.ellipse(8, 12 + f - 1, 3.5, 6.5, '#c89aff'); p.ellipse(8, 12, 1.5, 3, '#f0e8ff'); }, 16, 24)); S.portal.anim = true;
   S.spinning_web = [build((p) => { for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; p.line(8, 8, 8 + Math.cos(a) * 7, 8 + Math.sin(a) * 7, '#e0e0e0', 150); } p.ellipse(8, 8, 4, 4, null); }, 16, 16, false)];
+  // 1.8: shooting stars and the Frost Heart
+  S.fallen_star = [0, 1, 2].map((f) => build((p) => {
+    p.ball(16, 18, 14, 9, '#4a4658'); p.ball(14, 16, 11, 7, '#6a6680'); p.ball(12, 14, 6, 4, '#8a86a0');
+    for (const [x, y] of [[9, 15], [18, 13], [22, 19], [13, 20], [26, 16]]) p.ball(x, y, 1.5, 1.2, ['#f0e8ff', '#c8b8ff', '#fff8c0'][(x + f) % 3]);
+    p.set(16 + f, 11, '#ffffff'); p.set(6, 18 - f, '#ffffff');
+  }, 32, 28)); S.fallen_star.anim = true;
+  const brazierBase = (p) => { p.poly([[3, 8], [13, 8], [11, 13], [5, 13]], '#3a3a42'); p.hline(3, 12, 8, '#5a5a64'); p.rect(7, 13, 2, 6, '#2a2a30'); p.rect(4, 19, 8, 2, '#2a2a30'); };
+  S.brazier = [build((p) => { brazierBase(p); p.rect(5, 6, 6, 2, '#4a3a2a'); p.set(6, 5, '#a8d0e8'); p.set(10, 5, '#a8d0e8'); }, 16, 22)];
+  S.brazier_lit = [0, 1, 2].map((f) => build((p) => { brazierBase(p); p.poly([[4, 8], [8, 0 + f], [12, 8]], '#f0701e'); p.poly([[6, 8], [8, 3 + f], [10, 8]], '#ffd060'); p.set(5 + f, 2, '#ffa040'); }, 16, 22)); S.brazier_lit.anim = true;
+  S.brazier_broken = [build((p) => { p.poly([[3, 12], [8, 10], [7, 14], [4, 14]], '#3a3a42'); p.poly([[9, 11], [13, 9], [12, 14], [9, 14]], '#3a3a42'); p.rect(7, 14, 2, 5, '#2a2a30'); p.rect(4, 19, 8, 2, '#2a2a30'); p.set(6, 16, '#a8d0e8'); p.set(11, 17, '#a8d0e8'); }, 16, 22)];
+  S.frozen_roots = [build((p) => {
+    for (const [a, b, c, d] of [[2, 14, 8, 8], [8, 8, 14, 13], [8, 8, 7, 2], [5, 11, 1, 6], [11, 10, 15, 6]]) { p.line(a, b, c, d, '#6a5a4a'); p.line(a, b + 1, c, d + 1, '#4a3a2a'); }
+    for (const [x, y] of [[3, 13], [7, 3], [14, 12], [2, 7], [14, 7]]) p.set(x, y, '#e0f4ff');
+  }, 16, 16)];
+  S.frost_heart = [0, 1, 2, 3].map((f) => build((p) => {
+    p.ball(16, 30, 13, 4, '#6a8aa8');
+    p.poly([[16, 2 + (f % 2)], [26, 14], [22, 28], [10, 28], [6, 14]], '#6ab0e0');
+    p.poly([[16, 6 + (f % 2)], [22, 14], [19, 25], [13, 25], [10, 14]], '#a8d8f8');
+    p.poly([[16, 10], [19, 15], [16, 22], [13, 15]], ['#e8f8ff', '#ffffff', '#d0f0ff', '#ffffff'][f]);
+    p.line(8, 6 + f, 6, 2 + f, '#e0f4ff'); p.line(24, 8 - f, 27, 4 - f, '#e0f4ff');
+  }, 32, 34)); S.frost_heart.anim = true;
+  S.keep_gate = [build((p) => {
+    p.rect(0, 4, 32, 28, STONE); p.hline(0, 31, 4, STONE_L); for (let x = 0; x < 32; x += 6) p.rect(x, 0, 4, 5, STONE);
+    p.rect(9, 12, 14, 20, '#1a2230'); p.ellipse(16, 12, 7, 5, '#1a2230'); p.rect(9, 12, 1, 20, STONE_D); p.rect(22, 12, 1, 20, STONE_D);
+    for (const [x, y] of [[3, 8], [26, 10], [5, 22], [27, 24]]) p.set(x, y, '#e0f4ff');
+    p.hline(0, 31, 31, STONE_D);
+  }, 32, 32)];
+  S.keep_exit = [build((p) => { p.rect(1, 0, 30, 20, STONE_D); p.rect(6, 4, 20, 16, '#e8f0f8'); p.rect(6, 4, 20, 2, '#c8d8e8'); p.hline(0, 31, 19, STONE); }, 32, 20)];
+
 }
 
 export function fenceMask(world, x, y, isFence) {

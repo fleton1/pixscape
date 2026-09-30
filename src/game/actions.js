@@ -1,5 +1,6 @@
 // Context menus and everything that happens when you click on stuff.
 import { G, msg, sfx, after } from './state.js';
+import { useBrazier, openCrate } from './braziers.js';
 import { ITEMS, COOKING, BONES, FIREMAKING, POTIONS, SMELTING } from '../data/items.js';
 import { OBJECTS } from '../data/objects.js';
 import { NPCS } from '../data/npcs.js';
@@ -61,6 +62,7 @@ export function worldMenu(hit) {
     const o = hit.obj, d = OBJECTS[o.type];
     let acts = d.actions;
     if (d.door) acts = [o.open ? 'Close' : 'Open'];
+    if (o.type === 'brazier') acts = [o.broken ? 'Fix' : o.lit ? 'Feed' : 'Light'];
     const depleted = o.depleted > G.tick;
     const name = depleted && d.wc ? 'Tree stump' : depleted && d.mine ? 'Rocks' : d.name;
     if (!(depleted && (d.wc || d.mine))) for (const a of acts) E.push({ text: `${a} ${C(name)}`, fn: () => G.game.setTarget('obj', o, a) });
@@ -92,6 +94,7 @@ export function performNpc(n, option) {
       break;
     }
     case 'Trade': if (n.spawn.shop) G.ui.openShop(n.spawn.shop); break;
+    case 'Exchange': G.ui.openExchange(); break;
     case 'Bank': G.ui.openBank(); break;
     case 'Pickpocket': pickpocket(n); break;
     case 'Shear': shear(n); break;
@@ -156,6 +159,7 @@ export function performObj(o, option, useItem) {
       else if (o.type === 'tomb_door') tombDoor(o, false);
       else if (o.type === 'portal') G.game.teleport(...G.game.home(), 'The portal whisks you away.', true, 'main');
       break;
+    case 'Light': case 'Feed': case 'Fix': if (o.type === 'brazier') useBrazier(o, option); break;
     case 'Search': searchObject(o); break;
     case 'Take-flour':
       if (!p.has('pot')) { msg('You need an empty pot to hold the flour.'); return; }
@@ -225,6 +229,7 @@ function useOnObjAction(itemId, o) {
   if (o.type === 'furnace' && (SMELTING.some((s) => Object.keys(s.ores).includes(itemId)) || itemId === 'gold_bar')) return G.ui.openFurnace(itemId === 'gold_bar' ? 'jewellery' : 'bars');
   if (o.type === 'anvil' && itemId.endsWith('_bar')) return G.ui.openAnvil(itemId.replace('_bar', ''));
   if ((o.type === 'altar' || o.type === 'chaos_altar') && BONES[itemId]) return offerBones(itemId, o);
+  if (o.type === 'brazier' && ['frost_root', 'tinderbox', 'hammer'].includes(itemId)) return useBrazier(o);
   if (o.type === 'tomb_door' && itemId === 'scarab_tablet') return tombDoor(o, true);
   if (o.type === 'flour_bin' && itemId === 'pot') return performObj(o, 'Take-flour');
   msg('Nothing interesting happens.');
@@ -271,6 +276,7 @@ export function itemOptions(slot) {
   if (it.equip) E.push({ text: `${it.equip.slot === 'weapon' || it.equip.slot === 'shield' ? 'Wield' : 'Wear'} ${nm}`, fn: () => p.equipFromSlot(slot) });
   if (FIREMAKING[s.id]) E.push({ text: `Light ${nm}`, fn: () => lightLogs(slot) });
   if (s.id === 'clue_scroll') E.push({ text: `Read ${nm}`, fn: () => readClue() });
+  if (s.id === 'supply_crate') E.push({ text: `Open ${nm}`, fn: () => openCrate(slot) });
   if (s.id === 'casket' || s.id === 'reward_casket') E.push({ text: `Open ${nm}`, fn: () => openCasket(slot, s.id === 'reward_casket') });
   if (s.id === 'lamp') E.push({ text: `Rub ${nm}`, fn: () => rubLamp(slot) });
   if (s.id === 'spade') E.push({ text: `Dig ${nm}`, fn: () => { p.path = []; p.target = null; dig(); } });

@@ -111,11 +111,18 @@ The overworld grows east and south (existing coordinates stay valid, so saves ke
   prayers, gear) plus XP lamps.
 - **Achievement diaries** per region (easy / medium / hard / elite) with region reward items.
 
-## Phase 6 — Systems and quality of life [next]
+## Phase 6 — Systems and quality of life [done in 1.8]
 
-Bank tabs and placeholders, collection log growth, a skill-milestone log, run-energy tuning,
-world events, a Wintertodt-style group activity (Frostpeak braziers), and a single-player trader
-economy.
+- Bank tabs and placeholders.
+- Collection log in categories (bosses, monsters, rare finds, diaries, pets) and an adventure log
+  of milestones (levels, quests, diaries, bosses) on the stats page.
+- World events every 15-30 minutes: shooting stars to mine for stardust, goblin raids on Hilda's
+  farm, and a travelling merchant with rare stock.
+- The Frost Heart in Frostpeak Keep (Firemaking 50): a Wintertodt-style activity. Chop frozen
+  roots, light, feed and fix four braziers against the cold; points earn supply crates scaled to
+  your skills, with the pyromancer outfit, warm gloves and a phoenix pet.
+- The Vesper Exchange: Broker Casimir trades almost anything at market prices that drift over
+  time and move with your own buying and selling.
 
 ## Release plan
 
@@ -129,3 +136,4 @@ economy.
 | 1.5 [done] | Slayer, more monsters, Wilderness dungeons, save export/import, sprite gallery |
 | 1.6 [done] | Quest wave (18 quests) + achievement diaries (7 regions) |
 | 1.7 [done] | Overworld growth (560x440: the Vesperan Steppe, Tanglewood, the Ashen Reach), standing stones, Farming + Hunter |
+| 1.8 [done] | Bank tabs and placeholders, collection and adventure logs, world events, the Frost Heart, the Vesper Exchange |

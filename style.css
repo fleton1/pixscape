@@ -124,6 +124,7 @@ button { font-family: var(--font); cursor: pointer; }
 .quest:hover { background: rgba(255,255,255,.07); }
 .quest.started { color: #ffff00; }
 .quest.done { color: #00ff00; }
+.evline { margin-top: 10px; font-size: 12px; color: #c8b890; text-align: center; }
 .qbtns { display: flex; flex-direction: column; gap: 5px; margin-top: 14px; }
 .qbtns button, .set.btns button, .bankbtns button, .ftabs button { background: #3a3226; border: 2px solid #1a1510; box-shadow: inset 0 0 0 1px #5b4f3c; color: #ff981f; padding: 5px; font-size: 13px; border-radius: 3px; }
 .qbtns button:hover, .set.btns button:hover, .bankbtns button:hover { filter: brightness(1.2); }
@@ -163,6 +164,9 @@ button { font-family: var(--font); cursor: pointer; }
 .keys { color: #a89878; font-size: 12px; line-height: 1.4; }
 
 #wild-level { position: fixed; right: 244px; bottom: 12px; z-index: 10; color: #ffff00; font-size: 16px; text-shadow: 1px 1px 0 #000; display: flex; align-items: center; gap: 6px; }
+#minigame { position: fixed; top: 34px; left: 8px; z-index: 10; width: 190px; background: rgba(40,34,26,.85); border: 2px solid #5b4f3c; border-radius: 4px; padding: 4px 8px; color: #fff; font-size: 14px; text-shadow: 1px 1px 0 #000; pointer-events: none; }
+#minigame .bar { height: 10px; margin: 3px 0; background: #1a1510; border: 1px solid #000; }
+#minigame .bar div { height: 100%; background: #7ab8d8; }
 #wild-level .skull { width: 22px; height: 22px; background: radial-gradient(circle at 35% 45%, #000 18%, transparent 20%), radial-gradient(circle at 65% 45%, #000 18%, transparent 20%), radial-gradient(circle, #eee 60%, transparent 62%); }
 
 /* ---------- chatbox ---------- */
@@ -249,7 +253,25 @@ button { font-family: var(--font); cursor: pointer; }
 .bslot.empty img { opacity: .35; }
 .bankbtns { display: flex; gap: 4px; align-items: center; margin-top: 6px; font-size: 13px; flex-wrap: wrap; }
 .bankbtns .bq { width: 38px; }
+.bankbtns #ph-toggle.on { background: #6a2e20; }
+.banktabs { display: flex; gap: 3px; margin-bottom: 6px; flex-wrap: wrap; }
+.btab { background: #3a3226; border: 2px solid #1a1510; color: #ff981f; font-family: var(--font); min-width: 36px; height: 30px; border-radius: 4px 4px 0 0; display: flex; align-items: center; justify-content: center; }
+.btab.on { background: #6a2e20; }
+.btab img { width: 22px; height: 22px; image-rendering: pixelated; }
+.bslot.ph img { opacity: .3; filter: grayscale(1); }
 .bankbtns .bq.on { background: #6a2e20; }
+.exsearch { width: 100%; box-sizing: border-box; padding: 6px 8px; font: inherit; font-size: 15px; background: #1a1510; color: #fff; border: 2px solid var(--edge); border-radius: 3px; margin-bottom: 6px; }
+.exlist { max-height: 330px; overflow-y: auto; background: rgba(0,0,0,.2); border: 2px solid var(--edge); padding: 4px; min-height: 120px; }
+.exrow { display: flex; align-items: center; gap: 8px; padding: 4px; border-bottom: 1px solid rgba(0,0,0,.3); }
+.exrow img { width: 36px; height: 32px; image-rendering: pixelated; }
+.exname { flex: 1; font-size: 14px; color: #ff981f; line-height: 1.2; }
+.exname .held { color: #c8b890; }
+.exprice { color: #e8e0c8; font-size: 13px; }
+.exprice .up { color: #6ac86a; } .exprice .down { color: #e86a5a; } .exprice .flat { color: #a89878; }
+.exbtns { display: flex; flex-wrap: wrap; gap: 3px; justify-content: flex-end; max-width: 150px; }
+.exbtns button { font: inherit; font-size: 12px; padding: 3px 6px; background: #4a4034; color: #fff; border: 1px solid #1a1510; border-radius: 3px; cursor: pointer; }
+.exbtns button:hover { background: #5d5447; }
+.exempty { color: #a89878; text-align: center; padding: 20px 8px; font-size: 14px; }
 .shophint, .mkhint { font-size: 12px; color: #a89878; text-align: center; margin-top: 6px; }
 .ftabs { display: flex; gap: 4px; margin-bottom: 6px; flex-wrap: wrap; }
 .ftabs button.on { background: #6a2e20; box-shadow: inset 0 0 0 1px #c86a4a; }
@@ -275,6 +297,8 @@ button { font-family: var(--font); cursor: pointer; }
 .dtier { padding: 2px 10px 6px; } .dtname { color: #ffff00; font-size: 14px; } .dtname small { color: #a89878; }
 .dtask { font-size: 13px; color: #c8b890; padding-left: 8px; } .dtask.ok { color: #6ae06a; } .dtask.dim { color: #8a7a5a; font-style: italic; }
 .dclaim { margin: 4px 0 0 8px; background: #6a2e20; border: 2px solid #1a1510; color: #ffe8b0; font-family: var(--font); padding: 4px 8px; border-radius: 3px; }
+.alog { font-size: 13px; border-bottom: 1px dashed #b8a47a; padding: 2px 0; } .alog small { color: #6a5a3a; }
+.clog h3 small { color: #a89878; font-size: 12px; }
 .clog h3 { color: #ff981f; font-weight: normal; margin: 4px 0; }
 .clog .grid { display: grid; grid-template-columns: repeat(auto-fill, 40px); gap: 3px; }
 .cl { position: relative; width: 40px; height: 40px; background: rgba(0,0,0,.3); border: 1px solid #3a3226; display: flex; align-items: center; justify-content: center; }

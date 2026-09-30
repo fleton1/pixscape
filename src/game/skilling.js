@@ -6,6 +6,7 @@ import { SKILL_NAMES } from '../data/skills.js';
 import { clamp, randInt, pickWeighted, aOrAn, cap } from '../util.js';
 import { givePet } from './combat.js';
 import { damagePlayer } from './combat.js';
+import { mineStar } from './events.js';
 
 export function startAction(fn, delay = 1, anim = true) {
   const p = G.player;
@@ -78,6 +79,7 @@ export function chop(o) {
 // ------------------------------------------------------------ mining
 export function mine(o) {
   const p = G.player, d = OBJECTS[o.type];
+  if (o.type === 'fallen_star') { msg('You start mining the star.'); p.faceTile(o.x, o.y); startAction(() => (mineStar(o) ? 4 : false), 2); return; }
   if (o.type === 'cracked_sandstone') return G.game.questMine(o);
   const m = d.mine;
   if (!m) return;

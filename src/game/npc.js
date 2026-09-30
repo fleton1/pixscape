@@ -75,10 +75,10 @@ export function spawnNpc(defId, spawn, world = G.world) {
   return n;
 }
 
-export function removeNpc(n) {
-  const i = G.npcs.indexOf(n);
-  if (i >= 0) G.npcs.splice(i, 1);
-  G.npcById.delete(n.id);
+export function removeNpc(n, world = G.world) {
+  const i = world.npcs.indexOf(n);
+  if (i >= 0) world.npcs.splice(i, 1);
+  world.npcById.delete(n.id);
 }
 
 export function tickNpc(n) {

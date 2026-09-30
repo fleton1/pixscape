@@ -30,6 +30,7 @@ export function skillGuide() {
   }
   for (const [key, list] of Object.entries(FISH)) for (const f of list) add('fishing', f.lvl, ITEMS[f.fish].name.replace('Raw ', ''), f.fish, key.split('@')[0]);
   for (const [id, f] of Object.entries(FIREMAKING)) add('firemaking', f.lvl, ITEMS[id].name, id, 'Logs');
+  add('firemaking', 50, 'The Frost Heart, in Frostpeak Keep just south of Frosthold', 'supply_crate', 'Activities');
   // processing
   for (const [raw, c] of Object.entries(COOKING)) add('cooking', c.lvl, ITEMS[c.out].name, c.out, 'Fire or range');
   for (const s of SMELTING) add('smithing', s.lvl, ITEMS[s.bar].name, s.bar, 'Smelting');

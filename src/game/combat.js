@@ -366,7 +366,7 @@ export function killNpc(n) {
   sfx('death');
   if (p.target && p.target.ref === n) p.target = null;
   p.stats.kills[n.defId] = (p.stats.kills[n.defId] || 0) + 1;
-  if (n.boss) msg(`Your ${n.name} kill count is: ${p.stats.kills[n.defId]}.`, '#ef1020');
+  if (n.boss) { const kc = p.stats.kills[n.defId]; msg(`Your ${n.name} kill count is: ${kc}.`, '#ef1020'); if (kc === 1 || kc % 25 === 0) p.logEvent(`Defeated ${n.name} (kill ${kc})`); }
   const cx = n.x + Math.floor((n.size - 1) / 2), cy = n.y + Math.floor((n.size - 1) / 2);
   after(1, () => dropLoot(n, cx, cy));
   if (n.temp) after(2, () => { const i = G.npcs.indexOf(n); if (i >= 0) G.npcs.splice(i, 1); G.npcById.delete(n.id); });
@@ -389,8 +389,9 @@ export function seedFor(lvl) {
 }
 function dropLoot(n, x, y) {
   const d = n.def.drops || {};
-  if (n.temp && n.defId !== 'goblin_warrior') return;
   const drop = (id, qty = 1) => G.game.dropGround(id, qty, x, y, { loot: true });
+  if (n.spawn.event) { drop('coins', randInt(80, 250)); if (Math.random() < 0.15) drop('lamp', 1); }
+  if (n.temp && n.defId !== 'goblin_warrior') return;
   for (const [id, q] of d.always || []) drop(id, q);
   if (d.main && d.main.length) {
     const e = pickWeighted(d.main);
